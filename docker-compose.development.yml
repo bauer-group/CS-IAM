@@ -33,13 +33,15 @@ services:
 
   # ── Prepare the shared machine-key volume ───────────────────────────────────
   # Fresh named volumes are root:root, but Zitadel runs as the non-root
-  # `zitadel` user and must write the FirstInstance machine key into /machinekey.
-  # This one-shot makes the volume writable before Zitadel's setup runs.
+  # `zitadel` user (uid 1000) and must write the FirstInstance machine key into
+  # /machinekey. Own the volume to Zitadel and keep it group-private (0750 — not
+  # world-writable or world-readable). The root `provisioner` reads it directly;
+  # `directory-sync` joins gid 1000 (group_add) to read it.
   prepare-machinekey:
     image: ${ALPINE_IMAGE:-alpine}:${ALPINE_VERSION:-3.23}
     container_name: ${STACK_NAME:-iam}_PREP
     restart: "no"
-    command: ["sh", "-c", "chmod 0777 /machinekey"]
+    command: ["sh", "-c", "chown 1000:1000 /machinekey && chmod 0750 /machinekey"]
     volumes:
       - machinekey:/machinekey
     networks:
@@ -189,6 +191,9 @@ services:
       dockerfile: Dockerfile
     container_name: ${STACK_NAME:-iam}_SYNC
     restart: unless-stopped
+    # Join Zitadel's gid so the group-private (0750) machine key is readable.
+    group_add:
+      - "1000"
     <<: *logging
     environment:
       TZ: ${TIME_ZONE:-Etc/UTC}
