@@ -3,5 +3,5 @@
 pydantic>=2.13,<3
 pydantic-settings>=2.14,<3
 boto3>=1.43
-apscheduler>=3.11,<4
+apscheduler>=3.11.2,<4
 rich>=14,<15
