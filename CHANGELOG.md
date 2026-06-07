@@ -1,3 +1,9 @@
+## [0.1.2](https://github.com/bauer-group/CS-IAM/compare/v0.1.1...v0.1.2) (2026-06-07)
+
+### 🐛 Bug Fixes
+
+* **compose:** fixed the dev bootstrap (machine-key perms + resolvable issuer) ([6a81146](https://github.com/bauer-group/CS-IAM/commit/6a811465d8b773ec721c29fbfcb811ae94747aaf))
+
 ## [0.1.1](https://github.com/bauer-group/CS-IAM/compare/v0.1.0...v0.1.1) (2026-06-07)
 
 ### 🐛 Bug Fixes
