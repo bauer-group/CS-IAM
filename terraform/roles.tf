@@ -16,3 +16,15 @@ resource "zitadel_project_role" "catalog" {
   display_name = each.value
   group        = "native"
 }
+
+# Same catalog on the customer project, so the project grant to the External
+# Users org can hand these roles to external users.
+resource "zitadel_project_role" "external_catalog" {
+  for_each = toset(var.project_roles)
+
+  org_id       = local.org_id
+  project_id   = zitadel_project.external.id
+  role_key     = each.value
+  display_name = each.value
+  group        = "native"
+}

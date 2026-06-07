@@ -1,5 +1,25 @@
 # Users, Roles & Groups
 
+## Organisations (trust tiers)
+
+| Org | Who | Password policy | App access |
+|-----|-----|-----------------|------------|
+| **BAUER GROUP** (internal) | company users (federated + local) | strict instance default (12 chars + MFA) | all internal apps via the grant model |
+| **External Users** (customers) | external/customer accounts | relaxed (`min_length 8`, org-level override) | **only** apps explicitly granted to this org |
+
+Both orgs live in one Zitadel instance. The internal org is created by
+FirstInstance; the **External Users** org, its relaxed password policy, and the
+customer **External Apps** project (granted to it) are managed in Terraform
+(`terraform/orgs.tf`, `projects.tf`).
+
+**How "externals only reach allowed apps" works:** every project has
+`has_project_check = true`, so a token is only issued to a user who holds a
+grant. Internal apps live in the `BAUER GROUP` project, which is **never granted
+to the external org** → customers can't authenticate to them. Customer apps live
+in the `External Apps` project, which **is** granted to the external org →
+customers can be granted roles there and only there. Route an app with the
+per-app `audience` field (`"internal"` default, or `"external"`).
+
 ## Account types
 
 | Type | Auth | Password | MFA |

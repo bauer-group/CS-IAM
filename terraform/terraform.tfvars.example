@@ -16,10 +16,18 @@ org_name     = "BAUER GROUP"
 project_name = "BAUER GROUP"
 role_prefix  = "entra:"
 
+# External (customer) org — relaxed password policy, access only to apps with
+# audience = "external" (see app_redirect_uris below).
+external_org_name            = "External Users"
+external_password_min_length = 8
+external_project_name        = "External Apps"
+
 # Microsoft Entra ID (leave azure_client_id = "" to skip federation)
 azure_client_id     = ""
 azure_client_secret = ""
 azure_tenant_id     = ""
 
-# OIDC applications (JSON string)
-app_redirect_uris = "[{\"name\":\"outline\",\"redirect_uris\":[\"https://wiki.bauer-group.com/auth/oidc.callback\"]}]"
+# OIDC applications (JSON string). Optional per-app "audience":
+#   omitted / "internal" → internal-only app (BAUER GROUP project)
+#   "external"           → customer app (External Apps project, granted to externals)
+app_redirect_uris = "[{\"name\":\"outline\",\"redirect_uris\":[\"https://wiki.bauer-group.com/auth/oidc.callback\"]},{\"name\":\"customer-portal\",\"audience\":\"external\",\"redirect_uris\":[\"https://portal.example.com/auth/callback\"]}]"

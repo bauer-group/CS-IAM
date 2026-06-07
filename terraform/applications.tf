@@ -5,14 +5,24 @@
 # Zitadel generates the client_id/secret — surfaced via outputs.tf, never
 # pre-shared. Apps request the metadata scope so synced extended attributes
 # (job_title, department, fax, …) appear in their tokens.
+#
+# Per-app `audience` selects which project (= access tier) the app lives in:
+#   "internal" (default) → the BAUER GROUP project (internal users only)
+#   "external"           → the External Apps project (granted to customers)
+# All apps are owned by the internal org; externals reach the external ones via
+# the project grant in projects.tf.
 # =============================================================================
 
 resource "zitadel_application_oidc" "app" {
   for_each = { for a in local.apps : a.name => a }
 
-  org_id     = local.org_id
-  project_id = zitadel_project.main.id
-  name       = each.key
+  org_id = local.org_id
+  project_id = (
+    try(each.value.audience, "internal") == "external"
+    ? zitadel_project.external.id
+    : zitadel_project.main.id
+  )
+  name = each.key
 
   redirect_uris             = each.value.redirect_uris
   post_logout_redirect_uris = try(each.value.post_logout_redirect_uris, [])

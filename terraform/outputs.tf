@@ -13,7 +13,17 @@ output "project_id" {
 
 output "org_id" {
   value       = local.org_id
-  description = "BAUER GROUP organisation id."
+  description = "BAUER GROUP (internal) organisation id."
+}
+
+output "external_org_id" {
+  value       = zitadel_org.external.id
+  description = "External Users (customer) organisation id."
+}
+
+output "external_project_id" {
+  value       = zitadel_project.external.id
+  description = "Customer-facing project id (granted to the external org)."
 }
 
 output "entra_idp_id" {

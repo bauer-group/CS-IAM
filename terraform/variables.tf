@@ -54,6 +54,28 @@ variable "project_roles" {
   description = "Native (Terraform-owned) project role catalog. Synced Entra roles are owned by directory-sync and carry role_prefix."
 }
 
+# ── External (customer) organisation ──────────────────────────────────────────
+# A second org for customers/externals. They authenticate via OIDC against
+# Zitadel but, unlike internal users, may access ONLY the apps explicitly granted
+# to this org (the external project below) — never internal apps.
+variable "external_org_name" {
+  type        = string
+  default     = "External Users"
+  description = "Name of the second org holding customer/external accounts."
+}
+
+variable "external_password_min_length" {
+  type        = number
+  default     = 8
+  description = "Minimum password length for the external org (relaxed from the strict instance default)."
+}
+
+variable "external_project_name" {
+  type        = string
+  default     = "External Apps"
+  description = "Project holding customer-facing apps; granted to the external org so its users authenticate only to these."
+}
+
 # ── Microsoft Entra ID (upstream IdP) ────────────────────────────────────────
 variable "azure_client_id" {
   type        = string
