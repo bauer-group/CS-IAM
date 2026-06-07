@@ -1,3 +1,9 @@
+## [0.1.1](https://github.com/bauer-group/CS-IAM/compare/v0.1.0...v0.1.1) (2026-06-07)
+
+### 🐛 Bug Fixes
+
+* **ci:** fixed the four Docker image builds ([f068719](https://github.com/bauer-group/CS-IAM/commit/f068719a57534b7e1919538205e28ce2fc3eceba))
+
 ## [0.1.0](https://github.com/bauer-group/CS-IAM/compare/v0.0.0...v0.1.0) (2026-06-07)
 
 ### 🚀 Features
