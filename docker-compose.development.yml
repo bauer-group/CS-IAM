@@ -8,7 +8,7 @@
 # and the directory-sync sidecar keeps profiles/groups fresh from Entra.
 #
 # Access:
-#   - Console / Issuer   http://${IAM_DEV_HOSTNAME:-zitadel.localhost}:${IAM_DEV_PORT:-8080}
+#   - Console / Issuer   http://${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}
 #   - Login              admin@bauer-group.com / ${ZITADEL_ADMIN_PASSWORD}
 #
 # Bootstrap order:
@@ -30,6 +30,20 @@ x-logging: &logging
 
 
 services:
+
+  # ── Prepare the shared machine-key volume ───────────────────────────────────
+  # Fresh named volumes are root:root, but Zitadel runs as the non-root
+  # `zitadel` user and must write the FirstInstance machine key into /machinekey.
+  # This one-shot makes the volume writable before Zitadel's setup runs.
+  prepare-machinekey:
+    image: ${ALPINE_IMAGE:-alpine}:${ALPINE_VERSION:-3.23}
+    container_name: ${STACK_NAME:-iam}_PREP
+    restart: "no"
+    command: ["sh", "-c", "chmod 0777 /machinekey"]
+    volumes:
+      - machinekey:/machinekey
+    networks:
+      - local
 
   # ── PostgreSQL 18 ───────────────────────────────────────────────────────────
   # Tuned for SSD/NVMe by default. For HDD set PG_RANDOM_PAGE_COST=2.0 (10k RPM)
@@ -106,10 +120,13 @@ services:
       ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ${ZITADEL_DB_USER:-zitadel}
       ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${ZITADEL_DB_PASSWORD}
       ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
-      # External access — dev issuer is zitadel.localhost so the SAME URL resolves
-      # from the host browser (*.localhost -> 127.0.0.1 -> published port) AND from
-      # the automation containers (network alias), keeping issuer/JWT-aud consistent.
-      ZITADEL_EXTERNALDOMAIN: ${IAM_DEV_HOSTNAME:-zitadel.localhost}
+      # External access — dev issuer is the service name `zitadel` so the
+      # automation containers reach it via Docker DNS and the issuer / JWT
+      # audience match. (`*.localhost` can't be used here: musl/glibc force it
+      # to 127.0.0.1 inside every container, shadowing the network alias.)
+      # For browser console access from the host, add `127.0.0.1 zitadel` to
+      # your hosts file and open http://zitadel:8080.
+      ZITADEL_EXTERNALDOMAIN: ${IAM_DEV_HOSTNAME:-zitadel}
       ZITADEL_EXTERNALPORT: ${IAM_DEV_PORT:-8080}
       ZITADEL_EXTERNALSECURE: "false"
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:?Set ZITADEL_ADMIN_PASSWORD in .env}
@@ -122,10 +139,10 @@ services:
     depends_on:
       database-server:
         condition: service_healthy
+      prepare-machinekey:
+        condition: service_completed_successfully
     networks:
-      local:
-        aliases:
-          - ${IAM_DEV_HOSTNAME:-zitadel.localhost}
+      - local
 
   # ── Provisioner (OpenTofu IaC, one-shot, non-destructive) ───────────────────
   provisioner:
@@ -142,12 +159,12 @@ services:
         max-file: "1"
     environment:
       TZ: ${TIME_ZONE:-Etc/UTC}
-      ZITADEL_DOMAIN: ${IAM_DEV_HOSTNAME:-zitadel.localhost}
+      ZITADEL_DOMAIN: ${IAM_DEV_HOSTNAME:-zitadel}
       ZITADEL_PORT: ${IAM_DEV_PORT:-8080}
       ZITADEL_INSECURE: "true"
       ZITADEL_JWT_PROFILE_FILE: /machinekey/iam-admin.json
       ZITADEL_WAIT_TIMEOUT: ${PROVISIONER_WAIT_TIMEOUT:-120}
-      TF_VAR_zitadel_domain: ${IAM_DEV_HOSTNAME:-zitadel.localhost}
+      TF_VAR_zitadel_domain: ${IAM_DEV_HOSTNAME:-zitadel}
       TF_VAR_zitadel_port: ${IAM_DEV_PORT:-8080}
       TF_VAR_zitadel_insecure: "true"
       TF_VAR_role_prefix: ${SYNC_ROLE_PREFIX:-entra:}
@@ -178,7 +195,7 @@ services:
       AZURE_TENANT_ID: ${AZURE_TENANT_ID:-}
       AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-}
       AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET:-}
-      ZITADEL_DOMAIN: ${IAM_DEV_HOSTNAME:-zitadel.localhost}
+      ZITADEL_DOMAIN: ${IAM_DEV_HOSTNAME:-zitadel}
       ZITADEL_PORT: ${IAM_DEV_PORT:-8080}
       ZITADEL_INSECURE: "true"
       ZITADEL_JWT_PROFILE_FILE: /machinekey/iam-admin.json

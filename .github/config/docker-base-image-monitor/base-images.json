@@ -24,11 +24,11 @@
       "description": "Base image for directory-sync and database-backup"
     },
     {
-      "name": "opentofu",
-      "image": "ghcr.io/opentofu/opentofu",
-      "tag": "1.12",
-      "variable": "OPENTOFU_DIGEST",
-      "description": "Base image for the provisioner IaC runner"
+      "name": "alpine",
+      "image": "alpine",
+      "tag": "3.23",
+      "variable": "ALPINE_DIGEST",
+      "description": "Base for the provisioner (tofu binary staged in) + machine-key prep step (OpenTofu version pinned via the provisioner Dockerfile ARG)"
     }
   ],
   "settings": {

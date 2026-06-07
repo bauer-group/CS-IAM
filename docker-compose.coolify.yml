@@ -22,6 +22,16 @@ x-logging: &logging
 
 services:
 
+  # ── Prepare the shared machine-key volume ───────────────────────────────────
+  # Fresh named volumes are root:root; Zitadel runs as the non-root `zitadel`
+  # user and must write the FirstInstance machine key into /machinekey.
+  prepare-machinekey:
+    image: ${ALPINE_IMAGE:-alpine}:${ALPINE_VERSION:-3.23}
+    restart: "no"
+    command: ["sh", "-c", "chmod 0777 /machinekey"]
+    volumes:
+      - machinekey:/machinekey
+
   # ── PostgreSQL 18 ───────────────────────────────────────────────────────────
   database-server:
     image: ${POSTGRES_IMAGE:-postgres}:${POSTGRES_VERSION:-18-alpine}
@@ -93,6 +103,8 @@ services:
     depends_on:
       database-server:
         condition: service_healthy
+      prepare-machinekey:
+        condition: service_completed_successfully
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${STACK_NAME:-iam}.rule=Host(`${IAM_HOSTNAME}`)"

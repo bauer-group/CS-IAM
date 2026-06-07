@@ -29,6 +29,19 @@ x-logging: &logging
 
 services:
 
+  # ── Prepare the shared machine-key volume ───────────────────────────────────
+  # Fresh named volumes are root:root, but Zitadel runs as the non-root
+  # `zitadel` user and must write the FirstInstance machine key into /machinekey.
+  prepare-machinekey:
+    image: ${ALPINE_IMAGE:-alpine}:${ALPINE_VERSION:-3.23}
+    container_name: ${STACK_NAME:-iam}_PREP
+    restart: "no"
+    command: ["sh", "-c", "chmod 0777 /machinekey"]
+    volumes:
+      - machinekey:/machinekey
+    networks:
+      - local
+
   # ── PostgreSQL 18 ───────────────────────────────────────────────────────────
   # Tuned for SSD/NVMe by default. For HDD set PG_RANDOM_PAGE_COST=2.0/4.0 and
   # PG_EFFECTIVE_IO_CONCURRENCY=4/2 in .env. Memory + WAL presets for
@@ -111,6 +124,8 @@ services:
     depends_on:
       database-server:
         condition: service_healthy
+      prepare-machinekey:
+        condition: service_completed_successfully
     networks:
       - local
       - proxy
