@@ -32,15 +32,16 @@ services:
   # ── Prepare the shared machine-key volume ───────────────────────────────────
   # Fresh named volumes are root:root, but Zitadel runs as the non-root
   # `zitadel` user (uid 1000) and must write the FirstInstance machine key into
-  # /machinekey. Own it to Zitadel, group-private (0750 — not world-accessible).
-  # The root `provisioner` reads it; `directory-sync` joins gid 1000 to read it.
+  # /data/machinekey. Own it to Zitadel, group-private (0750 — not
+  # world-accessible). The root `provisioner` reads it; `directory-sync` runs
+  # with gid 1000 (user: "1001:1000") to read it.
   prepare-machinekey:
     image: ${ALPINE_IMAGE:-alpine}:${ALPINE_VERSION:-3.23}
     container_name: ${STACK_NAME:-iam}_PREP
     restart: "no"
-    command: ["sh", "-c", "chown 1000:1000 /machinekey && chmod 0750 /machinekey"]
+    command: ["sh", "-c", "chown 1000:1000 /data/machinekey && chmod 0750 /data/machinekey"]
     volumes:
-      - machinekey:/machinekey
+      - machinekey:/data/machinekey
     networks:
       - local
 
@@ -120,9 +121,11 @@ services:
       ZITADEL_EXTERNALSECURE: "true"
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:?Set ZITADEL_ADMIN_PASSWORD in .env}
     volumes:
-      - ./config/zitadel/defaults.yaml:/zitadel/config/defaults.yaml:ro
-      - ./config/zitadel/steps.yaml:/zitadel/config/steps.yaml:ro
-      - machinekey:/machinekey
+      # Config (defaults.yaml/steps.yaml) is baked into the image. To override
+      # without rebuilding, uncomment and edit the host files:
+      # - ./config/zitadel/defaults.yaml:/zitadel/config/defaults.yaml:ro
+      # - ./config/zitadel/steps.yaml:/zitadel/config/steps.yaml:ro
+      - machinekey:/data/machinekey
     depends_on:
       database-server:
         condition: service_healthy
@@ -166,7 +169,7 @@ services:
       ZITADEL_DOMAIN: ${IAM_HOSTNAME}
       ZITADEL_PORT: 443
       ZITADEL_INSECURE: "false"
-      ZITADEL_JWT_PROFILE_FILE: /machinekey/iam-admin.json
+      ZITADEL_JWT_PROFILE_FILE: /data/machinekey/iam-admin.json
       ZITADEL_WAIT_TIMEOUT: ${PROVISIONER_WAIT_TIMEOUT:-180}
       TF_VAR_zitadel_domain: ${IAM_HOSTNAME}
       TF_VAR_zitadel_port: 443
@@ -177,7 +180,7 @@ services:
       TF_VAR_azure_tenant_id: ${AZURE_TENANT_ID:-}
       TF_VAR_app_redirect_uris: ${APP_REDIRECT_URIS:-[]}
     volumes:
-      - machinekey:/machinekey:ro
+      - machinekey:/data/machinekey:ro
       - tfstate:/tfstate
     depends_on:
       zitadel:
@@ -203,7 +206,7 @@ services:
       ZITADEL_DOMAIN: ${IAM_HOSTNAME}
       ZITADEL_PORT: 443
       ZITADEL_INSECURE: "false"
-      ZITADEL_JWT_PROFILE_FILE: /machinekey/iam-admin.json
+      ZITADEL_JWT_PROFILE_FILE: /data/machinekey/iam-admin.json
       ZITADEL_WAIT_TIMEOUT: ${SYNC_WAIT_TIMEOUT:-180}
       SYNC_ENABLED: ${SYNC_ENABLED:-true}
       SYNC_PROFILES_INTERVAL: ${SYNC_PROFILES_INTERVAL:-300}
@@ -213,8 +216,8 @@ services:
       SYNC_LOG_LEVEL: ${SYNC_LOG_LEVEL:-INFO}
       SYNC_LOG_FORMAT: ${SYNC_LOG_FORMAT:-console}
     volumes:
-      - machinekey:/machinekey:ro
       - sync-data:/data
+      - machinekey:/data/machinekey:ro
     depends_on:
       provisioner:
         condition: service_completed_successfully

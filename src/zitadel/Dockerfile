@@ -6,8 +6,14 @@
 # if the upstream registry path changes, is paywalled, or is retired.
 #
 # Adds:
-#   - OCI + BAUER GROUP metadata only (functionally identical to upstream)
+#   - The secret-free BAUER GROUP default config baked in (defaults.yaml +
+#     steps.yaml at /zitadel/config) so the stack does not depend on host
+#     bind-mounts; override by bind-mounting your own files over those paths
+#   - OCI + BAUER GROUP metadata
 #   - A stable, owned image path the compose files pull from
+#
+# Build context = repo root (so config/ is reachable):
+#   docker build -f src/zitadel/Dockerfile -t cs-iam/zitadel .
 #
 # Emergency fork path: swap BASE_ZITADEL_IMAGE to an internal fork build — every
 # other layer in this stack (compose, config, sidecars) keeps working unchanged.
@@ -56,8 +62,16 @@ LABEL org.opencontainers.image.base.name="${BASE_ZITADEL_IMAGE}:${BASE_ZITADEL_V
 LABEL org.opencontainers.image.version="0.1.2"
 
 # ---------------------------------------------------------------------------
-# Customizations
+# Baked-in default configuration (secret-free)
 # ---------------------------------------------------------------------------
-# None — re-publish upstream unchanged so a user comparing both binaries sees
-# identical behaviour. Inherit ENTRYPOINT, CMD, EXPOSE, USER and WORKDIR from
-# the Zitadel base image. Add overlays here only for a concrete need.
+# Bake the DefaultInstance + FirstInstance config into the image so the stack
+# does not rely on host bind-mounts, which are fragile (a missing host path
+# silently becomes an empty dir; SELinux/Windows path quirks bite). The compose
+# command points at these paths; override at runtime by bind-mounting your own
+# files over them. NO secrets are baked — the admin password and all credentials
+# arrive through ZITADEL_* env vars at runtime.
+COPY config/zitadel/defaults.yaml /zitadel/config/defaults.yaml
+COPY config/zitadel/steps.yaml /zitadel/config/steps.yaml
+
+# Inherit ENTRYPOINT, CMD, EXPOSE, USER (zitadel, uid 1000) and WORKDIR from the
+# base image — no behavioural change beyond the baked config above.

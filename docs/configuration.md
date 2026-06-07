@@ -8,13 +8,19 @@ Configuration lives in three places:
    `ZITADEL_*` env vars from the compose file.
 3. **`config/zitadel/steps.yaml`** — `FirstInstance` org/admin/machine SA.
 
+> The two `config/zitadel/*.yaml` files are **baked into the `zitadel` image**
+> (so the stack doesn't depend on fragile host bind-mounts). To apply changes,
+> rebuild/re-pull the image — or, for a quick local override, uncomment the
+> config bind-mounts in the compose `zitadel.volumes:` block and edit the host
+> files. Either way the source of truth stays `config/zitadel/`.
+
 ## `.env` reference (key entries)
 
 | Variable | Purpose |
 |---|---|
 | `STACK_NAME` | container/volume/network prefix (default `iam`) |
 | `IAM_HOSTNAME` | production OIDC issuer host |
-| `IAM_DEV_HOSTNAME` / `IAM_DEV_PORT` | dev issuer (`zitadel.localhost:8080`) |
+| `IAM_DEV_HOSTNAME` / `IAM_DEV_PORT` | dev issuer (the Docker service name, `zitadel:8080`) |
 | `PROXY_NETWORK` | external Traefik network |
 | `ZITADEL_MASTERKEY` | 32-char secrets-at-rest key (generated) |
 | `ZITADEL_ADMIN_PASSWORD` | first admin console password (generated) |

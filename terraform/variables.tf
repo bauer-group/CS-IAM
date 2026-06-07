@@ -25,7 +25,7 @@ variable "zitadel_insecure" {
 
 variable "zitadel_jwt_profile_file" {
   type        = string
-  default     = "/machinekey/iam-admin.json"
+  default     = "/data/machinekey/iam-admin.json"
   description = "Path to the FirstInstance machine key (JSON) used for auth."
 }
 

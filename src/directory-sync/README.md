@@ -38,7 +38,7 @@ The two sets never overlap.
 
 - Requires Application Graph permissions: `User.Read.All`, `GroupMember.Read.All`,
   `ProfilePhoto.Read.All` (admin-consented).
-- Auth to Zitadel uses the FirstInstance machine key (`/machinekey/iam-admin.json`).
+- Auth to Zitadel uses the FirstInstance machine key (`/data/machinekey/iam-admin.json`).
 - Zitadel API paths (v2 users + v1 management) are validated in the integration
   smoke test against the deployed version.
 - No PII/secrets are logged.

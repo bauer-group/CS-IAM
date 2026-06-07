@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     zitadel_domain: str = Field(default="localhost")
     zitadel_port: int = Field(default=443, ge=1, le=65535)
     zitadel_insecure: bool = Field(default=False)
-    zitadel_jwt_profile_file: str = Field(default="/machinekey/iam-admin.json")
+    zitadel_jwt_profile_file: str = Field(default="/data/machinekey/iam-admin.json")
     zitadel_wait_timeout: int = Field(default=180, ge=0)
 
     # ── Sync behaviour ────────────────────────────────────────────────────

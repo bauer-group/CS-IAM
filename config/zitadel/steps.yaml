@@ -22,9 +22,10 @@ FirstInstance:
   InstanceName: "BAUER GROUP IAM"
   DefaultLanguage: de
 
-  # Where the machine credentials are written (mounted `machinekey` volume).
-  MachineKeyPath: /machinekey/iam-admin.json
-  PatPath: /machinekey/iam-admin.pat
+  # Where the machine credentials are written (mounted `machinekey` volume,
+  # under /data so it sits with the other per-container data dirs).
+  MachineKeyPath: /data/machinekey/iam-admin.json
+  PatPath: /data/machinekey/iam-admin.pat
 
   Org:
     Name: "BAUER GROUP"

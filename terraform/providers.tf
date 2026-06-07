@@ -6,7 +6,7 @@
 # role catalog and break-glass grants. Run by the provisioner init
 # container (or an operator via `tofu` CLI from this directory).
 #
-# Auth: the FirstInstance machine key written to /machinekey/iam-admin.json.
+# Auth: the FirstInstance machine key written to /data/machinekey/iam-admin.json.
 # =============================================================================
 
 terraform {

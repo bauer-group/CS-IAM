@@ -1,10 +1,11 @@
 # =============================================================================
 # Root .dockerignore
 # =============================================================================
-# Applies to the ONE image built with build-context = repo root:
-# src/provisioner (it bundles ./terraform). Keeps that context minimal
-# and secret-free. Every other image builds from its own ./src/<svc> context
-# with its own .dockerignore.
+# Applies to the images built with build-context = repo root:
+#   - src/provisioner (bundles ./terraform)
+#   - src/zitadel     (bakes ./config/zitadel/*.yaml)
+# Keeps that context minimal and secret-free. The remaining images build from
+# their own ./src/<svc> context with their own .dockerignore.
 # =============================================================================
 
 # VCS + CI

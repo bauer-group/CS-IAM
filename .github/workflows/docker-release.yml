@@ -86,7 +86,7 @@ jobs:
     secrets: inherit
 
   # ============================================
-  # zitadel (thin wrapper of the upstream image)
+  # zitadel (wrapper of upstream + baked config; build-context = repo root)
   # ============================================
   docker-build-zitadel-release:
     name: 🐳 Build & Push zitadel
@@ -104,7 +104,7 @@ jobs:
       auto-tags: true
       latest-tag: true
       dockerfile-path: './src/zitadel/Dockerfile'
-      docker-context: './src/zitadel'
+      docker-context: '.'
       platforms: 'linux/amd64'
       push: true
       generate-sbom: true
@@ -123,7 +123,7 @@ jobs:
       ghcr-image-name: 'bauer-group/CS-IAM/zitadel'
       auto-tags: true
       dockerfile-path: './src/zitadel/Dockerfile'
-      docker-context: './src/zitadel'
+      docker-context: '.'
       platforms: 'linux/amd64'
       push: false
       security-scan: false

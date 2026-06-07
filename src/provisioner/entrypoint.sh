@@ -16,7 +16,7 @@ set -euo pipefail
 
 WORKDIR="/workspace/terraform"
 PLAN="/tmp/plan.tfplan"
-KEY_FILE="${ZITADEL_JWT_PROFILE_FILE:-/machinekey/iam-admin.json}"
+KEY_FILE="${ZITADEL_JWT_PROFILE_FILE:-/data/machinekey/iam-admin.json}"
 WAIT_TIMEOUT="${ZITADEL_WAIT_TIMEOUT:-180}"
 
 log() { printf '%s [provision] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
