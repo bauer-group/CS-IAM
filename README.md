@@ -15,7 +15,7 @@
 |---|---|
 | Federates to **Entra ID** (and later Google/GitHub/…) | upstream IdP, provisioned via Terraform |
 | **Own local accounts** (need not exist in Entra) | login policy allows local + IdP; federated users are password-less (IdP-only); `ForceMFALocalOnly` |
-| **Avatar + extended attributes** kept current | `zitadel-sync` delta job → native phone + metadata (fax/mobile/office/dept) + avatar |
+| **Avatar + extended attributes** kept current | `directory-sync` delta job → native phone + metadata (fax/mobile/office/dept) + avatar |
 | **Roles/groups** drive app login | Entra groups → namespaced project roles + grants; project authorization-on-auth gate |
 | **Self-service UI** | Zitadel Console + Login v2 |
 | **Everything as code** | native config → Terraform (IaC init container) → Python sync; non-destructive |
@@ -31,9 +31,9 @@
  Documenso) │  sub = OID   │
             └──────┬───────┘
                    │ Postgres 18
-            ┌──────▼───────┐   zitadel-provision (OpenTofu, one-shot, non-destructive)
-            │  zitadel-db  │   zitadel-sync      (Graph delta → profiles/avatar/groups)
-            └──────────────┘   zitadel-backup    (pg_dump, --profile backup)
+            ┌──────▼───────┐   provisioner (OpenTofu, one-shot, non-destructive)
+            │  database-server  │   directory-sync      (Graph delta → profiles/avatar/groups)
+            └──────────────┘   database-backup    (pg_dump, --profile backup)
 ```
 
 ## Quick start (development)
@@ -56,9 +56,9 @@ Production (Traefik): set `IAM_HOSTNAME`, point DNS at the host, then
 config/zitadel/   defaults.yaml + steps.yaml   (native Zitadel config — policies, org, admin, SA)
 terraform/        IdPs, project, OIDC apps, role catalog, grants  (IaC)
 src/zitadel/             thin-wrapper image
-src/zitadel-provision/   OpenTofu init container (guarded, non-destructive)
-src/zitadel-sync/        directory-sync (Python)
-src/zitadel-backup/      pg_dump sidecar (Python)
+src/provisioner/   OpenTofu init container (guarded, non-destructive)
+src/directory-sync/        directory-sync (Python)
+src/database-backup/      pg_dump sidecar (Python)
 scripts/generate-env.py  cross-platform secret generator
 docker-compose.{development,traefik,coolify}.yml
 docs/             setup / management / operation / migration guides
@@ -67,8 +67,8 @@ docs/             setup / management / operation / migration guides
 ## Layered "everything-as-code"
 
 1. **Native config** (`config/zitadel/*.yaml`) — policies, branding, SMTP, token lifetimes, org + admin + machine SA.
-2. **Terraform** (`terraform/`, run by the `zitadel-provision` init container) — IdPs, project, OIDC apps, role catalog, grants. **Non-destructive**: never prunes UI-made resources; aborts on any destroy.
-3. **Directory-sync** (`zitadel-sync`) — Graph delta → extended attributes, avatar, Entra groups → namespaced roles/grants. Login-time JIT refresh is native to Zitadel.
+2. **Terraform** (`terraform/`, run by the `provisioner` init container) — IdPs, project, OIDC apps, role catalog, grants. **Non-destructive**: never prunes UI-made resources; aborts on any destroy.
+3. **Directory-sync** (`directory-sync`) — Graph delta → extended attributes, avatar, Entra groups → namespaced roles/grants. Login-time JIT refresh is native to Zitadel.
 
 ## Documentation
 
@@ -82,6 +82,7 @@ docs/             setup / management / operation / migration guides
 | [users-roles-groups.md](docs/users-roles-groups.md) | local vs federated, role/grant app-gating, self-service |
 | [migration.md](docs/migration.md) | Entra → Zitadel cutover (avatar + data preserved) |
 | [operations.md](docs/operations.md) | health, upgrades, HA path, decoupling |
+| [sizing-and-tuning.md](docs/sizing-and-tuning.md) | PG18 presets (SSD/HDD + RAM size) |
 | [backup-and-restore.md](docs/backup-and-restore.md) | pg_dump snapshots, off-site, restore |
 | [security-hardening.md](docs/security-hardening.md) | security posture |
 | [troubleshooting.md](docs/troubleshooting.md) | h2c/502, PG18, duplicate users, … |
@@ -92,8 +93,8 @@ docs/             setup / management / operation / migration guides
 |---|---|---|
 | Zitadel | `v4.15.0` | PostgreSQL 18 needs ≥ v4.11.0 |
 | PostgreSQL | `18-alpine` | volume path `/var/lib/postgresql` (no `/data`) |
-| OpenTofu | `1.10` | provision image base |
-| Python | `3.14-alpine` | sync + backup sidecars |
+| OpenTofu | `1.12.0` | provisioner image base |
+| Python | `3.14-alpine` | directory-sync + database-backup sidecars |
 
 ## License
 

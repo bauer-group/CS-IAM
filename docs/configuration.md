@@ -45,7 +45,7 @@ override it in the compose `environment:` (e.g.
 Creates the `BAUER GROUP` org, the Human admin (`admin@bauer-group.com`,
 password via `ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD`), and the **machine
 automation user** `iam-admin` whose JSON key is written to the `machinekey`
-volume — the credential Terraform and `zitadel-sync` use.
+volume — the credential Terraform and `directory-sync` use.
 
 ## What is NOT here
 

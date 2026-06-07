@@ -51,7 +51,7 @@ variable "role_prefix" {
 variable "project_roles" {
   type        = list(string)
   default     = ["user", "admin"]
-  description = "Native (Terraform-owned) project role catalog. Synced Entra roles are owned by zitadel-sync and carry role_prefix."
+  description = "Native (Terraform-owned) project role catalog. Synced Entra roles are owned by directory-sync and carry role_prefix."
 }
 
 # ── Microsoft Entra ID (upstream IdP) ────────────────────────────────────────

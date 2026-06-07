@@ -24,7 +24,7 @@ updates:
       prefix: "chore(ci)"
 
   # ── Docker base images ────────────────────────────────────────────────────
-  # Zitadel application image (thin wrapper)
+  # zitadel application image (thin wrapper)
   - package-ecosystem: "docker"
     directory: "/src/zitadel"
     schedule:
@@ -39,9 +39,9 @@ updates:
     commit-message:
       prefix: "chore(docker)"
 
-  # zitadel-provision (OpenTofu IaC runner)
+  # provisioner (OpenTofu IaC runner)
   - package-ecosystem: "docker"
-    directory: "/src/zitadel-provision"
+    directory: "/src/provisioner"
     schedule:
       interval: "weekly"
       day: "sunday"
@@ -54,9 +54,9 @@ updates:
     commit-message:
       prefix: "chore(docker)"
 
-  # zitadel-sync (directory-sync sidecar)
+  # directory-sync (Entra -> Zitadel sidecar)
   - package-ecosystem: "docker"
-    directory: "/src/zitadel-sync"
+    directory: "/src/directory-sync"
     schedule:
       interval: "weekly"
       day: "sunday"
@@ -69,9 +69,9 @@ updates:
     commit-message:
       prefix: "chore(docker)"
 
-  # zitadel-backup (pg_dump sidecar)
+  # database-backup (pg_dump sidecar)
   - package-ecosystem: "docker"
-    directory: "/src/zitadel-backup"
+    directory: "/src/database-backup"
     schedule:
       interval: "weekly"
       day: "sunday"
@@ -86,7 +86,7 @@ updates:
 
   # ── Python dependencies ───────────────────────────────────────────────────
   - package-ecosystem: "pip"
-    directory: "/src/zitadel-sync"
+    directory: "/src/directory-sync"
     schedule:
       interval: "weekly"
       day: "sunday"
@@ -100,7 +100,7 @@ updates:
       prefix: "chore(deps)"
 
   - package-ecosystem: "pip"
-    directory: "/src/zitadel-backup"
+    directory: "/src/database-backup"
     schedule:
       interval: "weekly"
       day: "sunday"

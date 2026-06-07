@@ -20,7 +20,7 @@
 DefaultInstance:
   # ── Login policy ─────────────────────────────────────────────────────────
   # Goal (b)+(i): local accounts AND external IdP coexist. Federated users are
-  # created WITHOUT a password (see zitadel-sync / Terraform), so in practice
+  # created WITHOUT a password (see directory-sync / Terraform), so in practice
   # only genuine local accounts can use the password form. MFA is enforced for
   # local logins only — Entra handles MFA for federated logins.
   LoginPolicy:

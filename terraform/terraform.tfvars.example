@@ -2,7 +2,7 @@
 # terraform.tfvars (example)
 # =============================================================================
 # When running `tofu` from the CLI, copy to terraform.tfvars and fill in.
-# The zitadel-provision container instead receives these as TF_VAR_* env vars
+# The provisioner container instead receives these as TF_VAR_* env vars
 # from the compose file — no tfvars file needed there.
 #
 # terraform.tfvars is git-ignored (carries the Entra client secret).

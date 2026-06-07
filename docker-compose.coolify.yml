@@ -1,14 +1,16 @@
 # =============================================================================
-# CS-IAM — Zitadel OIDC/IAM Stack — Coolify
+# CS-IAM — Zitadel OIDC/IAM Stack — Coolify Mode
 # =============================================================================
-# For deployment on a Coolify-managed host. Coolify provides the reverse proxy
-# (Traefik) and TLS; set the domain for the `zitadel` service in the Coolify UI
-# (target port 8080) and enable the h2c/HTTP2 option, OR keep the Traefik
-# labels below which Coolify honours.
+# For a Coolify-managed host. Coolify provides the reverse proxy (Traefik) and
+# TLS; set the domain for the `zitadel` service in the Coolify UI (target port
+# 8080, HTTP2/h2c enabled) — the Traefik labels below are also honoured.
 #
 # Coolify injects environment via its dashboard; this file reads the same
 # variable names as the other variants. `start-from-init` is idempotent.
 # =============================================================================
+
+
+### Service Templates ###
 
 x-logging: &logging
   logging:
@@ -17,19 +19,40 @@ x-logging: &logging
       max-size: "50m"
       max-file: "3"
 
+
 services:
-  zitadel-db:
+
+  # ── PostgreSQL 18 ───────────────────────────────────────────────────────────
+  database-server:
     image: ${POSTGRES_IMAGE:-postgres}:${POSTGRES_VERSION:-18-alpine}
     restart: unless-stopped
     <<: *logging
+    command: >
+      -c max_connections=${PG_MAX_CONNECTIONS:-100}
+      -c shared_buffers=${PG_SHARED_BUFFERS:-2GB}
+      -c work_mem=${PG_WORK_MEM:-8MB}
+      -c effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-6GB}
+      -c maintenance_work_mem=${PG_MAINTENANCE_WORK_MEM:-256MB}
+      -c max_wal_size=${PG_MAX_WAL_SIZE:-2GB}
+      -c min_wal_size=${PG_MIN_WAL_SIZE:-512MB}
+      -c random_page_cost=${PG_RANDOM_PAGE_COST:-1.1}
+      -c seq_page_cost=1.0
+      -c effective_io_concurrency=${PG_EFFECTIVE_IO_CONCURRENCY:-200}
+      -c max_parallel_workers_per_gather=2
+      -c max_parallel_workers=4
+      -c max_parallel_maintenance_workers=2
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
     environment:
-      TZ: ${TIME_ZONE:-Etc/UTC}
-      POSTGRES_DB: ${ZITADEL_DB_NAME:-zitadel}
-      POSTGRES_USER: ${ZITADEL_DB_USER:-zitadel}
-      POSTGRES_PASSWORD: ${ZITADEL_DB_PASSWORD:?Set ZITADEL_DB_PASSWORD}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      - TZ=${TIME_ZONE:-Etc/UTC}
+      - PGTZ=${TIME_ZONE:-Etc/UTC}
+      - POSTGRES_DB=${ZITADEL_DB_NAME:-zitadel}
+      - POSTGRES_USER=${ZITADEL_DB_USER:-zitadel}
+      - POSTGRES_PASSWORD=${ZITADEL_DB_PASSWORD:?Set ZITADEL_DB_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8 --locale=C
     volumes:
-      - zitadel-db-data:/var/lib/postgresql
+      - database-data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${ZITADEL_DB_USER:-zitadel} -d ${ZITADEL_DB_NAME:-zitadel}"]
       interval: 15s
@@ -37,6 +60,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # ── Zitadel (OIDC broker, h2c) ──────────────────────────────────────────────
   zitadel:
     image: ${ZITADEL_IMAGE:-ghcr.io/bauer-group/cs-iam/zitadel}:${ZITADEL_VERSION:-latest}
     restart: unless-stopped
@@ -49,7 +73,7 @@ services:
       --tlsMode external
     environment:
       TZ: ${TIME_ZONE:-Etc/UTC}
-      ZITADEL_DATABASE_POSTGRES_HOST: zitadel-db
+      ZITADEL_DATABASE_POSTGRES_HOST: database-server
       ZITADEL_DATABASE_POSTGRES_PORT: 5432
       ZITADEL_DATABASE_POSTGRES_DATABASE: ${ZITADEL_DB_NAME:-zitadel}
       ZITADEL_DATABASE_POSTGRES_USER_USERNAME: ${ZITADEL_DB_USER:-zitadel}
@@ -67,18 +91,19 @@ services:
       - ./config/zitadel/steps.yaml:/zitadel/config/steps.yaml:ro
       - machinekey:/machinekey
     depends_on:
-      zitadel-db:
+      database-server:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${STACK_NAME:-iam}-app.rule=Host(`${IAM_HOSTNAME}`)"
-      - "traefik.http.routers.${STACK_NAME:-iam}-app.entrypoints=https"
-      - "traefik.http.routers.${STACK_NAME:-iam}-app.tls=true"
-      - "traefik.http.services.${STACK_NAME:-iam}-app.loadbalancer.server.port=8080"
-      - "traefik.http.services.${STACK_NAME:-iam}-app.loadbalancer.server.scheme=h2c"
+      - "traefik.http.routers.${STACK_NAME:-iam}.rule=Host(`${IAM_HOSTNAME}`)"
+      - "traefik.http.routers.${STACK_NAME:-iam}.entrypoints=https"
+      - "traefik.http.routers.${STACK_NAME:-iam}.tls=true"
+      - "traefik.http.services.${STACK_NAME:-iam}.loadBalancer.server.port=8080"
+      - "traefik.http.services.${STACK_NAME:-iam}.loadBalancer.server.scheme=h2c"
 
-  zitadel-provision:
-    image: ${PROVISION_IMAGE:-ghcr.io/bauer-group/cs-iam/zitadel-provision}:${PROVISION_VERSION:-latest}
+  # ── Provisioner (OpenTofu IaC, one-shot, non-destructive) ───────────────────
+  provisioner:
+    image: ${PROVISIONER_IMAGE:-ghcr.io/bauer-group/cs-iam/provisioner}:${PROVISIONER_VERSION:-latest}
     restart: "no"
     environment:
       TZ: ${TIME_ZONE:-Etc/UTC}
@@ -86,7 +111,7 @@ services:
       ZITADEL_PORT: 443
       ZITADEL_INSECURE: "false"
       ZITADEL_JWT_PROFILE_FILE: /machinekey/iam-admin.json
-      ZITADEL_WAIT_TIMEOUT: ${PROVISION_WAIT_TIMEOUT:-180}
+      ZITADEL_WAIT_TIMEOUT: ${PROVISIONER_WAIT_TIMEOUT:-180}
       TF_VAR_zitadel_domain: ${IAM_HOSTNAME}
       TF_VAR_zitadel_port: 443
       TF_VAR_zitadel_insecure: "false"
@@ -102,8 +127,9 @@ services:
       zitadel:
         condition: service_started
 
-  zitadel-sync:
-    image: ${SYNC_IMAGE:-ghcr.io/bauer-group/cs-iam/zitadel-sync}:${SYNC_VERSION:-latest}
+  # ── Directory-sync (Entra Graph delta -> Zitadel) ───────────────────────────
+  directory-sync:
+    image: ${DIRECTORY_SYNC_IMAGE:-ghcr.io/bauer-group/cs-iam/directory-sync}:${DIRECTORY_SYNC_VERSION:-latest}
     restart: unless-stopped
     <<: *logging
     environment:
@@ -124,20 +150,21 @@ services:
       SYNC_LOG_LEVEL: ${SYNC_LOG_LEVEL:-INFO}
     volumes:
       - machinekey:/machinekey:ro
-      - sync-state:/data
+      - sync-data:/data
     depends_on:
-      zitadel-provision:
+      provisioner:
         condition: service_completed_successfully
 
-  zitadel-backup:
-    image: ${BACKUP_IMAGE:-ghcr.io/bauer-group/cs-iam/zitadel-backup}:${BACKUP_VERSION:-latest}
+  # ── Database backup (pg_dump, opt-in via --profile backup) ──────────────────
+  database-backup:
+    image: ${DATABASE_BACKUP_IMAGE:-ghcr.io/bauer-group/cs-iam/database-backup}:${DATABASE_BACKUP_VERSION:-latest}
     profiles: ["backup"]
     restart: unless-stopped
     <<: *logging
     environment:
       TZ: ${TIME_ZONE:-Etc/UTC}
       INSTANCE_NAME: ${STACK_NAME:-iam}
-      DB_HOST: zitadel-db
+      DB_HOST: database-server
       DB_PORT: 5432
       DB_NAME: ${ZITADEL_DB_NAME:-zitadel}
       DB_USER: ${ZITADEL_DB_USER:-zitadel}
@@ -150,12 +177,14 @@ services:
     volumes:
       - backup-data:/data
     depends_on:
-      zitadel-db:
+      database-server:
         condition: service_healthy
 
+
+### Volumes ###
 volumes:
-  zitadel-db-data:
+  database-data:
   machinekey:
   tfstate:
-  sync-state:
+  sync-data:
   backup-data:

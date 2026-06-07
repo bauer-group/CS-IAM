@@ -1,15 +1,25 @@
 # =============================================================================
-# CS-IAM — Zitadel OIDC/IAM Stack — Development (direct ports, HTTP)
+# CS-IAM — Zitadel OIDC/IAM Stack — Development Mode (local builds)
 # =============================================================================
-# Local development on http://localhost:8080 with TLS disabled.
-#   docker compose -f docker-compose.development.yml up -d
+# Usage: docker compose -f docker-compose.development.yml up -d --build
+#
+# Builds the custom images locally from src/ instead of pulling from GHCR, and
+# runs on plain HTTP. The OpenTofu provisioner applies the IdPs/projects/apps,
+# and the directory-sync sidecar keeps profiles/groups fresh from Entra.
+#
+# Access:
+#   - Console / Issuer   http://${IAM_DEV_HOSTNAME:-zitadel.localhost}:${IAM_DEV_PORT:-8080}
+#   - Login              admin@bauer-group.com / ${ZITADEL_ADMIN_PASSWORD}
 #
 # Bootstrap order:
-#   zitadel-db (healthy) → zitadel (FirstInstance writes the machine key) →
-#   zitadel-provision (OpenTofu applies IdPs/projects/apps) → zitadel-sync.
-# zitadel has no in-container healthcheck (distroless image, no shell/curl),
-# so the dependent containers poll readiness + the machine-key file themselves.
+#   database-server (healthy) -> zitadel (writes the machine key) ->
+#   provisioner (tofu apply) -> directory-sync.
+# zitadel has no in-container healthcheck (distroless image, no shell), so the
+# dependent containers poll readiness + the machine-key file themselves.
 # =============================================================================
+
+
+### Service Templates ###
 
 x-logging: &logging
   logging:
@@ -18,28 +28,45 @@ x-logging: &logging
       max-size: "25m"
       max-file: "3"
 
+
 services:
-  # ── PostgreSQL 18 ──────────────────────────────────────────────────────────
-  zitadel-db:
+
+  # ── PostgreSQL 18 ───────────────────────────────────────────────────────────
+  # Tuned for SSD/NVMe by default. For HDD set PG_RANDOM_PAGE_COST=2.0 (10k RPM)
+  # or 4.0 (7.2k RPM) and PG_EFFECTIVE_IO_CONCURRENCY=4/2 in .env. Memory + WAL
+  # presets for 4/8/16/32 GB hosts are documented in .env.example.
+  database-server:
     image: ${POSTGRES_IMAGE:-postgres}:${POSTGRES_VERSION:-18-alpine}
-    container_name: ${STACK_NAME:-iam}_DB
-    hostname: zitadel-db
+    container_name: ${STACK_NAME:-iam}_DATABASE
+    hostname: database-server
     restart: unless-stopped
     <<: *logging
-    environment:
-      TZ: ${TIME_ZONE:-Etc/UTC}
-      POSTGRES_DB: ${ZITADEL_DB_NAME:-zitadel}
-      POSTGRES_USER: ${ZITADEL_DB_USER:-zitadel}
-      POSTGRES_PASSWORD: ${ZITADEL_DB_PASSWORD:?Set ZITADEL_DB_PASSWORD in .env}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     command: >
       -c max_connections=${PG_MAX_CONNECTIONS:-100}
-      -c shared_buffers=${PG_SHARED_BUFFERS:-256MB}
+      -c shared_buffers=${PG_SHARED_BUFFERS:-1GB}
       -c work_mem=${PG_WORK_MEM:-4MB}
-      -c effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-768MB}
-      -c maintenance_work_mem=${PG_MAINTENANCE_WORK_MEM:-64MB}
+      -c effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-3GB}
+      -c maintenance_work_mem=${PG_MAINTENANCE_WORK_MEM:-128MB}
+      -c max_wal_size=${PG_MAX_WAL_SIZE:-1GB}
+      -c min_wal_size=${PG_MIN_WAL_SIZE:-256MB}
+      -c random_page_cost=${PG_RANDOM_PAGE_COST:-1.1}
+      -c seq_page_cost=1.0
+      -c effective_io_concurrency=${PG_EFFECTIVE_IO_CONCURRENCY:-200}
+      -c max_parallel_workers_per_gather=2
+      -c max_parallel_workers=4
+      -c max_parallel_maintenance_workers=2
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+    environment:
+      - TZ=${TIME_ZONE:-Etc/UTC}
+      - PGTZ=${TIME_ZONE:-Etc/UTC}
+      - POSTGRES_DB=${ZITADEL_DB_NAME:-zitadel}
+      - POSTGRES_USER=${ZITADEL_DB_USER:-zitadel}
+      - POSTGRES_PASSWORD=${ZITADEL_DB_PASSWORD:?Set ZITADEL_DB_PASSWORD in .env}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8 --locale=C
     volumes:
-      - zitadel-db-data:/var/lib/postgresql
+      - database-data:/var/lib/postgresql
     expose:
       - 5432/tcp
     healthcheck:
@@ -51,9 +78,12 @@ services:
     networks:
       - local
 
-  # ── Zitadel (OIDC broker) ──────────────────────────────────────────────────
+  # ── Zitadel (OIDC broker) ───────────────────────────────────────────────────
   zitadel:
     image: ${ZITADEL_IMAGE:-ghcr.io/zitadel/zitadel}:${ZITADEL_VERSION:-v4.15.0}
+    build:
+      context: ./src/zitadel
+      dockerfile: Dockerfile
     container_name: ${STACK_NAME:-iam}_APP
     hostname: zitadel
     restart: unless-stopped
@@ -66,8 +96,8 @@ services:
       --tlsMode disabled
     environment:
       TZ: ${TIME_ZONE:-Etc/UTC}
-      # ── Database connection ───────────────────────────────────────────────
-      ZITADEL_DATABASE_POSTGRES_HOST: zitadel-db
+      # Database connection
+      ZITADEL_DATABASE_POSTGRES_HOST: database-server
       ZITADEL_DATABASE_POSTGRES_PORT: 5432
       ZITADEL_DATABASE_POSTGRES_DATABASE: ${ZITADEL_DB_NAME:-zitadel}
       ZITADEL_DATABASE_POSTGRES_USER_USERNAME: ${ZITADEL_DB_USER:-zitadel}
@@ -76,15 +106,12 @@ services:
       ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ${ZITADEL_DB_USER:-zitadel}
       ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${ZITADEL_DB_PASSWORD}
       ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
-      # ── External access (dev = plain HTTP) ────────────────────────────────
-      # Issuer host = zitadel.localhost so the SAME URL resolves from the host
-      # browser (*.localhost → 127.0.0.1 → published port) AND from the
-      # automation containers (network alias → zitadel:8080). This keeps the
-      # OIDC issuer / JWT audience consistent everywhere.
+      # External access — dev issuer is zitadel.localhost so the SAME URL resolves
+      # from the host browser (*.localhost -> 127.0.0.1 -> published port) AND from
+      # the automation containers (network alias), keeping issuer/JWT-aud consistent.
       ZITADEL_EXTERNALDOMAIN: ${IAM_DEV_HOSTNAME:-zitadel.localhost}
       ZITADEL_EXTERNALPORT: ${IAM_DEV_PORT:-8080}
       ZITADEL_EXTERNALSECURE: "false"
-      # ── First-instance admin password (overrides steps.yaml) ──────────────
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:?Set ZITADEL_ADMIN_PASSWORD in .env}
     volumes:
       - ./config/zitadel/defaults.yaml:/zitadel/config/defaults.yaml:ro
@@ -93,20 +120,20 @@ services:
     ports:
       - "${IAM_DEV_PORT:-8080}:8080"
     depends_on:
-      zitadel-db:
+      database-server:
         condition: service_healthy
     networks:
       local:
         aliases:
           - ${IAM_DEV_HOSTNAME:-zitadel.localhost}
 
-  # ── Provisioning (OpenTofu IaC, one-shot, non-destructive) ─────────────────
-  zitadel-provision:
+  # ── Provisioner (OpenTofu IaC, one-shot, non-destructive) ───────────────────
+  provisioner:
+    image: ${PROVISIONER_IMAGE:-ghcr.io/bauer-group/cs-iam/provisioner}:${PROVISIONER_VERSION:-latest}
     build:
       context: .
-      dockerfile: ./src/zitadel-provision/Dockerfile
-    image: ${PROVISION_IMAGE:-ghcr.io/bauer-group/cs-iam/zitadel-provision}:${PROVISION_VERSION:-latest}
-    container_name: ${STACK_NAME:-iam}_PROVISION
+      dockerfile: ./src/provisioner/Dockerfile
+    container_name: ${STACK_NAME:-iam}_PROVISIONER
     restart: "no"
     logging:
       driver: json-file
@@ -117,10 +144,9 @@ services:
       TZ: ${TIME_ZONE:-Etc/UTC}
       ZITADEL_DOMAIN: ${IAM_DEV_HOSTNAME:-zitadel.localhost}
       ZITADEL_PORT: ${IAM_DEV_PORT:-8080}
-      ZITADEL_INSECURE: "true" # dev: plain HTTP
+      ZITADEL_INSECURE: "true"
       ZITADEL_JWT_PROFILE_FILE: /machinekey/iam-admin.json
-      ZITADEL_WAIT_TIMEOUT: ${PROVISION_WAIT_TIMEOUT:-120}
-      # Terraform variables (TF_VAR_*) — Entra IdP is created only when set
+      ZITADEL_WAIT_TIMEOUT: ${PROVISIONER_WAIT_TIMEOUT:-120}
       TF_VAR_zitadel_domain: ${IAM_DEV_HOSTNAME:-zitadel.localhost}
       TF_VAR_zitadel_port: ${IAM_DEV_PORT:-8080}
       TF_VAR_zitadel_insecure: "true"
@@ -138,12 +164,12 @@ services:
     networks:
       - local
 
-  # ── Directory-sync (Graph delta → Zitadel; default service) ────────────────
-  zitadel-sync:
+  # ── Directory-sync (Entra Graph delta -> Zitadel; default service) ──────────
+  directory-sync:
+    image: ${DIRECTORY_SYNC_IMAGE:-ghcr.io/bauer-group/cs-iam/directory-sync}:${DIRECTORY_SYNC_VERSION:-latest}
     build:
-      context: ./src/zitadel-sync
+      context: ./src/directory-sync
       dockerfile: Dockerfile
-    image: ${SYNC_IMAGE:-ghcr.io/bauer-group/cs-iam/zitadel-sync}:${SYNC_VERSION:-latest}
     container_name: ${STACK_NAME:-iam}_SYNC
     restart: unless-stopped
     <<: *logging
@@ -166,19 +192,19 @@ services:
       SYNC_LOG_FORMAT: ${SYNC_LOG_FORMAT:-console}
     volumes:
       - machinekey:/machinekey:ro
-      - sync-state:/data
+      - sync-data:/data
     depends_on:
-      zitadel-provision:
+      provisioner:
         condition: service_completed_successfully
     networks:
       - local
 
-  # ── Backup (pg_dump, opt-in via --profile backup) ──────────────────────────
-  zitadel-backup:
+  # ── Database backup (pg_dump, opt-in via --profile backup) ──────────────────
+  database-backup:
+    image: ${DATABASE_BACKUP_IMAGE:-ghcr.io/bauer-group/cs-iam/database-backup}:${DATABASE_BACKUP_VERSION:-latest}
     build:
-      context: ./src/zitadel-backup
+      context: ./src/database-backup
       dockerfile: Dockerfile
-    image: ${BACKUP_IMAGE:-ghcr.io/bauer-group/cs-iam/zitadel-backup}:${BACKUP_VERSION:-latest}
     container_name: ${STACK_NAME:-iam}_BACKUP
     profiles: ["backup"]
     restart: unless-stopped
@@ -186,7 +212,7 @@ services:
     environment:
       TZ: ${TIME_ZONE:-Etc/UTC}
       INSTANCE_NAME: ${STACK_NAME:-iam}
-      DB_HOST: zitadel-db
+      DB_HOST: database-server
       DB_PORT: 5432
       DB_NAME: ${ZITADEL_DB_NAME:-zitadel}
       DB_USER: ${ZITADEL_DB_USER:-zitadel}
@@ -200,23 +226,32 @@ services:
     volumes:
       - backup-data:/data
     depends_on:
-      zitadel-db:
+      database-server:
         condition: service_healthy
     networks:
       - local
 
+
+### Volumes ###
 volumes:
-  zitadel-db-data:
-    name: ${STACK_NAME:-iam}-db
+  database-data:
+    driver: local
+    name: ${STACK_NAME:-iam}-database
   machinekey:
+    driver: local
     name: ${STACK_NAME:-iam}-machinekey
   tfstate:
+    driver: local
     name: ${STACK_NAME:-iam}-tfstate
-  sync-state:
+  sync-data:
+    driver: local
     name: ${STACK_NAME:-iam}-sync
   backup-data:
+    driver: local
     name: ${STACK_NAME:-iam}-backup
 
+
+### Networks ###
 networks:
   local:
     driver: bridge

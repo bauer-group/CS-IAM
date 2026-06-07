@@ -15,7 +15,7 @@ data "zitadel_orgs" "bauer" {
 }
 
 locals {
-  org_id = one(data.zitadel_orgs.bauer.org_ids)
+  org_id = one(data.zitadel_orgs.bauer.ids)
   apps   = jsondecode(var.app_redirect_uris)
 }
 

@@ -12,9 +12,9 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'src/zitadel/Dockerfile'
-      - 'src/zitadel-provision/Dockerfile'
-      - 'src/zitadel-sync/Dockerfile'
-      - 'src/zitadel-backup/Dockerfile'
+      - 'src/provisioner/Dockerfile'
+      - 'src/directory-sync/Dockerfile'
+      - 'src/database-backup/Dockerfile'
 
 permissions:
   contents: write

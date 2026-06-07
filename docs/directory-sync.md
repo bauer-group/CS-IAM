@@ -8,7 +8,7 @@ The Entra IdP has **auto-update** enabled → on **every login** Zitadel refresh
 the user's profile from the Entra token claims (name, email, …). Free and
 instant, but limited to token claims and only for users who log in.
 
-## 3b. Scheduled `zitadel-sync` (Graph delta)
+## 3b. Scheduled `directory-sync` (Graph delta)
 
 A Python sidecar with **two independently-scheduled jobs** (one container,
 shared auth + delta-token store):
@@ -36,11 +36,11 @@ too, and hand-made/native roles are never touched.
 ## One-shot CLI
 
 ```bash
-docker compose run --rm zitadel-sync sync-profiles
-docker compose run --rm zitadel-sync sync-groups
-docker compose run --rm zitadel-sync import-users --test-one
-docker compose run --rm zitadel-sync import-users
-docker compose run --rm zitadel-sync discover-subject-keys
+docker compose run --rm directory-sync sync-profiles
+docker compose run --rm directory-sync sync-groups
+docker compose run --rm directory-sync import-users --test-one
+docker compose run --rm directory-sync import-users
+docker compose run --rm directory-sync discover-subject-keys
 ```
 
 ## Why not event-driven (yet)

@@ -24,11 +24,15 @@ resource "zitadel_idp_azure_ad" "entra" {
 
   email_verified = true
 
-  # Federation behaviour
+  # Federation behaviour:
+  #   - auto-creation     JIT-create users that were not pre-imported
+  #   - auto-update       refresh the profile from Entra claims on every login
+  #   - auto_linking EMAIL attach a federated login to a pre-imported user
   is_linking_allowed  = true
   is_creation_allowed = true
-  is_auto_creation    = true # JIT-create users not yet imported
-  is_auto_update      = true # refresh profile from Entra on every login (§3a)
+  is_auto_creation    = true
+  is_auto_update      = true
+  auto_linking        = "AUTO_LINKING_OPTION_EMAIL"
 }
 
 # Example — add Google later (uncomment + provide credentials):

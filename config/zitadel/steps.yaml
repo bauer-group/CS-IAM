@@ -5,7 +5,7 @@
 #   - org "BAUER GROUP"
 #   - a Human admin (console login) — granted IAM_OWNER automatically
 #   - a Machine automation user "iam-admin" — the headless admin credential
-#     consumed by Terraform (jwt_profile_file) and zitadel-sync (JWT-bearer)
+#     consumed by Terraform (jwt_profile_file) and directory-sync (JWT-bearer)
 #
 # SECRET-FREE + committed. The admin password is injected at runtime via
 # ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD (env overrides this file).
@@ -40,7 +40,7 @@ FirstInstance:
       PasswordChangeRequired: false
       # Password: injected via ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD
 
-    # ── Machine automation user (Terraform + zitadel-sync) ─────────────────
+    # ── Machine automation user (Terraform + directory-sync) ─────────────────
     Machine:
       Machine:
         Username: iam-admin

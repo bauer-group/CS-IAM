@@ -1,12 +1,12 @@
 # Backup & Restore
 
 Zitadel keeps all state in PostgreSQL, so a DB dump is a **complete** snapshot
-(there is no S3 source in this stack). The `zitadel-backup` sidecar handles it.
+(there is no S3 source in this stack). The `database-backup` sidecar handles it.
 
 ## Enable
 
 ```bash
-docker compose -f docker-compose.traefik.yml --profile backup up -d zitadel-backup
+docker compose -f docker-compose.traefik.yml --profile backup up -d database-backup
 ```
 
 Default schedule: cron `15 3 * * *` (03:15), retention 14, local-only.
@@ -29,10 +29,10 @@ Remote retention mirrors `BACKUP_RETENTION_COUNT`.
 ## Manage
 
 ```bash
-docker compose --profile backup run --rm zitadel-backup --now          # snapshot now
-docker compose --profile backup run --rm zitadel-backup cli list
-docker compose --profile backup run --rm zitadel-backup cli verify <id>  # sha256 vs manifest
-docker compose --profile backup run --rm zitadel-backup cli prune
+docker compose --profile backup run --rm database-backup --now          # snapshot now
+docker compose --profile backup run --rm database-backup cli list
+docker compose --profile backup run --rm database-backup cli verify <id>  # sha256 vs manifest
+docker compose --profile backup run --rm database-backup cli prune
 ```
 
 ## Restore (disaster recovery)
@@ -41,7 +41,7 @@ docker compose --profile backup run --rm zitadel-backup cli prune
 
 ```bash
 docker compose -f docker-compose.traefik.yml stop zitadel
-docker compose --profile backup run --rm zitadel-backup cli restore <id>
+docker compose --profile backup run --rm database-backup cli restore <id>
 docker compose -f docker-compose.traefik.yml up -d zitadel
 ```
 

@@ -2,12 +2,12 @@
 
 The structural Zitadel resources — identity providers, the project, OIDC
 applications, the native role catalog and break-glass grants — are managed as
-**code** in `terraform/` and applied by the one-shot `zitadel-provision`
+**code** in `terraform/` and applied by the one-shot `provisioner`
 container on stack-up. The same Terraform is runnable from a CLI.
 
 ## How it runs (the init container)
 
-On `docker compose up`, `zitadel-provision`:
+On `docker compose up`, `provisioner`:
 
 1. waits for the machine key + Zitadel readiness,
 2. `tofu init`,
@@ -65,6 +65,6 @@ carries OIDC client secrets — keep it private; `*.tfstate` is git-ignored.
 
 ## Ownership boundary vs. sync
 
-Terraform owns the **native role catalog** + break-glass grants. `zitadel-sync`
+Terraform owns the **native role catalog** + break-glass grants. `directory-sync`
 owns the **dynamic, namespaced** (`entra:`) roles/grants from Entra groups. The
 two sets never overlap.

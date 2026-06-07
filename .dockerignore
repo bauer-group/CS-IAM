@@ -2,7 +2,7 @@
 # Root .dockerignore
 # =============================================================================
 # Applies to the ONE image built with build-context = repo root:
-# src/zitadel-provision (it bundles ./terraform). Keeps that context minimal
+# src/provisioner (it bundles ./terraform). Keeps that context minimal
 # and secret-free. Every other image builds from its own ./src/<svc> context
 # with its own .dockerignore.
 # =============================================================================
@@ -40,8 +40,8 @@ docs/
 *.md
 docker-compose*.yml
 
-# Other service sources are not part of the provision image
+# Other service sources are not part of the provisioner image
 src/zitadel/
-src/zitadel-sync/
-src/zitadel-backup/
+src/directory-sync/
+src/database-backup/
 scripts/

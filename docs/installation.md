@@ -54,8 +54,8 @@ bind the domain to the `zitadel` service (target port 8080, HTTP2/h2c enabled).
 
 ## 3. Bootstrap order (automatic)
 
-`zitadel-db` (healthy) → `zitadel` (writes the machine key, runs FirstInstance)
-→ `zitadel-provision` (OpenTofu applies IdPs/projects/apps) → `zitadel-sync`.
+`database-server` (healthy) → `zitadel` (writes the machine key, runs FirstInstance)
+→ `provisioner` (OpenTofu applies IdPs/projects/apps) → `directory-sync`.
 The provision + sync containers poll Zitadel readiness + the machine-key file
 themselves (Zitadel has no in-container healthcheck — distroless image).
 
@@ -63,7 +63,7 @@ themselves (Zitadel has no in-container healthcheck — distroless image).
 
 ```bash
 curl https://id.bauer-group.com/.well-known/openid-configuration
-docker compose -f docker-compose.traefik.yml logs zitadel-provision
+docker compose -f docker-compose.traefik.yml logs provisioner
 cd terraform && tofu output app_client_ids   # generated OIDC client ids
 ```
 

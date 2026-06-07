@@ -9,7 +9,7 @@ Apps recognise returning users by the subject they stored. We make Zitadel emit
 the **same value** by creating each Zitadel user with **`userId = Entra OID`**.
 The app-facing `sub` is then identical to before → **no app changes, no DB
 rewrites, no fallback code**. Avatars and extended data are carried over and
-kept fresh by `zitadel-sync`.
+kept fresh by `directory-sync`.
 
 > Caveat — Microsoft's OIDC `sub` is *pairwise* (per app registration), not the
 > OID. Apps keyed on the `oid` claim or **email** preserve cleanly (e.g. Outline
@@ -23,18 +23,18 @@ kept fresh by `zitadel-sync`.
    apps are provisioned (`tofu output`).
 2. **Per-app discovery**
    ```bash
-   docker compose run --rm zitadel-sync discover-subject-keys
+   docker compose run --rm directory-sync discover-subject-keys
    ```
    For each app confirm what it keys on (oid / pairwise sub / email).
 3. **Verify subject-preservation works**
    ```bash
-   docker compose run --rm zitadel-sync import-users --test-one
+   docker compose run --rm directory-sync import-users --test-one
    ```
    Confirms Zitadel accepts `userId = <Entra OID UUID>` and the fetched user id
    equals the OID.
 4. **Bulk import** the affected users (before cutover):
    ```bash
-   docker compose run --rm zitadel-sync import-users
+   docker compose run --rm directory-sync import-users
    ```
    Creates password-less users with `userId = OID`, plus metadata + avatar.
 5. **Switch each app's OIDC config** from Entra-direct to Zitadel:

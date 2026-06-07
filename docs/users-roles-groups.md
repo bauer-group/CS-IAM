@@ -23,7 +23,7 @@ Zitadel models "groups" through **project roles** + **user grants**:
   with a role to log into that project's apps (goal d).
 - **Native roles** (`user`, `admin`, …) are the Terraform-owned catalog
   (`terraform/roles.tf`).
-- **Entra-group roles** are created by `zitadel-sync`, **namespaced** with
+- **Entra-group roles** are created by `directory-sync`, **namespaced** with
   `entra:` so they're distinct. Each user's grant is recomputed from their
   current Entra group membership (adds + removes).
 

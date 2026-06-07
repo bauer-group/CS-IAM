@@ -10,14 +10,14 @@ Without it every request is 502.
 
 PostgreSQL 18 needs **Zitadel ≥ v4.11.0**. Bump `ZITADEL_VERSION`.
 
-## `zitadel-provision` exits with "machine key not present"
+## `provisioner` exits with "machine key not present"
 
 The FirstInstance key is written by `zitadel` during initial setup. Check
 `docker compose logs zitadel` for setup completion; ensure the `machinekey`
 volume is shared (rw on zitadel, ro on provision/sync). Increase
 `PROVISION_WAIT_TIMEOUT` on a slow first boot.
 
-## `zitadel-provision` aborts on a destructive plan
+## `provisioner` aborts on a destructive plan
 
 By design — it refuses unattended destroy/replace to protect managed and
 UI-made resources. Review and apply manually:
@@ -47,13 +47,13 @@ deployed version, fall back to email-based matching for that app (see
 ## Avatar / fax / phone not updating
 
 Those aren't in the OIDC token, so login-time JIT won't carry them — the
-`zitadel-sync` delta job does (every `SYNC_PROFILES_INTERVAL`). Check
-`docker compose logs zitadel-sync` and that Graph `ProfilePhoto.Read.All` /
+`directory-sync` delta job does (every `SYNC_PROFILES_INTERVAL`). Check
+`docker compose logs directory-sync` and that Graph `ProfilePhoto.Read.All` /
 `User.Read.All` are admin-consented.
 
 ## Sync idle / "AZURE_* not configured"
 
-`zitadel-sync` idles without Entra credentials (standalone mode). Set
+`directory-sync` idles without Entra credentials (standalone mode). Set
 `AZURE_TENANT_ID/CLIENT_ID/CLIENT_SECRET` to enable it.
 
 ## Zitadel API path errors from sync

@@ -21,14 +21,14 @@
       "image": "python",
       "tag": "3.14-alpine",
       "variable": "PYTHON_ALPINE_DIGEST",
-      "description": "Base image for zitadel-sync and zitadel-backup"
+      "description": "Base image for directory-sync and database-backup"
     },
     {
       "name": "opentofu",
       "image": "ghcr.io/opentofu/opentofu",
-      "tag": "1.10",
+      "tag": "1.12",
       "variable": "OPENTOFU_DIGEST",
-      "description": "Base image for the zitadel-provision IaC runner"
+      "description": "Base image for the provisioner IaC runner"
     }
   ],
   "settings": {

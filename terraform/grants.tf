@@ -2,7 +2,7 @@
 # Grants (break-glass / admin only)
 # =============================================================================
 # Dynamic per-user grants derived from Entra group membership are owned by
-# zitadel-sync (namespaced with var.role_prefix) — NOT declared here, so the
+# directory-sync (namespaced with var.role_prefix) — NOT declared here, so the
 # two never fight over the same objects.
 #
 # Use this file only for a small, stable set of break-glass authorizations that

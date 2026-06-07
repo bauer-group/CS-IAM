@@ -3,7 +3,7 @@
 # =============================================================================
 # Manages the Zitadel resources that are NOT expressible in defaults.yaml /
 # steps.yaml: identity providers, the project, OIDC applications, the project
-# role catalog and break-glass grants. Run by the zitadel-provision init
+# role catalog and break-glass grants. Run by the provisioner init
 # container (or an operator via `tofu` CLI from this directory).
 #
 # Auth: the FirstInstance machine key written to /machinekey/iam-admin.json.

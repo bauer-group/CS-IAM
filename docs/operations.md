@@ -5,12 +5,12 @@
 ```bash
 docker compose -f docker-compose.traefik.yml ps
 docker compose -f docker-compose.traefik.yml logs -f zitadel
-docker compose -f docker-compose.traefik.yml logs zitadel-provision   # one-shot
+docker compose -f docker-compose.traefik.yml logs provisioner   # one-shot
 curl https://id.bauer-group.com/debug/healthz
 curl https://id.bauer-group.com/.well-known/openid-configuration
 ```
 
-`zitadel-db` has a `pg_isready` healthcheck; the sidecars have process
+`database-server` has a `pg_isready` healthcheck; the sidecars have process
 healthchecks. `zitadel` itself has no in-container healthcheck (distroless) —
 readiness is verified via the discovery endpoint and polled by dependents.
 
@@ -27,7 +27,7 @@ readiness is verified via the discovery endpoint and polled by dependents.
 Enable the sidecar and see [backup-and-restore.md](backup-and-restore.md):
 
 ```bash
-docker compose -f docker-compose.traefik.yml --profile backup up -d zitadel-backup
+docker compose -f docker-compose.traefik.yml --profile backup up -d database-backup
 ```
 
 ## Scaling path (goal g)
@@ -50,5 +50,5 @@ without Entra:
 
 1. Create local accounts (or keep the imported ones) and set passwords.
 2. Remove/disable the Entra IdP (delete `terraform/idps.tf` entry, `tofu apply`).
-3. Stop `zitadel-sync`.
+3. Stop `directory-sync`.
 Zitadel remains the authoritative IdP for all apps — no app reconfiguration.
