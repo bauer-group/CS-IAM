@@ -77,15 +77,18 @@ DefaultInstance:
 
   # ── Branding ───────────────────────────────────────────────────────────────
   # Minimal brand tokens; full logos are uploaded via the console/Terraform.
+  # BAUER GROUP brand palette — orange primary (#FF8500) on warm neutrals.
+  # Logo/icon/font are binary assets uploaded via the Assets API (not URLs here)
+  # — see the branding step in docs/branding-and-login.md.
   LabelPolicy:
-    PrimaryColor: "#1f4e79"
-    BackgroundColor: "#fafafa"
-    WarnColor: "#cd3d27"
-    FontColor: "#000000"
-    PrimaryColorDark: "#2f6db0"
-    BackgroundColorDark: "#111827"
-    WarnColorDark: "#ff5a47"
-    FontColorDark: "#ffffff"
+    PrimaryColor: "#FF8500"        # orange-500 — brand primary
+    BackgroundColor: "#FFFFFF"     # bg-primary
+    WarnColor: "#EF4444"           # error-500
+    FontColor: "#231F1C"           # warm-900 — brand black (text-primary)
+    PrimaryColorDark: "#FB923C"    # orange-400 — brighter primary on dark
+    BackgroundColorDark: "#231F1C" # warm-900 — brand black
+    WarnColorDark: "#EF4444"       # error-500
+    FontColorDark: "#F9F8F6"       # warm-50 — brand light
     HideLoginNameSuffix: false
     DisableWatermark: true
     ThemeMode: 0 # 0=auto, 1=light, 2=dark
