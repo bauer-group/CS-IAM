@@ -77,7 +77,8 @@ docs/             setup / management / operation / migration guides
 | [installation.md](docs/installation.md) | deploy (dev / Traefik / Coolify), first login |
 | [configuration.md](docs/configuration.md) | `.env` + `defaults.yaml`/`steps.yaml` reference |
 | [provisioning-terraform.md](docs/provisioning-terraform.md) | IaC, state, non-destructive guard, adding apps/IdPs |
-| [identity-providers.md](docs/identity-providers.md) | Entra setup + adding Google/GitHub/Facebook |
+| [identity-providers.md](docs/identity-providers.md) | per-org IdPs: Entra single/multi-tenant, Google + social catalog |
+| [branding-and-login.md](docs/branding-and-login.md) | brand colors/logo/font, Login v2 theming, translations, IdP-logo plan |
 | [directory-sync.md](docs/directory-sync.md) | freshness model (JIT + delta), namespacing |
 | [users-roles-groups.md](docs/users-roles-groups.md) | local vs federated, role/grant app-gating, self-service |
 | [migration.md](docs/migration.md) | Entra → Zitadel cutover (avatar + data preserved) |

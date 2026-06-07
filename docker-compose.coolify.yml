@@ -99,6 +99,9 @@ services:
       ZITADEL_EXTERNALPORT: 443
       ZITADEL_EXTERNALSECURE: "true"
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:?Set ZITADEL_ADMIN_PASSWORD}
+      # Login v2 — hosted login served by the `login` service at /ui/v2/login.
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "true"
+      ZITADEL_OIDC_DEFAULTLOGINURLV2: https://${IAM_HOSTNAME}/ui/v2/login/login?authRequest=
     volumes:
       # Config (defaults.yaml/steps.yaml) is baked into the image. To override
       # without rebuilding, uncomment and edit the host files:
@@ -117,6 +120,36 @@ services:
       - "traefik.http.routers.${STACK_NAME:-iam}.tls=true"
       - "traefik.http.services.${STACK_NAME:-iam}.loadBalancer.server.port=8080"
       - "traefik.http.services.${STACK_NAME:-iam}.loadBalancer.server.scheme=h2c"
+
+  # ── Login v2 (official hosted login UI; branded via LabelPolicy + theme) ────
+  login:
+    image: ${LOGIN_IMAGE:-ghcr.io/zitadel/zitadel-login}:${LOGIN_VERSION:-v4.15.0}
+    restart: unless-stopped
+    user: "1000:1000"
+    <<: *logging
+    environment:
+      TZ: ${TIME_ZONE:-Etc/UTC}
+      ZITADEL_API_URL: http://zitadel:8080
+      ZITADEL_SERVICE_USER_TOKEN_FILE: /data/machinekey/iam-admin.pat
+      CUSTOM_REQUEST_HEADERS: "Host:${IAM_HOSTNAME}"
+      NEXT_PUBLIC_BASE_PATH: /ui/v2/login
+      NEXT_PUBLIC_THEME_LAYOUT: ${LOGIN_THEME_LAYOUT:-side-by-side}
+      NEXT_PUBLIC_THEME_ROUNDNESS: ${LOGIN_THEME_ROUNDNESS:-mid}
+      NEXT_PUBLIC_THEME_SPACING: ${LOGIN_THEME_SPACING:-regular}
+      NEXT_PUBLIC_THEME_APPEARANCE: ${LOGIN_THEME_APPEARANCE:-material}
+    volumes:
+      - machinekey:/data/machinekey:ro
+    depends_on:
+      zitadel:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${STACK_NAME:-iam}-login.rule=Host(`${IAM_HOSTNAME}`) && PathPrefix(`/ui/v2/login`)"
+      - "traefik.http.routers.${STACK_NAME:-iam}-login.entrypoints=https"
+      - "traefik.http.routers.${STACK_NAME:-iam}-login.tls=true"
+      - "traefik.http.routers.${STACK_NAME:-iam}-login.priority=20"
+      - "traefik.http.routers.${STACK_NAME:-iam}-login.service=${STACK_NAME:-iam}-login"
+      - "traefik.http.services.${STACK_NAME:-iam}-login.loadBalancer.server.port=3000"
 
   # ── Provisioner (OpenTofu IaC, one-shot, non-destructive) ───────────────────
   provisioner:

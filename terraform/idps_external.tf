@@ -18,7 +18,7 @@ locals {
 
 # ── Microsoft Entra ID — multi-tenant (any work/school + personal accounts) ──
 resource "zitadel_org_idp_azure_ad" "external_entra" {
-  count = var.external_azure_client_id != "" ? 1 : 0
+  count = var.external_azure_client_id != "" && var.external_azure_client_secret != "" ? 1 : 0
 
   org_id        = zitadel_org.external.id
   name          = "Microsoft account"
@@ -39,7 +39,7 @@ resource "zitadel_org_idp_azure_ad" "external_entra" {
 
 # ── Google ───────────────────────────────────────────────────────────────────
 resource "zitadel_org_idp_google" "external_google" {
-  count = var.google_client_id != "" ? 1 : 0
+  count = var.google_client_id != "" && var.google_client_secret != "" ? 1 : 0
 
   org_id        = zitadel_org.external.id
   name          = "Google"

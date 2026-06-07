@@ -15,7 +15,9 @@
 # =============================================================================
 
 resource "zitadel_org_idp_azure_ad" "entra" {
-  count = var.azure_client_id != "" ? 1 : 0
+  # Require BOTH id and secret — a half-config would be rejected by Zitadel and
+  # abort the whole provision, so skip gracefully instead.
+  count = var.azure_client_id != "" && var.azure_client_secret != "" ? 1 : 0
 
   org_id        = local.org_id
   name          = "Microsoft / Entra ID"
