@@ -2,7 +2,7 @@
 # Floors track the current release so Dependabot stays quiet until a real bump.
 pydantic>=2.13,<3
 pydantic-settings>=2.14,<3
-httpx>=0.28,<1
+httpx>=0.28.1,<1
 azure-identity>=1.25,<2
 PyJWT>=2.13,<3
 cryptography>=44
