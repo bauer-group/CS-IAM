@@ -1,3 +1,9 @@
+## [0.4.0](https://github.com/bauer-group/CS-IAM/compare/v0.3.0...v0.4.0) (2026-06-07)
+
+### 🚀 Features
+
+* **iam:** added per-org identity-provider federation ([3b01360](https://github.com/bauer-group/CS-IAM/commit/3b013607037210786de05b1bf269d13bced28f64))
+
 ## [0.3.0](https://github.com/bauer-group/CS-IAM/compare/v0.2.0...v0.3.0) (2026-06-07)
 
 ### 🚀 Features
