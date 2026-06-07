@@ -1,3 +1,9 @@
+## [0.5.0](https://github.com/bauer-group/CS-IAM/compare/v0.4.1...v0.5.0) (2026-06-07)
+
+### 🚀 Features
+
+* **login:** added Login v2 hosted UI (official image, branded) ([7070456](https://github.com/bauer-group/CS-IAM/commit/70704564400c2e12a02c28b38c2ce10f728319c4))
+
 ## [0.4.1](https://github.com/bauer-group/CS-IAM/compare/v0.4.0...v0.4.1) (2026-06-07)
 
 ### 🐛 Bug Fixes
