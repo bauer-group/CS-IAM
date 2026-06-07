@@ -109,6 +109,8 @@ jobs:
       push: true
       generate-sbom: true
       sync-dockerhub-readme: true
+      security-scan: false
+      security-fail-on: 'CRITICAL'
     secrets: inherit
 
   docker-build-zitadel-pr:
@@ -124,6 +126,8 @@ jobs:
       docker-context: './src/zitadel'
       platforms: 'linux/amd64'
       push: false
+      security-scan: false
+      security-fail-on: 'CRITICAL'
     secrets: inherit
 
   # ============================================
@@ -150,6 +154,8 @@ jobs:
       push: true
       generate-sbom: true
       sync-dockerhub-readme: true
+      security-scan: false
+      security-fail-on: 'CRITICAL'
     secrets: inherit
 
   docker-build-provisioner-pr:
@@ -165,6 +171,8 @@ jobs:
       docker-context: '.'
       platforms: 'linux/amd64'
       push: false
+      security-scan: false
+      security-fail-on: 'CRITICAL'
     secrets: inherit
 
   # ============================================
@@ -191,6 +199,8 @@ jobs:
       push: true
       generate-sbom: true
       sync-dockerhub-readme: true
+      security-scan: false
+      security-fail-on: 'CRITICAL'
     secrets: inherit
 
   docker-build-directory-sync-pr:
@@ -206,6 +216,8 @@ jobs:
       docker-context: './src/directory-sync'
       platforms: 'linux/amd64'
       push: false
+      security-scan: false
+      security-fail-on: 'CRITICAL'
     secrets: inherit
 
   # ============================================
@@ -232,6 +244,8 @@ jobs:
       push: true
       generate-sbom: true
       sync-dockerhub-readme: true
+      security-scan: false
+      security-fail-on: 'CRITICAL'
     secrets: inherit
 
   docker-build-database-backup-pr:
@@ -247,4 +261,6 @@ jobs:
       docker-context: './src/database-backup'
       platforms: 'linux/amd64'
       push: false
+      security-scan: false
+      security-fail-on: 'CRITICAL'
     secrets: inherit

@@ -7,4 +7,4 @@ azure-identity>=1.25,<2
 PyJWT>=2.13,<3
 cryptography>=44
 apscheduler>=3.11,<4
-rich>=14,<15
+rich>=14,<16

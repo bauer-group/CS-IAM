@@ -9,6 +9,10 @@
 # additive/in-place changes — any destroy/replace aborts with an alert, so
 # resources created in the Zitadel UI (not in Terraform state) are never pruned.
 #
+# NOTE: the official ghcr.io/opentofu/opentofu image carries an
+# `ONBUILD RUN exit 1` guard to forbid using it as a base; we therefore stage
+# the `tofu` binary in and run on a plain Alpine base.
+#
 # Build context = repo root (the image bundles ./terraform):
 #   docker build -f src/provisioner/Dockerfile -t cs-iam/provisioner .
 #
@@ -18,12 +22,25 @@
 # ---------------------------------------------------------------------------
 # Build Arguments
 # ---------------------------------------------------------------------------
+ARG ALPINE_VERSION=3.23
 ARG OPENTOFU_VERSION=1.12.0
 
 # ---------------------------------------------------------------------------
-# Base Image
+# Stage 1: fetch the pinned OpenTofu binary
 # ---------------------------------------------------------------------------
-FROM ghcr.io/opentofu/opentofu:${OPENTOFU_VERSION}
+FROM alpine:${ALPINE_VERSION} AS tofu
+ARG OPENTOFU_VERSION
+RUN apk add --no-cache curl unzip ca-certificates \
+    && curl -fsSL -o /tmp/tofu.zip \
+        "https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/tofu_${OPENTOFU_VERSION}_linux_amd64.zip" \
+    && unzip /tmp/tofu.zip tofu -d /usr/local/bin \
+    && chmod +x /usr/local/bin/tofu \
+    && /usr/local/bin/tofu version
+
+# ---------------------------------------------------------------------------
+# Stage 2: runtime
+# ---------------------------------------------------------------------------
+FROM alpine:${ALPINE_VERSION}
 
 # ---------------------------------------------------------------------------
 # Metadata Labels (Legacy)
@@ -49,18 +66,18 @@ LABEL org.opencontainers.image.version="0.1.0"
 # ---------------------------------------------------------------------------
 # bash  - the guarded-apply entrypoint        curl - Zitadel readiness probe
 # jq    - destructive-plan detection          ca-certificates - TLS to the issuer
-USER root
 RUN apk add --no-cache bash curl jq ca-certificates tzdata
 
 # ---------------------------------------------------------------------------
-# Application (Terraform + guarded entrypoint)
+# Application (tofu binary + Terraform + guarded entrypoint)
 # ---------------------------------------------------------------------------
+COPY --from=tofu /usr/local/bin/tofu /usr/local/bin/tofu
 WORKDIR /workspace
 COPY terraform/ ./terraform/
 COPY src/provisioner/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # ---------------------------------------------------------------------------
-# Entrypoint (overrides the upstream `tofu` entrypoint with the guarded runner)
+# Entrypoint (guarded, non-destructive apply)
 # ---------------------------------------------------------------------------
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

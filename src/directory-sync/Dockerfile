@@ -66,9 +66,10 @@ LABEL org.opencontainers.image.version="0.1.0"
 # ---------------------------------------------------------------------------
 # Runtime Dependencies + Non-root User
 # ---------------------------------------------------------------------------
+# 'sync' is a built-in Alpine user — use a dedicated, collision-free account.
 RUN apk add --no-cache tini tzdata ca-certificates procps \
-    && addgroup -g 1000 sync \
-    && adduser -u 1000 -G sync -h /app -D sync
+    && addgroup -g 1001 -S appsync \
+    && adduser -S -D -u 1001 -G appsync -h /app appsync
 
 # Python packages from the builder; the test stage is a hard build dependency.
 COPY --from=builder /install /usr/local
@@ -79,13 +80,13 @@ RUN rm /tmp/_test_passed
 # Application
 # ---------------------------------------------------------------------------
 WORKDIR /app
-COPY --chown=sync:sync src/ ./src/
+COPY --chown=appsync:appsync src/ ./src/
 ENV PYTHONPATH=/app/src \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
-RUN mkdir -p /data && chown sync:sync /data
+RUN mkdir -p /data && chown appsync:appsync /data
 VOLUME ["/data"]
-USER sync
+USER appsync
 
 # ---------------------------------------------------------------------------
 # Health Check (the scheduler process stays alive in daemon mode)

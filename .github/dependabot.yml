@@ -87,6 +87,9 @@ updates:
   # ── Python dependencies ───────────────────────────────────────────────────
   - package-ecosystem: "pip"
     directory: "/src/directory-sync"
+    # Only open a PR when the requirement actually blocks the new version
+    # (no floor-raise noise for releases already allowed by the range).
+    versioning-strategy: increase-if-necessary
     schedule:
       interval: "weekly"
       day: "sunday"
@@ -101,6 +104,8 @@ updates:
 
   - package-ecosystem: "pip"
     directory: "/src/database-backup"
+    # Only open a PR when the requirement actually blocks the new version.
+    versioning-strategy: increase-if-necessary
     schedule:
       interval: "weekly"
       day: "sunday"
