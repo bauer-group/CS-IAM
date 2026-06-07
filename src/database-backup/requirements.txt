@@ -1,6 +1,6 @@
 # Runtime dependencies for the database-backup container.
 # Floors track the current release so Dependabot stays quiet until a real bump.
-pydantic>=2.13,<3
+pydantic>=2.13.4,<3
 pydantic-settings>=2.14,<3
 boto3>=1.43
 apscheduler>=3.11,<4
