@@ -1,3 +1,9 @@
+## [0.3.0](https://github.com/bauer-group/CS-IAM/compare/v0.2.0...v0.3.0) (2026-06-07)
+
+### 🚀 Features
+
+* **iam:** added External Users org and customer app-access model ([19bbbec](https://github.com/bauer-group/CS-IAM/commit/19bbbec35a55f10f62391f2e202251a34be5bb9a))
+
 ## [0.2.0](https://github.com/bauer-group/CS-IAM/compare/v0.1.3...v0.2.0) (2026-06-07)
 
 ### 🚀 Features
