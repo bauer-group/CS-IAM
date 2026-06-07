@@ -1,0 +1,47 @@
+# =============================================================================
+# Root .dockerignore
+# =============================================================================
+# Applies to the ONE image built with build-context = repo root:
+# src/zitadel-provision (it bundles ./terraform). Keeps that context minimal
+# and secret-free. Every other image builds from its own ./src/<svc> context
+# with its own .dockerignore.
+# =============================================================================
+
+# VCS + CI
+.git
+.github
+.gitignore
+.gitattributes
+
+# Secrets / local config — never bake into an image
+**/.env
+**/.env.*
+!**/.env.example
+*.tfstate
+*.tfstate.*
+**/.terraform/
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+*.machinekey.json
+admin.pat
+
+# Python / tooling caches
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.venv/
+**/venv/
+
+# Docs + compose are not needed inside the provision image
+docs/
+*.md
+docker-compose*.yml
+
+# Other service sources are not part of the provision image
+src/zitadel/
+src/zitadel-sync/
+src/zitadel-backup/
+scripts/

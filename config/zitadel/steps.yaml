@@ -1,0 +1,52 @@
+# =============================================================================
+# Zitadel — FirstInstance setup steps (BAUER GROUP)
+# =============================================================================
+# Passed to Zitadel via `--steps`. Bootstraps the first instance ONCE:
+#   - org "BAUER GROUP"
+#   - a Human admin (console login) — granted IAM_OWNER automatically
+#   - a Machine automation user "iam-admin" — the headless admin credential
+#     consumed by Terraform (jwt_profile_file) and zitadel-sync (JWT-bearer)
+#
+# SECRET-FREE + committed. The admin password is injected at runtime via
+# ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD (env overrides this file).
+#
+# The machine key (JSON) and a PAT are written to the shared `machinekey`
+# volume so the provision + sync containers can read them. The key file is the
+# ONLY admin credential that leaves the zitadel container — keep that volume
+# private.
+#
+# Reference: https://github.com/zitadel/zitadel/blob/main/cmd/setup/steps.yaml
+# =============================================================================
+
+FirstInstance:
+  InstanceName: "BAUER GROUP IAM"
+  DefaultLanguage: de
+
+  # Where the machine credentials are written (mounted `machinekey` volume).
+  MachineKeyPath: /machinekey/iam-admin.json
+  PatPath: /machinekey/iam-admin.pat
+
+  Org:
+    Name: "BAUER GROUP"
+
+    # ── Human admin (console login; password via env) ──────────────────────
+    Human:
+      UserName: admin
+      FirstName: IAM
+      LastName: Administrator
+      Email:
+        Address: admin@bauer-group.com
+        Verified: true
+      PasswordChangeRequired: false
+      # Password: injected via ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD
+
+    # ── Machine automation user (Terraform + zitadel-sync) ─────────────────
+    Machine:
+      Machine:
+        Username: iam-admin
+        Name: "IAM Automation (Terraform + Sync)"
+      MachineKey:
+        Type: 1 # 1 = JSON key (written to MachineKeyPath)
+      Pat:
+        # A PAT is also written to PatPath for tools that prefer bearer tokens.
+        ExpirationDate: 2100-01-01T00:00:00Z

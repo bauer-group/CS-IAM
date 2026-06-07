@@ -1,0 +1,60 @@
+# =============================================================================
+# Git Ignore Configuration
+# =============================================================================
+
+# Environment (Secrets)
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+.claude/
+*.code-workspace
+.history/
+
+# OS Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary Files
+*.tmp
+*.temp
+*.bak
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Terraform / OpenTofu
+# State holds rendered secrets (OIDC client secrets) — never commit it.
+*.tfstate
+*.tfstate.*
+.terraform/
+crash.log
+crash.*.log
+# Real variable files carry credentials; only the *.example is tracked.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+# The provider lock file IS committed for reproducible builds.
+!.terraform.lock.hcl
+
+# Zitadel machine key / generated credentials (never commit)
+*.machinekey.json
+admin.pat

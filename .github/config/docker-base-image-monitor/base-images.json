@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/bauer-group/automation-templates/main/.github/config/docker-base-image-monitor/docker-base-images.schema.json",
+  "_description": "CS-IAM — upstream images consumed by the stack. The monitor tracks digests and triggers a release when an upstream image moves.",
+  "images": [
+    {
+      "name": "zitadel",
+      "image": "ghcr.io/zitadel/zitadel",
+      "tag": "v4.15.0",
+      "variable": "ZITADEL_DIGEST",
+      "description": "Zitadel OIDC/IAM application image (PostgreSQL 18 needs >= v4.11.0)"
+    },
+    {
+      "name": "postgres",
+      "image": "postgres",
+      "tag": "18-alpine",
+      "variable": "POSTGRES_ALPINE_DIGEST",
+      "description": "PostgreSQL 18 — Zitadel datastore"
+    },
+    {
+      "name": "python-alpine",
+      "image": "python",
+      "tag": "3.14-alpine",
+      "variable": "PYTHON_ALPINE_DIGEST",
+      "description": "Base image for zitadel-sync and zitadel-backup"
+    },
+    {
+      "name": "opentofu",
+      "image": "ghcr.io/opentofu/opentofu",
+      "tag": "1.10",
+      "variable": "OPENTOFU_DIGEST",
+      "description": "Base image for the zitadel-provision IaC runner"
+    }
+  ],
+  "settings": {
+    "commit-prefix": "chore(deps)",
+    "auto-create-variables": true
+  }
+}

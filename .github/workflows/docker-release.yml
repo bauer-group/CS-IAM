@@ -1,0 +1,250 @@
+name: 🚀 Release & Docker Build
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
+      - '*.md'
+      - 'docs/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'terraform/**'
+      - 'config/**'
+      - 'docker-compose*.yml'
+      - '.dockerignore'
+      - '.env.example'
+  workflow_dispatch:
+    inputs:
+      force-release:
+        description: 'force create release'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  packages: write
+  security-events: write
+
+jobs:
+  # ============================================
+  # Validation
+  # ============================================
+  validate-compose:
+    name: 🔍 Validate Docker Compose
+    uses: bauer-group/automation-templates/.github/workflows/modules-validate-compose.yml@main
+    with:
+      compose-files: '["docker-compose.development.yml", "docker-compose.traefik.yml", "docker-compose.coolify.yml"]'
+      env-file: '.env.example'
+      validate-services: '["zitadel-db", "zitadel", "zitadel-provision", "zitadel-sync"]'
+
+  validate-scripts:
+    name: 🔍 Validate Shell Scripts
+    uses: bauer-group/automation-templates/.github/workflows/modules-validate-shellscript.yml@main
+    with:
+      scan-directory: '.'
+      severity: 'error'
+
+  validate-terraform:
+    name: 🔍 Validate OpenTofu
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: '1.10.0'
+      - name: tofu fmt
+        working-directory: terraform
+        run: tofu fmt -check -recursive
+      - name: tofu validate
+        working-directory: terraform
+        run: |
+          tofu init -backend=false -input=false
+          tofu validate -no-color
+
+  # ============================================
+  # Release (only on main push / dispatch)
+  # ============================================
+  release:
+    name: 📦 Create Semantic Release
+    needs: [validate-compose, validate-scripts, validate-terraform]
+    if: |
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      needs.validate-compose.result == 'success' &&
+      needs.validate-scripts.result == 'success' &&
+      needs.validate-terraform.result == 'success'
+    uses: bauer-group/automation-templates/.github/workflows/modules-semantic-release.yml@main
+    with:
+      target-branch: 'main'
+      dry-run: false
+      force-release: ${{ inputs.force-release || false }}
+    secrets: inherit
+
+  # ============================================
+  # zitadel (thin wrapper)
+  # ============================================
+  docker-build-zitadel-release:
+    name: 🐳 Build & Push zitadel
+    needs: release
+    if: needs.release.outputs.release-created == 'true'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      deploy-environment: 'production'
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-IAM/zitadel'
+      docker-image-name: 'bauergroup/cs-iam-zitadel'
+      release-version: ${{ needs.release.outputs.version }}
+      image-tags: 'stable'
+      update-dockerfile-version: true
+      auto-tags: true
+      latest-tag: true
+      dockerfile-path: './src/zitadel/Dockerfile'
+      docker-context: './src/zitadel'
+      platforms: 'linux/amd64'
+      push: true
+      generate-sbom: true
+      sync-dockerhub-readme: true
+    secrets: inherit
+
+  docker-build-zitadel-pr:
+    name: 🔨 Validate zitadel Build (PR)
+    needs: [validate-compose, validate-scripts, validate-terraform]
+    if: github.event_name == 'pull_request'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-IAM/zitadel'
+      auto-tags: true
+      dockerfile-path: './src/zitadel/Dockerfile'
+      docker-context: './src/zitadel'
+      platforms: 'linux/amd64'
+      push: false
+    secrets: inherit
+
+  # ============================================
+  # zitadel-provision (OpenTofu IaC; build-context = repo root)
+  # ============================================
+  docker-build-provision-release:
+    name: 🐳 Build & Push zitadel-provision
+    needs: release
+    if: needs.release.outputs.release-created == 'true'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      deploy-environment: 'production'
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-IAM/zitadel-provision'
+      docker-image-name: 'bauergroup/cs-iam-zitadel-provision'
+      release-version: ${{ needs.release.outputs.version }}
+      image-tags: 'stable'
+      update-dockerfile-version: true
+      auto-tags: true
+      latest-tag: true
+      dockerfile-path: './src/zitadel-provision/Dockerfile'
+      docker-context: '.'
+      platforms: 'linux/amd64'
+      push: true
+      generate-sbom: true
+      sync-dockerhub-readme: true
+    secrets: inherit
+
+  docker-build-provision-pr:
+    name: 🔨 Validate zitadel-provision Build (PR)
+    needs: [validate-compose, validate-scripts, validate-terraform]
+    if: github.event_name == 'pull_request'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-IAM/zitadel-provision'
+      auto-tags: true
+      dockerfile-path: './src/zitadel-provision/Dockerfile'
+      docker-context: '.'
+      platforms: 'linux/amd64'
+      push: false
+    secrets: inherit
+
+  # ============================================
+  # zitadel-sync
+  # ============================================
+  docker-build-sync-release:
+    name: 🐳 Build & Push zitadel-sync
+    needs: release
+    if: needs.release.outputs.release-created == 'true'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      deploy-environment: 'production'
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-IAM/zitadel-sync'
+      docker-image-name: 'bauergroup/cs-iam-zitadel-sync'
+      release-version: ${{ needs.release.outputs.version }}
+      image-tags: 'stable'
+      update-dockerfile-version: true
+      auto-tags: true
+      latest-tag: true
+      dockerfile-path: './src/zitadel-sync/Dockerfile'
+      docker-context: './src/zitadel-sync'
+      platforms: 'linux/amd64'
+      push: true
+      generate-sbom: true
+      sync-dockerhub-readme: true
+    secrets: inherit
+
+  docker-build-sync-pr:
+    name: 🔨 Validate zitadel-sync Build (PR)
+    needs: [validate-compose, validate-scripts, validate-terraform]
+    if: github.event_name == 'pull_request'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-IAM/zitadel-sync'
+      auto-tags: true
+      dockerfile-path: './src/zitadel-sync/Dockerfile'
+      docker-context: './src/zitadel-sync'
+      platforms: 'linux/amd64'
+      push: false
+    secrets: inherit
+
+  # ============================================
+  # zitadel-backup
+  # ============================================
+  docker-build-backup-release:
+    name: 🐳 Build & Push zitadel-backup
+    needs: release
+    if: needs.release.outputs.release-created == 'true'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      deploy-environment: 'production'
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-IAM/zitadel-backup'
+      docker-image-name: 'bauergroup/cs-iam-zitadel-backup'
+      release-version: ${{ needs.release.outputs.version }}
+      image-tags: 'stable'
+      update-dockerfile-version: true
+      auto-tags: true
+      latest-tag: true
+      dockerfile-path: './src/zitadel-backup/Dockerfile'
+      docker-context: './src/zitadel-backup'
+      platforms: 'linux/amd64'
+      push: true
+      generate-sbom: true
+      sync-dockerhub-readme: true
+    secrets: inherit
+
+  docker-build-backup-pr:
+    name: 🔨 Validate zitadel-backup Build (PR)
+    needs: [validate-compose, validate-scripts, validate-terraform]
+    if: github.event_name == 'pull_request'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-IAM/zitadel-backup'
+      auto-tags: true
+      dockerfile-path: './src/zitadel-backup/Dockerfile'
+      docker-context: './src/zitadel-backup'
+      platforms: 'linux/amd64'
+      push: false
+    secrets: inherit

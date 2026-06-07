@@ -1,0 +1,161 @@
+# =============================================================================
+# CS-IAM — Zitadel OIDC/IAM Stack — Coolify
+# =============================================================================
+# For deployment on a Coolify-managed host. Coolify provides the reverse proxy
+# (Traefik) and TLS; set the domain for the `zitadel` service in the Coolify UI
+# (target port 8080) and enable the h2c/HTTP2 option, OR keep the Traefik
+# labels below which Coolify honours.
+#
+# Coolify injects environment via its dashboard; this file reads the same
+# variable names as the other variants. `start-from-init` is idempotent.
+# =============================================================================
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "3"
+
+services:
+  zitadel-db:
+    image: ${POSTGRES_IMAGE:-postgres}:${POSTGRES_VERSION:-18-alpine}
+    restart: unless-stopped
+    <<: *logging
+    environment:
+      TZ: ${TIME_ZONE:-Etc/UTC}
+      POSTGRES_DB: ${ZITADEL_DB_NAME:-zitadel}
+      POSTGRES_USER: ${ZITADEL_DB_USER:-zitadel}
+      POSTGRES_PASSWORD: ${ZITADEL_DB_PASSWORD:?Set ZITADEL_DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - zitadel-db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ZITADEL_DB_USER:-zitadel} -d ${ZITADEL_DB_NAME:-zitadel}"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  zitadel:
+    image: ${ZITADEL_IMAGE:-ghcr.io/bauer-group/cs-iam/zitadel}:${ZITADEL_VERSION:-latest}
+    restart: unless-stopped
+    <<: *logging
+    command: >
+      start-from-init
+      --masterkey "${ZITADEL_MASTERKEY:?Set ZITADEL_MASTERKEY}"
+      --config /zitadel/config/defaults.yaml
+      --steps /zitadel/config/steps.yaml
+      --tlsMode external
+    environment:
+      TZ: ${TIME_ZONE:-Etc/UTC}
+      ZITADEL_DATABASE_POSTGRES_HOST: zitadel-db
+      ZITADEL_DATABASE_POSTGRES_PORT: 5432
+      ZITADEL_DATABASE_POSTGRES_DATABASE: ${ZITADEL_DB_NAME:-zitadel}
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: ${ZITADEL_DB_USER:-zitadel}
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: ${ZITADEL_DB_PASSWORD}
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ${ZITADEL_DB_USER:-zitadel}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${ZITADEL_DB_PASSWORD}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      ZITADEL_EXTERNALDOMAIN: ${IAM_HOSTNAME:?Set IAM_HOSTNAME}
+      ZITADEL_EXTERNALPORT: 443
+      ZITADEL_EXTERNALSECURE: "true"
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:?Set ZITADEL_ADMIN_PASSWORD}
+    volumes:
+      - ./config/zitadel/defaults.yaml:/zitadel/config/defaults.yaml:ro
+      - ./config/zitadel/steps.yaml:/zitadel/config/steps.yaml:ro
+      - machinekey:/machinekey
+    depends_on:
+      zitadel-db:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${STACK_NAME:-iam}-app.rule=Host(`${IAM_HOSTNAME}`)"
+      - "traefik.http.routers.${STACK_NAME:-iam}-app.entrypoints=https"
+      - "traefik.http.routers.${STACK_NAME:-iam}-app.tls=true"
+      - "traefik.http.services.${STACK_NAME:-iam}-app.loadbalancer.server.port=8080"
+      - "traefik.http.services.${STACK_NAME:-iam}-app.loadbalancer.server.scheme=h2c"
+
+  zitadel-provision:
+    image: ${PROVISION_IMAGE:-ghcr.io/bauer-group/cs-iam/zitadel-provision}:${PROVISION_VERSION:-latest}
+    restart: "no"
+    environment:
+      TZ: ${TIME_ZONE:-Etc/UTC}
+      ZITADEL_DOMAIN: ${IAM_HOSTNAME}
+      ZITADEL_PORT: 443
+      ZITADEL_INSECURE: "false"
+      ZITADEL_JWT_PROFILE_FILE: /machinekey/iam-admin.json
+      ZITADEL_WAIT_TIMEOUT: ${PROVISION_WAIT_TIMEOUT:-180}
+      TF_VAR_zitadel_domain: ${IAM_HOSTNAME}
+      TF_VAR_zitadel_port: 443
+      TF_VAR_zitadel_insecure: "false"
+      TF_VAR_role_prefix: ${SYNC_ROLE_PREFIX:-entra:}
+      TF_VAR_azure_client_id: ${AZURE_CLIENT_ID:-}
+      TF_VAR_azure_client_secret: ${AZURE_CLIENT_SECRET:-}
+      TF_VAR_azure_tenant_id: ${AZURE_TENANT_ID:-}
+      TF_VAR_app_redirect_uris: ${APP_REDIRECT_URIS:-[]}
+    volumes:
+      - machinekey:/machinekey:ro
+      - tfstate:/tfstate
+    depends_on:
+      zitadel:
+        condition: service_started
+
+  zitadel-sync:
+    image: ${SYNC_IMAGE:-ghcr.io/bauer-group/cs-iam/zitadel-sync}:${SYNC_VERSION:-latest}
+    restart: unless-stopped
+    <<: *logging
+    environment:
+      TZ: ${TIME_ZONE:-Etc/UTC}
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID:-}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET:-}
+      ZITADEL_DOMAIN: ${IAM_HOSTNAME}
+      ZITADEL_PORT: 443
+      ZITADEL_INSECURE: "false"
+      ZITADEL_JWT_PROFILE_FILE: /machinekey/iam-admin.json
+      ZITADEL_WAIT_TIMEOUT: ${SYNC_WAIT_TIMEOUT:-180}
+      SYNC_ENABLED: ${SYNC_ENABLED:-true}
+      SYNC_PROFILES_INTERVAL: ${SYNC_PROFILES_INTERVAL:-300}
+      SYNC_GROUPS_INTERVAL: ${SYNC_GROUPS_INTERVAL:-600}
+      SYNC_ROLE_PREFIX: ${SYNC_ROLE_PREFIX:-entra:}
+      SYNC_PROJECT_NAME: ${SYNC_PROJECT_NAME:-BAUER GROUP}
+      SYNC_LOG_LEVEL: ${SYNC_LOG_LEVEL:-INFO}
+    volumes:
+      - machinekey:/machinekey:ro
+      - sync-state:/data
+    depends_on:
+      zitadel-provision:
+        condition: service_completed_successfully
+
+  zitadel-backup:
+    image: ${BACKUP_IMAGE:-ghcr.io/bauer-group/cs-iam/zitadel-backup}:${BACKUP_VERSION:-latest}
+    profiles: ["backup"]
+    restart: unless-stopped
+    <<: *logging
+    environment:
+      TZ: ${TIME_ZONE:-Etc/UTC}
+      INSTANCE_NAME: ${STACK_NAME:-iam}
+      DB_HOST: zitadel-db
+      DB_PORT: 5432
+      DB_NAME: ${ZITADEL_DB_NAME:-zitadel}
+      DB_USER: ${ZITADEL_DB_USER:-zitadel}
+      DB_PASSWORD: ${ZITADEL_DB_PASSWORD}
+      DB_SSL_MODE: disable
+      BACKUP_RETENTION_COUNT: ${BACKUP_RETENTION_COUNT:-14}
+      BACKUP_SCHEDULE_ENABLED: ${BACKUP_SCHEDULE_ENABLED:-true}
+      BACKUP_SCHEDULE_CRON: ${BACKUP_SCHEDULE_CRON:-15 3 * * *}
+      BACKUP_LOG_LEVEL: ${BACKUP_LOG_LEVEL:-INFO}
+    volumes:
+      - backup-data:/data
+    depends_on:
+      zitadel-db:
+        condition: service_healthy
+
+volumes:
+  zitadel-db-data:
+  machinekey:
+  tfstate:
+  sync-state:
+  backup-data:

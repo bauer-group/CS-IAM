@@ -1,0 +1,3 @@
+# The Zitadel wrapper image needs only its Dockerfile — keep the context empty.
+*
+!Dockerfile

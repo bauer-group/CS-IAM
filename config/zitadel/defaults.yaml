@@ -1,0 +1,101 @@
+# =============================================================================
+# Zitadel — DefaultInstance configuration (BAUER GROUP)
+# =============================================================================
+# Passed to Zitadel via `--config`. Holds the *template* applied to the first
+# instance: policies, branding, token lifetimes. It is SECRET-FREE and
+# committed as-is — every secret and instance-specific value (external domain,
+# DB password, masterkey, admin password) is injected at runtime via
+# ZITADEL_* environment variables, which override anything in this file.
+#
+# This file deliberately contains ONLY what Zitadel can express declaratively
+# in DefaultInstance. Identity Providers, Projects, Applications, Roles and
+# Grants are NOT expressible here — they are managed by Terraform
+# (see ../../terraform/). FirstInstance (org/admin/machine SA) lives in
+# steps.yaml and is passed via `--steps`.
+#
+# Viper ignores unknown keys, so version drift in optional fields is harmless.
+# Reference: https://github.com/zitadel/zitadel/blob/main/cmd/defaults.yaml
+# =============================================================================
+
+DefaultInstance:
+  # ── Login policy ─────────────────────────────────────────────────────────
+  # Goal (b)+(i): local accounts AND external IdP coexist. Federated users are
+  # created WITHOUT a password (see zitadel-sync / Terraform), so in practice
+  # only genuine local accounts can use the password form. MFA is enforced for
+  # local logins only — Entra handles MFA for federated logins.
+  LoginPolicy:
+    AllowUsernamePassword: true
+    AllowRegister: false # no self-registration; users come from Entra or are created by an admin
+    AllowExternalIDP: true
+    ForceMFA: false
+    ForceMFALocalOnly: true # MFA required for local (non-IdP) logins only
+    HidePasswordReset: false
+    IgnoreUnknownUsernames: true # don't reveal whether a username exists
+    AllowDomainDiscovery: true # route corporate-domain users to their IdP
+    DisableLoginWithEmail: false
+    DisableLoginWithPhone: true
+    DefaultRedirectURI: "" # set per-instance via env if a global landing page is wanted
+    PasswordCheckLifetime: 240h
+    ExternalLoginCheckLifetime: 240h
+    MFAInitSkipLifetime: 720h
+    SecondFactorCheckLifetime: 18h
+    MultiFactorCheckLifetime: 12h
+    # Second/Multi factor catalogues (verify enum values against the installed
+    # Zitadel version; unknown values are ignored). 1=OTP(TOTP) 2=U2F 6=OTPEmail 7=OTPSMS
+    SecondFactors:
+      - 1
+      - 2
+    MultiFactors:
+      - 1 # U2F with user verification (passkeys)
+    PasswordlessType: 1 # 1 = passkeys/passwordless allowed
+
+  # ── Password complexity (local accounts) ─────────────────────────────────
+  PasswordComplexityPolicy:
+    MinLength: 12
+    HasUppercase: true
+    HasLowercase: true
+    HasNumber: true
+    HasSymbol: true
+
+  # ── Lockout ───────────────────────────────────────────────────────────────
+  LockoutPolicy:
+    MaxPasswordAttempts: 5
+    MaxOTPAttempts: 5
+
+  # ── Domain handling ────────────────────────────────────────────────────────
+  DomainPolicy:
+    UserLoginMustBeDomain: false # usernames are not forced to carry the org domain
+    ValidateOrgDomains: true
+    SMTPSenderAddressMatchesInstanceDomain: false
+
+  # ── Privacy / support links (shown in the login UI) ────────────────────────
+  PrivacyPolicy:
+    TOSLink: ""
+    PrivacyLink: "https://www.bauer-group.com/datenschutz"
+    HelpLink: ""
+    SupportEmail: "support@bauer-group.com"
+
+  # ── Branding ───────────────────────────────────────────────────────────────
+  # Minimal brand tokens; full logos are uploaded via the console/Terraform.
+  LabelPolicy:
+    PrimaryColor: "#1f4e79"
+    BackgroundColor: "#fafafa"
+    WarnColor: "#cd3d27"
+    FontColor: "#000000"
+    PrimaryColorDark: "#2f6db0"
+    BackgroundColorDark: "#111827"
+    WarnColorDark: "#ff5a47"
+    FontColorDark: "#ffffff"
+    HideLoginNameSuffix: false
+    DisableWatermark: true
+    ThemeMode: 0 # 0=auto, 1=light, 2=dark
+
+  # ── OIDC token lifetimes ───────────────────────────────────────────────────
+  OIDCSettings:
+    AccessTokenLifetime: 12h
+    IdTokenLifetime: 12h
+    RefreshTokenIdleExpiration: 720h # 30d
+    RefreshTokenExpiration: 2160h # 90d
+
+  # ── Notification text defaults inherit from Zitadel; SMTP is injected via
+  #    ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_* env when an MTA is wired.

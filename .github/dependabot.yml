@@ -1,0 +1,129 @@
+# =============================================================================
+# Dependabot Configuration
+# =============================================================================
+# Monitors GitHub Actions, Docker base images, Python deps and the OpenTofu
+# provider for updates. Combined with docker-maintenance.yml for auto-merge,
+# and with check-base-images.yml for digest-pinned upstream tracking.
+# =============================================================================
+
+version: 2
+updates:
+  # ── GitHub Actions ────────────────────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "06:30"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "dependabot"
+    commit-message:
+      prefix: "chore(ci)"
+
+  # ── Docker base images ────────────────────────────────────────────────────
+  # Zitadel application image (thin wrapper)
+  - package-ecosystem: "docker"
+    directory: "/src/zitadel"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "06:30"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "dependabot"
+    commit-message:
+      prefix: "chore(docker)"
+
+  # zitadel-provision (OpenTofu IaC runner)
+  - package-ecosystem: "docker"
+    directory: "/src/zitadel-provision"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "06:30"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "dependabot"
+    commit-message:
+      prefix: "chore(docker)"
+
+  # zitadel-sync (directory-sync sidecar)
+  - package-ecosystem: "docker"
+    directory: "/src/zitadel-sync"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "06:30"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "dependabot"
+    commit-message:
+      prefix: "chore(docker)"
+
+  # zitadel-backup (pg_dump sidecar)
+  - package-ecosystem: "docker"
+    directory: "/src/zitadel-backup"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "06:30"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "dependabot"
+    commit-message:
+      prefix: "chore(docker)"
+
+  # ── Python dependencies ───────────────────────────────────────────────────
+  - package-ecosystem: "pip"
+    directory: "/src/zitadel-sync"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "06:30"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "python"
+      - "dependabot"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "pip"
+    directory: "/src/zitadel-backup"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "06:30"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "python"
+      - "dependabot"
+    commit-message:
+      prefix: "chore(deps)"
+
+  # ── Terraform / OpenTofu provider ─────────────────────────────────────────
+  - package-ecosystem: "terraform"
+    directory: "/terraform"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "06:30"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "terraform"
+      - "dependabot"
+    commit-message:
+      prefix: "chore(deps)"

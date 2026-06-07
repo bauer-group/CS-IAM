@@ -1,0 +1,25 @@
+# =============================================================================
+# terraform.tfvars (example)
+# =============================================================================
+# When running `tofu` from the CLI, copy to terraform.tfvars and fill in.
+# The zitadel-provision container instead receives these as TF_VAR_* env vars
+# from the compose file — no tfvars file needed there.
+#
+# terraform.tfvars is git-ignored (carries the Entra client secret).
+# =============================================================================
+
+zitadel_domain   = "id.bauer-group.com"
+zitadel_port     = "443"
+zitadel_insecure = false
+
+org_name     = "BAUER GROUP"
+project_name = "BAUER GROUP"
+role_prefix  = "entra:"
+
+# Microsoft Entra ID (leave azure_client_id = "" to skip federation)
+azure_client_id     = ""
+azure_client_secret = ""
+azure_tenant_id     = ""
+
+# OIDC applications (JSON string)
+app_redirect_uris = "[{\"name\":\"outline\",\"redirect_uris\":[\"https://wiki.bauer-group.com/auth/oidc.callback\"]}]"
