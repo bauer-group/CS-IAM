@@ -52,8 +52,11 @@ crash.*.log
 *.tfvars
 *.tfvars.json
 !*.tfvars.example
-# The provider lock file IS committed for reproducible builds.
-!.terraform.lock.hcl
+# The provider lock file is NOT committed: the provisioner runs a fresh
+# `tofu init` each boot, and a platform-specific lock would cause hash
+# mismatches across architectures.
+.terraform.lock.hcl
+**/.terraform.lock.hcl
 
 # Zitadel machine key / generated credentials (never commit)
 *.machinekey.json
