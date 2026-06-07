@@ -1,3 +1,10 @@
+## [0.1.3](https://github.com/bauer-group/CS-IAM/compare/v0.1.2...v0.1.3) (2026-06-07)
+
+### 🐛 Bug Fixes
+
+* **compose:** used a scalar user override instead of group_add ([af56165](https://github.com/bauer-group/CS-IAM/commit/af56165fbe6fab9eeaf40c534067e6e3442117cd))
+* **security:** locked down the machine-key volume permissions ([f6c5952](https://github.com/bauer-group/CS-IAM/commit/f6c59524ff41f03139512f7134ced63b7411328b))
+
 ## [0.1.2](https://github.com/bauer-group/CS-IAM/compare/v0.1.1...v0.1.2) (2026-06-07)
 
 ### 🐛 Bug Fixes
