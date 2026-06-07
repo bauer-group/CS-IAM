@@ -191,9 +191,9 @@ services:
     image: ${DIRECTORY_SYNC_IMAGE:-ghcr.io/bauer-group/cs-iam/directory-sync}:${DIRECTORY_SYNC_VERSION:-latest}
     container_name: ${STACK_NAME:-iam}_SYNC
     restart: unless-stopped
-    # Join Zitadel's gid so the group-private (0750) machine key is readable.
-    group_add:
-      - "1000"
+    # Run with Zitadel's gid (1000) so the group-private (0750) machine-key dir
+    # is readable; uid 1001 still owns /data.
+    user: "1001:1000"
     <<: *logging
     environment:
       TZ: ${TIME_ZONE:-Etc/UTC}
