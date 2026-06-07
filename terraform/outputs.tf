@@ -27,8 +27,18 @@ output "external_project_id" {
 }
 
 output "entra_idp_id" {
-  value       = try(zitadel_idp_azure_ad.entra[0].id, null)
-  description = "Instance IdP id for Entra (null when federation is disabled)."
+  value       = try(zitadel_org_idp_azure_ad.entra[0].id, null)
+  description = "Internal-org Entra IdP id (null when federation is disabled)."
+}
+
+output "external_idp_ids" {
+  value = {
+    entra  = try(zitadel_org_idp_azure_ad.external_entra[0].id, null)
+    google = try(zitadel_org_idp_google.external_google[0].id, null)
+    oauth  = { for k, v in zitadel_org_idp_oauth.external : k => v.id }
+    oidc   = { for k, v in zitadel_org_idp_oidc.external : k => v.id }
+  }
+  description = "External-org IdP ids per provider (null/empty for disabled ones)."
 }
 
 output "app_client_ids" {

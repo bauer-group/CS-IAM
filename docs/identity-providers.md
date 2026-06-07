@@ -1,9 +1,18 @@
 # Identity Providers
 
-Zitadel federates to one or more upstream IdPs. Entra ID is the primary; more
-can be added as code.
+IdPs are **scoped per organisation**, so each org's login shows only its own
+providers:
 
-## Microsoft Entra ID
+| Org | Providers |
+|-----|-----------|
+| **BAUER GROUP** (internal) | Microsoft Entra ID — **single-tenant** (`terraform/idps.tf`) |
+| **External Users** (customers) | Entra **multi-tenant**, Google, and **any number** of OAuth2/OIDC providers — Facebook, LINE, WeChat, KakaoTalk, Naver, QQ, Weibo, … (`terraform/idps_external.tf`) |
+
+All IdPs are **opt-in**: nothing is created until its credentials are set. The
+redirect/callback URI to register at every provider is
+`https://id.bauer-group.com/idps/callback`.
+
+## Microsoft Entra ID (internal, single-tenant)
 
 ### 1. App Registration (Azure Portal)
 
@@ -34,12 +43,46 @@ can be added as code.
 Entra. Imported users are password-less → Entra-only. See
 [users-roles-groups.md](users-roles-groups.md).
 
-## Adding Google / GitHub / Facebook (goal h)
+## External-org providers (customer login)
 
-Add the matching resource to `terraform/idps.tf` and the credentials to `.env` +
-`terraform/variables.tf`. A Google stub is included (commented). Each gets the
-same auto-link/auto-update behaviour. Redirect URI pattern:
-`https://id.bauer-group.com/idps/callback`.
+`terraform/idps_external.tf` attaches providers to the **External Users** org.
+Two are first-class (native Zitadel templates) — set their `.env` creds:
 
-> Verify exact provider attribute names against the pinned `zitadel/zitadel`
-> provider version — `tofu validate` (CI) flags drift.
+| Provider | `.env` keys |
+|----------|-------------|
+| Entra **multi-tenant** | `EXTERNAL_AZURE_CLIENT_ID` / `EXTERNAL_AZURE_CLIENT_SECRET` |
+| Google | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` |
+
+### Any number of OAuth2 / OIDC providers (data-driven)
+
+Everything else is added **without new Terraform** through two JSON-map env
+vars — `EXTERNAL_OAUTH_IDPS` (generic OAuth2) and `EXTERNAL_OIDC_IDPS` (generic
+OIDC). Add a provider = add a map entry. The JSON carries client secrets, so
+keep `.env` at `chmod 600`.
+
+**OIDC catalog** (`EXTERNAL_OIDC_IDPS`) — only `issuer` + creds needed:
+
+| Provider | `issuer` | scopes |
+|----------|----------|--------|
+| LINE | `https://access.line.me` | `openid profile email` |
+| KakaoTalk | `https://kauth.kakao.com` | `openid account_email profile` |
+
+**OAuth2 catalog** (`EXTERNAL_OAUTH_IDPS`) — `authorization_endpoint` /
+`token_endpoint` / `user_endpoint` / `id_attribute`:
+
+| Provider | authorization / token / user endpoints | `id_attribute` |
+|----------|----------------------------------------|----------------|
+| Facebook | `…/v21.0/dialog/oauth` · `graph…/v21.0/oauth/access_token` · `graph…/me?fields=id,name,email` | `id` |
+| Naver | `nid.naver.com/oauth2.0/authorize` · `…/token` · `openapi.naver.com/v1/nid/me` | `response.id` |
+| WeChat | `open.weixin.qq.com/connect/qrconnect` · `api.weixin.qq.com/sns/oauth2/access_token` · `…/sns/userinfo` | `openid` |
+
+A fuller copy-paste JSON example is in `terraform/terraform.tfvars.example`.
+
+> **Caveats (honest):** WeChat and Naver are **not** spec-compliant OAuth2 —
+> WeChat uses `appid`/`secret` params + returns `openid`; Naver wraps the user
+> in a `response` object. They may need attribute mapping via an Action or a
+> normalising proxy. **Viber** offers no consumer OAuth login, so it can't be
+> an IdP. LINE/KakaoTalk/Facebook/Google/Entra work cleanly.
+
+> Provider attribute names are verified against the pinned `zitadel/zitadel`
+> provider; `tofu validate` (CI) flags any drift.

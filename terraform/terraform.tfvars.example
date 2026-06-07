@@ -22,10 +22,26 @@ external_org_name            = "External Users"
 external_password_min_length = 8
 external_project_name        = "External Apps"
 
-# Microsoft Entra ID (leave azure_client_id = "" to skip federation)
+# Microsoft Entra ID — INTERNAL org, single-tenant (leave id "" to skip)
 azure_client_id     = ""
 azure_client_secret = ""
 azure_tenant_id     = ""
+
+# ── External-org identity providers (customer login) ─────────────────────────
+# First-class (native templates):
+external_azure_client_id     = "" # Entra multi-tenant (any MS account)
+external_azure_client_secret = ""
+google_client_id             = ""
+google_client_secret         = ""
+
+# Any number of OAuth2 / OIDC providers via JSON maps — Facebook, WeChat, Naver,
+# QQ, Weibo (OAuth2); LINE, KakaoTalk (OIDC). Endpoint catalog +
+# how-to-add-more: docs/identity-providers.md. The JSON carries client secrets.
+# Example (one line per the JSON-string pattern):
+# external_oauth_idps = "{\"facebook\":{\"name\":\"Facebook\",\"client_id\":\"APPID\",\"client_secret\":\"SECRET\",\"authorization_endpoint\":\"https://www.facebook.com/v21.0/dialog/oauth\",\"token_endpoint\":\"https://graph.facebook.com/v21.0/oauth/access_token\",\"user_endpoint\":\"https://graph.facebook.com/me?fields=id,name,email\",\"id_attribute\":\"id\",\"scopes\":[\"email\",\"public_profile\"]}}"
+external_oauth_idps = "{}"
+# external_oidc_idps = "{\"line\":{\"name\":\"LINE\",\"client_id\":\"CHANNEL_ID\",\"client_secret\":\"CHANNEL_SECRET\",\"issuer\":\"https://access.line.me\",\"scopes\":[\"openid\",\"profile\",\"email\"]},\"kakao\":{\"name\":\"KakaoTalk\",\"client_id\":\"REST_API_KEY\",\"client_secret\":\"SECRET\",\"issuer\":\"https://kauth.kakao.com\",\"scopes\":[\"openid\",\"account_email\",\"profile\"]}}"
+external_oidc_idps = "{}"
 
 # OIDC applications (JSON string). Optional per-app "audience":
 #   omitted / "internal" → internal-only app (BAUER GROUP project)

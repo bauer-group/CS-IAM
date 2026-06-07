@@ -136,6 +136,13 @@ services:
       TF_VAR_azure_client_id: ${AZURE_CLIENT_ID:-}
       TF_VAR_azure_client_secret: ${AZURE_CLIENT_SECRET:-}
       TF_VAR_azure_tenant_id: ${AZURE_TENANT_ID:-}
+      # External-org IdPs (customer login)
+      TF_VAR_external_azure_client_id: ${EXTERNAL_AZURE_CLIENT_ID:-}
+      TF_VAR_external_azure_client_secret: ${EXTERNAL_AZURE_CLIENT_SECRET:-}
+      TF_VAR_google_client_id: ${GOOGLE_CLIENT_ID:-}
+      TF_VAR_google_client_secret: ${GOOGLE_CLIENT_SECRET:-}
+      TF_VAR_external_oauth_idps: ${EXTERNAL_OAUTH_IDPS:-}
+      TF_VAR_external_oidc_idps: ${EXTERNAL_OIDC_IDPS:-}
       TF_VAR_app_redirect_uris: ${APP_REDIRECT_URIS:-[]}
     volumes:
       - machinekey:/data/machinekey:ro

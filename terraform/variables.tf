@@ -93,7 +93,59 @@ variable "azure_client_secret" {
 variable "azure_tenant_id" {
   type        = string
   default     = ""
-  description = "Entra tenant id."
+  description = "Entra tenant id (internal, single-tenant)."
+}
+
+# ── External-org identity providers (all optional; empty client id = skip) ─────
+# Attached to the External Users org only (org_idp_* in idps_external.tf), so
+# they appear on the customer login but never the internal one. The stack
+# provisions cleanly with none configured.
+variable "external_azure_client_id" {
+  type        = string
+  default     = ""
+  description = "Multi-tenant Entra app client id for the external org (empty = skip)."
+}
+variable "external_azure_client_secret" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Multi-tenant Entra client secret for the external org."
+}
+variable "google_client_id" {
+  type        = string
+  default     = ""
+  description = "Google OAuth client id for the external org (empty = skip)."
+}
+variable "google_client_secret" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Google OAuth client secret for the external org."
+}
+# Generic OAuth2 / OIDC providers (data-driven — add any number without new TF).
+# Each is a JSON map keyed by a slug; the value carries name, credentials and
+# endpoints. Use OAuth2 for providers like Facebook, WeChat, Naver, QQ, Weibo;
+# OIDC for OpenID-compliant ones like LINE, KakaoTalk. A ready-to-use catalog of
+# endpoints lives in terraform.tfvars.example + docs/identity-providers.md.
+# NOTE: these JSON blobs carry client secrets — keep .env at chmod 600.
+variable "external_oauth_idps" {
+  type        = string
+  default     = "{}"
+  description = <<-EOT
+    JSON map of generic OAuth2 IdPs for the external org, e.g.
+    {"facebook":{"name":"Facebook","client_id":"…","client_secret":"…",
+    "authorization_endpoint":"…","token_endpoint":"…","user_endpoint":"…",
+    "id_attribute":"id","scopes":["email","public_profile"]}}
+  EOT
+}
+variable "external_oidc_idps" {
+  type        = string
+  default     = "{}"
+  description = <<-EOT
+    JSON map of generic OIDC IdPs for the external org, e.g.
+    {"line":{"name":"LINE","client_id":"…","client_secret":"…",
+    "issuer":"https://access.line.me","scopes":["openid","profile","email"]}}
+  EOT
 }
 
 # ── Applications ─────────────────────────────────────────────────────────────
