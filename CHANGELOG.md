@@ -1,3 +1,9 @@
+## [0.2.0](https://github.com/bauer-group/CS-IAM/compare/v0.1.3...v0.2.0) (2026-06-07)
+
+### 🚀 Features
+
+* **stack:** baked Zitadel config in the image, moved key under /data ([2ca6b22](https://github.com/bauer-group/CS-IAM/commit/2ca6b22f77a34fc46b9f3fefbae94836055aa4ea))
+
 ## [0.1.3](https://github.com/bauer-group/CS-IAM/compare/v0.1.2...v0.1.3) (2026-06-07)
 
 ### 🐛 Bug Fixes
