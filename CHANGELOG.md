@@ -1,3 +1,9 @@
+## [0.4.1](https://github.com/bauer-group/CS-IAM/compare/v0.4.0...v0.4.1) (2026-06-07)
+
+### 🐛 Bug Fixes
+
+* **branding:** corrected login/console colours to the brand palette ([112d244](https://github.com/bauer-group/CS-IAM/commit/112d2441c1aee446de59080962b488b374aef212)), closes [#1f4e79](https://github.com/bauer-group/CS-IAM/issues/1f4e79) [#FF8500](https://github.com/bauer-group/CS-IAM/issues/FF8500) [#FB923](https://github.com/bauer-group/CS-IAM/issues/FB923) [#231F1](https://github.com/bauer-group/CS-IAM/issues/231F1) [#F9F8F6](https://github.com/bauer-group/CS-IAM/issues/F9F8F6) [#EF4444](https://github.com/bauer-group/CS-IAM/issues/EF4444)
+
 ## [0.4.0](https://github.com/bauer-group/CS-IAM/compare/v0.3.0...v0.4.0) (2026-06-07)
 
 ### 🚀 Features
