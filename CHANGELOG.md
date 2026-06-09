@@ -1,3 +1,9 @@
+## [0.7.3](https://github.com/bauer-group/CS-IAM/compare/v0.7.2...v0.7.3) (2026-06-09)
+
+### ♻️ Refactoring
+
+* **idp:** renamed Google IdP vars to the EXTERNAL_ prefix ([b965368](https://github.com/bauer-group/CS-IAM/commit/b9653688d1699a68fe675601182bc8003b1cc0f7))
+
 ## [0.7.2](https://github.com/bauer-group/CS-IAM/compare/v0.7.1...v0.7.2) (2026-06-09)
 
 ### 🐛 Bug Fixes
