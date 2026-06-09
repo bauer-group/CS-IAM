@@ -47,6 +47,7 @@ LABEL org.opencontainers.image.vendor="BAUER GROUP"
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.source="https://github.com/bauer-group/CS-IAM"
 LABEL org.opencontainers.image.base.name="${LOGIN_BASE_IMAGE}:${LOGIN_BASE_VERSION}"
+LABEL org.opencontainers.image.version="0.0.0"
 
 # ---------------------------------------------------------------------------
 # Branding overlay
