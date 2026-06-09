@@ -39,12 +39,12 @@ resource "zitadel_org_idp_azure_ad" "external_entra" {
 
 # ── Google ───────────────────────────────────────────────────────────────────
 resource "zitadel_org_idp_google" "external_google" {
-  count = var.google_client_id != "" && var.google_client_secret != "" ? 1 : 0
+  count = var.external_google_client_id != "" && var.external_google_client_secret != "" ? 1 : 0
 
   org_id        = zitadel_org.external.id
   name          = "Google"
-  client_id     = var.google_client_id
-  client_secret = var.google_client_secret
+  client_id     = var.external_google_client_id
+  client_secret = var.external_google_client_secret
   scopes        = ["openid", "profile", "email"]
 
   is_linking_allowed  = true

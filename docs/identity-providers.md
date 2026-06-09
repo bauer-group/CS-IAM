@@ -51,7 +51,7 @@ Two are first-class (native Zitadel templates) — set their `.env` creds:
 | Provider | `.env` keys |
 |----------|-------------|
 | Entra **multi-tenant** | `EXTERNAL_AZURE_CLIENT_ID` / `EXTERNAL_AZURE_CLIENT_SECRET` |
-| Google | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` |
+| Google | `EXTERNAL_GOOGLE_CLIENT_ID` / `EXTERNAL_GOOGLE_CLIENT_SECRET` |
 
 Zitadel also has **native templates** for GitHub, GitLab and Apple — these can
 be wired as first-class resources exactly like Google (`org_idp_github` etc.)

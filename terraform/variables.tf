@@ -111,12 +111,12 @@ variable "external_azure_client_secret" {
   sensitive   = true
   description = "Multi-tenant Entra client secret for the external org."
 }
-variable "google_client_id" {
+variable "external_google_client_id" {
   type        = string
   default     = ""
   description = "Google OAuth client id for the external org (empty = skip)."
 }
-variable "google_client_secret" {
+variable "external_google_client_secret" {
   type        = string
   default     = ""
   sensitive   = true
