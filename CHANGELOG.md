@@ -1,3 +1,9 @@
+## [0.6.0](https://github.com/bauer-group/CS-IAM/compare/v0.5.1...v0.6.0) (2026-06-09)
+
+### 🚀 Features
+
+* **login:** switched login image to the EP-Zitadel branded fork ([1bf2c5c](https://github.com/bauer-group/CS-IAM/commit/1bf2c5cc069b94555034814f63c69c134b9cb3d7))
+
 ## [0.5.1](https://github.com/bauer-group/CS-IAM/compare/v0.5.0...v0.5.1) (2026-06-08)
 
 ## [0.5.0](https://github.com/bauer-group/CS-IAM/compare/v0.4.1...v0.5.0) (2026-06-07)
