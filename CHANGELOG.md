@@ -1,3 +1,9 @@
+## [0.7.2](https://github.com/bauer-group/CS-IAM/compare/v0.7.1...v0.7.2) (2026-06-09)
+
+### 🐛 Bug Fixes
+
+* **login:** floated the overlay base default to latest ([a8d8784](https://github.com/bauer-group/CS-IAM/commit/a8d878488b5a513186c9384c2942848a3bee76cc)), closes [#12144](https://github.com/bauer-group/CS-IAM/issues/12144)
+
 ## [0.7.1](https://github.com/bauer-group/CS-IAM/compare/v0.7.0...v0.7.1) (2026-06-09)
 
 ### 🐛 Bug Fixes
