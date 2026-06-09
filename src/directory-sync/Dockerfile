@@ -61,7 +61,7 @@ LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.source="https://github.com/bauer-group/CS-IAM"
 LABEL org.opencontainers.image.url="https://github.com/bauer-group/CS-IAM"
 LABEL org.opencontainers.image.documentation="https://github.com/bauer-group/CS-IAM#readme"
-LABEL org.opencontainers.image.version="0.8.0"
+LABEL org.opencontainers.image.version="0.9.0"
 
 # ---------------------------------------------------------------------------
 # Runtime Dependencies + Non-root User
