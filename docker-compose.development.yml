@@ -162,7 +162,7 @@ services:
       context: ./src/login
       args:
         LOGIN_BASE_IMAGE: ${LOGIN_BASE_IMAGE:-ghcr.io/bauer-group/ep-zitadel/zitadel-login}
-        LOGIN_BASE_VERSION: ${LOGIN_BASE_VERSION:-4.15.0}
+        LOGIN_BASE_VERSION: ${LOGIN_BASE_VERSION:-latest}
     container_name: ${STACK_NAME:-iam}_LOGIN
     restart: unless-stopped
     user: "1000:1000"
