@@ -1,3 +1,9 @@
+## [0.8.0](https://github.com/bauer-group/CS-IAM/compare/v0.7.3...v0.8.0) (2026-06-09)
+
+### 🚀 Features
+
+* **login:** added the BAUER GROUP favicon set to the login overlay ([d29d007](https://github.com/bauer-group/CS-IAM/commit/d29d007116dc6b78e99490b906dc644f9ee22587))
+
 ## [0.7.3](https://github.com/bauer-group/CS-IAM/compare/v0.7.2...v0.7.3) (2026-06-09)
 
 ### ♻️ Refactoring
