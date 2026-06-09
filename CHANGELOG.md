@@ -1,3 +1,9 @@
+## [0.7.1](https://github.com/bauer-group/CS-IAM/compare/v0.7.0...v0.7.1) (2026-06-09)
+
+### 🐛 Bug Fixes
+
+* **login:** floated base images on latest to track upstream fixes ([6a446a8](https://github.com/bauer-group/CS-IAM/commit/6a446a8f336966e6102e1cb77cbb5a03859dad4e)), closes [#12144](https://github.com/bauer-group/CS-IAM/issues/12144)
+
 ## [0.7.0](https://github.com/bauer-group/CS-IAM/compare/v0.6.0...v0.7.0) (2026-06-09)
 
 ### 🚀 Features
