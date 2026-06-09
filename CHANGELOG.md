@@ -1,3 +1,9 @@
+## [0.7.0](https://github.com/bauer-group/CS-IAM/compare/v0.6.0...v0.7.0) (2026-06-09)
+
+### 🚀 Features
+
+* **login:** added a branding overlay image atop the EP-Zitadel base ([18868c1](https://github.com/bauer-group/CS-IAM/commit/18868c12cbcd79b6d786a8971caf0f0da2c7fa21))
+
 ## [0.6.0](https://github.com/bauer-group/CS-IAM/compare/v0.5.1...v0.6.0) (2026-06-09)
 
 ### 🚀 Features
