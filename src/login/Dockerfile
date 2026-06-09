@@ -22,8 +22,14 @@
 # Documentation: https://github.com/bauer-group/CS-IAM
 # ===============================================================================
 
+# Floats on the EP-Zitadel base `latest` (matches the sibling stacks + the core
+# wrapper). The base-image monitor watches `zitadel-login:latest`'s digest and
+# rebuilds the overlay when EP publishes a new login image. CI builds with this
+# default (it passes no build-arg); compose overrides it from LOGIN_BASE_VERSION
+# in .env. Override with a fixed tag (--build-arg LOGIN_BASE_VERSION=4.15.1) for
+# a reproducible pin.
 ARG LOGIN_BASE_IMAGE=ghcr.io/bauer-group/ep-zitadel/zitadel-login
-ARG LOGIN_BASE_VERSION=4.15.0
+ARG LOGIN_BASE_VERSION=latest
 
 FROM ${LOGIN_BASE_IMAGE}:${LOGIN_BASE_VERSION}
 
