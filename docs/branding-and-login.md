@@ -83,13 +83,26 @@ the full workspace, so we maintain a **fork of zitadel/zitadel**:
   (`apps/login/src/components/idps/sign-in-with-generic.tsx` + `simple-icons`).
 - CI (`.github/workflows/cs-iam-login.yml`) builds `cs-iam-login.Dockerfile`
   (self-contained multi-stage) and publishes
-  **`ghcr.io/bauer-group/ep-zitadel/zitadel-login`** (`4.15.0`/`stable`/`latest`).
+  **`ghcr.io/bauer-group/ep-zitadel/zitadel-login`** (`4.15.1`/`stable`/`latest`).
+  `production` is a rolling **"release tag + our one-file patch"** line (based on
+  the `cs-iam-login.base-version` tag, not on upstream `main`), so its large
+  ahead/behind count vs `main` is the tag↔main divergence — cosmetic, not drift.
 - `feature/idp-brand-logos` holds the clean, upstream-PR-quality change (component
-  + unit test, no infra) — the candidate we can offer back to zitadel.
-- `upstream-bump.yml` (weekly + dispatch) detects new zitadel releases and opens
-  a `feature/bump-<tag>` PR re-applying the branding; merging republishes the
-  base image. Keep the CS-IAM core (`BASE_ZITADEL_VERSION`) + `LOGIN_BASE_VERSION`
-  in lockstep with it.
+  + unit test, no infra), based on upstream **`main`** so a PR shows only our 4-file
+  change — the candidate we can offer back to zitadel.
+- `upstream-bump.yml` (daily + dispatch) is the **automatic maintenance**: it
+  detects new zitadel releases, re-applies the branding on the new tag, **builds +
+  publishes** the refreshed base image, and only then force-rolls `production` to
+  it (build-as-gate — a release that breaks our patch fails the build and nothing
+  is adopted), publishing `…/zitadel-login:latest` (+ the version tag).
+
+CS-IAM **floats on `latest`** for both layers, like the sibling stacks: the core
+wrapper (`src/zitadel`, `BASE_ZITADEL_VERSION=latest`) tracks `zitadel:latest`, and
+the overlay (`src/login`, `LOGIN_BASE_VERSION=latest`) tracks
+`ep-zitadel-login:latest`. The **base-image monitor** watches the digest of each
+`latest` tag and triggers a `chore(deps)` rebuild when it moves — so when upstream
+releases (core) or the EP bump publishes (login), CS-IAM rebuilds automatically.
+Pin a fixed tag in `.env` only if you need a reproducible freeze.
 
 Only the core `zitadel` image stays official (wrapped by `src/zitadel`); we do
 not rebuild the Go core.

@@ -26,10 +26,13 @@
 # ---------------------------------------------------------------------------
 # Build Arguments
 # ---------------------------------------------------------------------------
-# Pinned minor (avoids a surprise major jump). The base-image monitor rebuilds
-# when this tag's digest moves; Dependabot proposes tag bumps.
+# Floats on the upstream `latest` release tag (matches the sibling stacks). The
+# base-image monitor watches `zitadel:latest`'s digest and triggers a rebuild
+# when it moves, so the wrapper re-pulls the new release automatically. Override
+# with a fixed tag (--build-arg BASE_ZITADEL_VERSION=v4.15.1) for a reproducible
+# pin. PostgreSQL 18 needs Zitadel >= v4.11.0 — `latest` always satisfies that.
 ARG BASE_ZITADEL_IMAGE=ghcr.io/zitadel/zitadel
-ARG BASE_ZITADEL_VERSION=v4.15.0
+ARG BASE_ZITADEL_VERSION=latest
 
 # ---------------------------------------------------------------------------
 # Base Image

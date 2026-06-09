@@ -5,16 +5,16 @@
     {
       "name": "zitadel",
       "image": "ghcr.io/zitadel/zitadel",
-      "tag": "v4.15.0",
-      "variable": "ZITADEL_DIGEST",
-      "description": "Zitadel OIDC/IAM application image (PostgreSQL 18 needs >= v4.11.0)"
+      "tag": "latest",
+      "variable": "ZITADEL_LATEST_DIGEST",
+      "description": "Zitadel OIDC/IAM core image — floating latest release (PostgreSQL 18 needs >= v4.11.0); src/zitadel wrapper rebuilds when the digest moves"
     },
     {
       "name": "ep-zitadel-login",
       "image": "ghcr.io/bauer-group/ep-zitadel/zitadel-login",
-      "tag": "4.15.0",
-      "variable": "EP_ZITADEL_LOGIN_DIGEST",
-      "description": "Base for the src/login branding overlay (EP-Zitadel fork; LOGIN_BASE_VERSION)"
+      "tag": "latest",
+      "variable": "EP_ZITADEL_LOGIN_LATEST_DIGEST",
+      "description": "Base for the src/login branding overlay (EP-Zitadel fork) — floating latest; overlay rebuilds when EP publishes a new login image"
     },
     {
       "name": "postgres",
