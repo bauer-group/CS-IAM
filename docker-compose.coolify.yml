@@ -123,7 +123,7 @@ services:
 
   # ── Login v2 (official hosted login UI; branded via LabelPolicy + theme) ────
   login:
-    image: ${LOGIN_IMAGE:-ghcr.io/bauer-group/ep-zitadel/zitadel-login}:${LOGIN_VERSION:-4.15.0}
+    image: ${LOGIN_IMAGE:-ghcr.io/bauer-group/cs-iam/login}:${LOGIN_VERSION:-latest}
     restart: unless-stopped
     user: "1000:1000"
     <<: *logging

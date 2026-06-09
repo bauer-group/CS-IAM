@@ -10,6 +10,13 @@
       "description": "Zitadel OIDC/IAM application image (PostgreSQL 18 needs >= v4.11.0)"
     },
     {
+      "name": "ep-zitadel-login",
+      "image": "ghcr.io/bauer-group/ep-zitadel/zitadel-login",
+      "tag": "4.15.0",
+      "variable": "EP_ZITADEL_LOGIN_DIGEST",
+      "description": "Base for the src/login branding overlay (EP-Zitadel fork; LOGIN_BASE_VERSION)"
+    },
+    {
       "name": "postgres",
       "image": "postgres",
       "tag": "18-alpine",

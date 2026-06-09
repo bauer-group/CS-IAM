@@ -157,7 +157,12 @@ services:
   # Waits for the machine-key PAT to appear, then serves the login at
   # /ui/v2/login. Runs with gid 1000 to read the group-private PAT (0750 dir).
   login:
-    image: ${LOGIN_IMAGE:-ghcr.io/bauer-group/ep-zitadel/zitadel-login}:${LOGIN_VERSION:-4.15.0}
+    image: ${LOGIN_IMAGE:-ghcr.io/bauer-group/cs-iam/login}:${LOGIN_VERSION:-latest}
+    build:
+      context: ./src/login
+      args:
+        LOGIN_BASE_IMAGE: ${LOGIN_BASE_IMAGE:-ghcr.io/bauer-group/ep-zitadel/zitadel-login}
+        LOGIN_BASE_VERSION: ${LOGIN_BASE_VERSION:-4.15.0}
     container_name: ${STACK_NAME:-iam}_LOGIN
     restart: unless-stopped
     user: "1000:1000"

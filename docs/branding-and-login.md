@@ -29,9 +29,11 @@ uploaded they flow into the Console and Login v2 automatically.
 
 - Enabled on the instance via `ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED`
   + `ZITADEL_OIDC_DEFAULTLOGINURLV2` (set in the compose files).
-- Served by the official `ghcr.io/zitadel/zitadel-login` image (version-matched
-  to the core) at **`/ui/v2/login`** — same domain via Traefik in prod, host
-  port `IAM_LOGIN_PORT` in dev.
+- Served at **`/ui/v2/login`** (same domain via Traefik in prod, host port
+  `IAM_LOGIN_PORT` in dev) by a **two-layer image**: the EP-Zitadel fork base
+  (`LOGIN_BASE_IMAGE`/`LOGIN_BASE_VERSION` — per-IdP brand logos) + the CS-IAM
+  branding overlay (`src/login` → `ghcr.io/bauer-group/cs-iam/login`,
+  `LOGIN_IMAGE`/`LOGIN_VERSION`). See "Custom branding overlay" below.
 - Auth: reads the FirstInstance machine-key **PAT** from the shared volume
   (`ZITADEL_SERVICE_USER_TOKEN_FILE`); the container blocks until that file
   exists. Runs with gid 1000 to read the group-private key.
@@ -82,10 +84,26 @@ the full workspace, so we maintain a **fork of zitadel/zitadel**:
 - CI (`.github/workflows/cs-iam-login.yml`) builds `cs-iam-login.Dockerfile`
   (self-contained multi-stage) and publishes
   **`ghcr.io/bauer-group/ep-zitadel/zitadel-login`** (`4.15.0`/`stable`/`latest`).
-- CS-IAM consumes it via `LOGIN_IMAGE` — only the image source changed; all the
-  wiring above (feature flag, container, Traefik route, PAT, theming,
-  translations) is unchanged.
+- `feature/idp-brand-logos` holds the clean, upstream-PR-quality change (component
+  + unit test, no infra) — the candidate we can offer back to zitadel.
+- `upstream-bump.yml` (weekly + dispatch) detects new zitadel releases and opens
+  a `feature/bump-<tag>` PR re-applying the branding; merging republishes the
+  base image. Keep the CS-IAM core (`BASE_ZITADEL_VERSION`) + `LOGIN_BASE_VERSION`
+  in lockstep with it.
 
 Only the core `zitadel` image stays official (wrapped by `src/zitadel`); we do
-not rebuild the Go core. Maintenance: rebase `production` onto a new upstream
-tag per release, then bump `LOGIN_VERSION`.
+not rebuild the Go core.
+
+## Custom branding overlay (favicon / icons / backgrounds)
+
+`src/login` is a thin image **`FROM` the EP-Zitadel base** that overlays static
+assets onto the served `/app/public` tree → `ghcr.io/bauer-group/cs-iam/login`
+(the image the `login` service actually runs). Drop assets into
+`src/login/branding/public/<path>` to override the same-path upstream asset:
+
+- `branding/public/favicon/…` — browser tab + app icons
+- `branding/public/images/…` — backgrounds (ref via `NEXT_PUBLIC_THEME_BACKGROUND_IMAGE=/images/…`)
+
+Empty by default = passthrough. The **main logo + colors are runtime** (Zitadel
+LabelPolicy / Assets — not baked here). No-rebuild alternative: mount custom
+assets over `/app/public/favicon` at runtime. See `src/login/branding/README.md`.

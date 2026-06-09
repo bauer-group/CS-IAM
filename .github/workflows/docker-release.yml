@@ -131,6 +131,48 @@ jobs:
     secrets: inherit
 
   # ============================================
+  # login (branding overlay; FROM the EP-Zitadel base login image)
+  # ============================================
+  docker-build-login-release:
+    name: 🐳 Build & Push login
+    needs: release
+    if: needs.release.outputs.release-created == 'true'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      deploy-environment: 'production'
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-IAM/login'
+      release-version: ${{ needs.release.outputs.version }}
+      image-tags: 'stable'
+      auto-tags: true
+      latest-tag: true
+      dockerfile-path: './src/login/Dockerfile'
+      docker-context: './src/login'
+      platforms: 'linux/amd64'
+      push: true
+      generate-sbom: true
+      security-scan: false
+      security-fail-on: 'CRITICAL'
+    secrets: inherit
+
+  docker-build-login-pr:
+    name: 🔨 Validate login Build (PR)
+    needs: [validate-compose, validate-scripts, validate-terraform]
+    if: github.event_name == 'pull_request'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-IAM/login'
+      auto-tags: true
+      dockerfile-path: './src/login/Dockerfile'
+      docker-context: './src/login'
+      platforms: 'linux/amd64'
+      push: false
+      security-scan: false
+      security-fail-on: 'CRITICAL'
+    secrets: inherit
+
+  # ============================================
   # provisioner (OpenTofu IaC; build-context = repo root)
   # ============================================
   docker-build-provisioner-release:
