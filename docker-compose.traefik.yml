@@ -163,7 +163,7 @@ services:
   # the catch-all Zitadel router). Reads the machine-key PAT (gid 1000); calls
   # Zitadel internally with a Host override so the request hits the instance.
   login:
-    image: ${LOGIN_IMAGE:-ghcr.io/zitadel/zitadel-login}:${LOGIN_VERSION:-v4.15.0}
+    image: ${LOGIN_IMAGE:-ghcr.io/bauer-group/ep-zitadel/zitadel-login}:${LOGIN_VERSION:-4.15.0}
     container_name: ${STACK_NAME:-iam}_LOGIN
     restart: unless-stopped
     user: "1000:1000"

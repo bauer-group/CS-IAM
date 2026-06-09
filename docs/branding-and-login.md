@@ -59,22 +59,33 @@ texts, use the `SetHostedLoginTranslation` settings API per BCP-47 locale
 (`en`, `de`, `fr-CH`, …) at instance or org level (permission `iam.policy.write`).
 The translation JSON mirrors the upstream `locales/<lang>.json`.
 
-## IdP provider button logos — native vs generic
+## IdP provider button logos — real logos for generic providers
 
 | Provider type | Button on the login |
 |---------------|---------------------|
-| **Native** (Microsoft/Entra, Google, GitHub, GitLab, Apple) | real brand logo (bundled) |
-| **Generic** OAuth2/OIDC (Facebook, LINE, WeChat, KakaoTalk, X, TikTok, LinkedIn, Naver, …) | generic icon + the configured name — **no brand logo** |
+| **Native** (Microsoft/Entra, Google, GitHub, GitLab, Apple) | real brand logo (upstream) |
+| **Generic** OAuth2/OIDC (Facebook, LINE, WeChat, KakaoTalk, X, TikTok, Naver, QQ, Weibo, VK, Zalo) | **real brand logo** (our fork) |
+| Unknown / other generic | name-only fallback (unchanged) |
 
-There is no per-IdP logo field for generic providers, so real logos for the
-social/Asian providers require editing the login app's IdP-button rendering.
+Upstream Login v2 renders generic OAuth2/OIDC providers as name-only buttons.
+Our fork adds the real brand glyphs (matched by IdP display name via
+`simple-icons`). LinkedIn is name-only — `simple-icons` removed that icon.
 
-### Phase 2 — fork for per-IdP logos (planned)
+### The fork — `bauer-group/EP-Zitadel`
 
-`apps/login` is a **pnpm + turbo monorepo** app (`@zitadel/login` +
-`@zitadel/client` + `@zitadel/proto`, Next.js standalone build). To deliver the
-generic-provider logos we vendor that subset, add a name/type → logo-asset map
-plus the SVGs, build the image **in CI**, and swap `LOGIN_IMAGE` to the built
-image. All the wiring above (feature flags, container, Traefik route, PAT,
-theming, translations) is reused unchanged — only the image swaps. Trade-off:
-an upstream rebase per Zitadel release.
+`apps/login` is a pnpm + nx monorepo app (`@zitadel/login` + `@zitadel/client`
++ `@zitadel/proto`, Next.js standalone, buf proto codegen). Building it needs
+the full workspace, so we maintain a **fork of zitadel/zitadel**:
+
+- `main` tracks upstream; `production` (default) = our customization
+  (`apps/login/src/components/idps/sign-in-with-generic.tsx` + `simple-icons`).
+- CI (`.github/workflows/cs-iam-login.yml`) builds `cs-iam-login.Dockerfile`
+  (self-contained multi-stage) and publishes
+  **`ghcr.io/bauer-group/ep-zitadel/zitadel-login`** (`4.15.0`/`stable`/`latest`).
+- CS-IAM consumes it via `LOGIN_IMAGE` — only the image source changed; all the
+  wiring above (feature flag, container, Traefik route, PAT, theming,
+  translations) is unchanged.
+
+Only the core `zitadel` image stays official (wrapped by `src/zitadel`); we do
+not rebuild the Go core. Maintenance: rebase `production` onto a new upstream
+tag per release, then bump `LOGIN_VERSION`.
