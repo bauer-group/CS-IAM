@@ -19,11 +19,26 @@ apply to both the Console and the login:
 > the Console (Branding) or via the API — re-running setup is idempotent and
 > won't overwrite an existing policy.
 
-## Logo, icon & font
+## Logo, icon & font (automated — IaC)
 
-These are **binary assets**, not config tokens — upload them via the Assets API
-(or Console → Branding): light/dark logo, favicon/icon, and a custom font. Once
-uploaded they flow into the Console and Login v2 automatically.
+The light/dark **logo**, **icon** and optional **font** are binary `LabelPolicy`
+assets (stored in Postgres, served at runtime — not config tokens, and not
+something the Terraform provider can upload). They are branded **automatically**
+by the one-shot **`zitadel-brand`** service:
+
+- Assets live in the repo at **`src/directory-sync/branding/`** (`logo-light.*`,
+  `logo-dark.*`, `icon.*`, optional `icon-dark.*` / `font.*`) and are baked into
+  the toolkit image at `/app/branding`.
+- On deploy (after `provisioner`), `zitadel-brand` runs the toolkit's `brand`
+  command: it uploads each present asset via the **Assets API**
+  (`/assets/v1/instance/policy/label/{logo,logo/dark,icon,icon/dark,font}`) using
+  the FirstInstance machine key, then **activates** the policy
+  (`/admin/v1/policies/label/_activate`). Idempotent — re-runs simply re-upload.
+- Toggle with `BRANDING_ENABLED` (default `true`). Swap the files (or bind-mount
+  over `/app/branding`) to rebrand; colours come from `defaults.yaml`.
+
+> **Manual fallback:** with `BRANDING_ENABLED=false`, upload the same assets once
+> via **Console → Branding** (persists in the DB across redeploys), then *Activate*.
 
 ## Login v2 (the `login` service)
 
@@ -114,9 +129,25 @@ assets onto the served `/app/public` tree → `ghcr.io/bauer-group/cs-iam/login`
 (the image the `login` service actually runs). Drop assets into
 `src/login/branding/public/<path>` to override the same-path upstream asset:
 
-- `branding/public/favicon/…` — browser tab + app icons
-- `branding/public/images/…` — backgrounds (ref via `NEXT_PUBLIC_THEME_BACKGROUND_IMAGE=/images/…`)
+- `branding/public/favicon/…` — browser tab + app icons (**branded**: the
+  BAUER GROUP square logo, generated at all sizes + `site.webmanifest`).
+- `branding/public/images/login-background.jpg` — the login-page background
+  (brand-black + subtle logo watermark), wired via `LOGIN_BACKGROUND_IMAGE` →
+  `NEXT_PUBLIC_THEME_BACKGROUND_IMAGE`. Set `LOGIN_BACKGROUND_IMAGE=` (empty) for none.
 
-Empty by default = passthrough. The **main logo + colors are runtime** (Zitadel
-LabelPolicy / Assets — not baked here). No-rebuild alternative: mount custom
-assets over `/app/public/favicon` at runtime. See `src/login/branding/README.md`.
+The **main logo/icon/font are NOT here** — they're runtime `LabelPolicy` assets
+uploaded automatically by `zitadel-brand` (see "Logo, icon & font" above), and
+**colours** come from `defaults.yaml`. The overlay is only for instance-wide
+**static** files (favicon, background) that are identical for every org.
+No-rebuild alternative: bind-mount custom assets over `/app/public/...` at runtime.
+See `src/login/branding/README.md`.
+
+## Branding at a glance — which asset lives where
+
+| Asset | Mechanism | Source in repo |
+|-------|-----------|----------------|
+| Colours (light/dark) | `LabelPolicy` in `defaults.yaml` (baked, applied at setup) | `config/zitadel/defaults.yaml` |
+| Main logo (light/dark) + icon + font | Assets API, auto-uploaded by `zitadel-brand` | `src/directory-sync/branding/` |
+| Favicon / tab + PWA icons | overlay (static, baked into `cs-iam/login`) | `src/login/branding/public/favicon/` |
+| Login-page background | overlay + `LOGIN_BACKGROUND_IMAGE` | `src/login/branding/public/images/` |
+| Per-IdP provider button logos | the EP-Zitadel fork (app code) | `bauer-group/EP-Zitadel` |

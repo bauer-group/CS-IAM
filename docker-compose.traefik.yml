@@ -178,6 +178,8 @@ services:
       NEXT_PUBLIC_THEME_ROUNDNESS: ${LOGIN_THEME_ROUNDNESS:-mid}
       NEXT_PUBLIC_THEME_SPACING: ${LOGIN_THEME_SPACING:-regular}
       NEXT_PUBLIC_THEME_APPEARANCE: ${LOGIN_THEME_APPEARANCE:-material}
+      # Login-page background (shipped in the overlay at /images). Empty = none.
+      NEXT_PUBLIC_THEME_BACKGROUND_IMAGE: ${LOGIN_BACKGROUND_IMAGE:-/ui/v2/login/images/login-background.jpg}
     volumes:
       - machinekey:/data/machinekey:ro
     depends_on:
@@ -267,6 +269,35 @@ services:
       SYNC_LOG_FORMAT: ${SYNC_LOG_FORMAT:-console}
     volumes:
       - sync-data:/data
+      - machinekey:/data/machinekey:ro
+    depends_on:
+      provisioner:
+        condition: service_completed_successfully
+    networks:
+      - local
+      - proxy
+
+  # ── Login branding (one-shot: upload logo/icon/font to the LabelPolicy) ─────
+  # Runs `brand` once after provisioning: pushes the baked-in logo/icon/font to
+  # the instance LabelPolicy via the Assets API and activates it (colours come
+  # from the baked DefaultInstance config). Idempotent; exits on completion.
+  zitadel-brand:
+    image: ${DIRECTORY_SYNC_IMAGE:-ghcr.io/bauer-group/cs-iam/directory-sync}:${DIRECTORY_SYNC_VERSION:-latest}
+    container_name: ${STACK_NAME:-iam}_BRAND
+    restart: "no"
+    command: ["brand"]
+    user: "1001:1000"
+    <<: *logging
+    environment:
+      TZ: ${TIME_ZONE:-Etc/UTC}
+      ZITADEL_DOMAIN: ${IAM_HOSTNAME}
+      ZITADEL_PORT: 443
+      ZITADEL_INSECURE: "false"
+      ZITADEL_JWT_PROFILE_FILE: /data/machinekey/iam-admin.json
+      ZITADEL_WAIT_TIMEOUT: ${SYNC_WAIT_TIMEOUT:-180}
+      BRANDING_ENABLED: ${BRANDING_ENABLED:-true}
+      SYNC_LOG_FORMAT: ${SYNC_LOG_FORMAT:-console}
+    volumes:
       - machinekey:/data/machinekey:ro
     depends_on:
       provisioner:

@@ -81,6 +81,9 @@ RUN rm /tmp/_test_passed
 # ---------------------------------------------------------------------------
 WORKDIR /app
 COPY --chown=appsync:appsync src/ ./src/
+# Login v2 branding assets (logo/icon/font) uploaded to the LabelPolicy by the
+# `brand` command. Swap these files (or bind-mount over /app/branding) to rebrand.
+COPY --chown=appsync:appsync branding/ ./branding/
 ENV PYTHONPATH=/app/src \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1

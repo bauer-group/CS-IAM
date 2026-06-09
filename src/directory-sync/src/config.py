@@ -38,6 +38,13 @@ class Settings(BaseSettings):
     sync_project_name: str = Field(default="BAUER GROUP")
     data_dir: str = Field(default="/data", description="Delta-token + report storage")
 
+    # ── Branding (Login v2 LabelPolicy logo/icon/font) ────────────────────
+    # The `brand` one-shot uploads any assets present in branding_dir to the
+    # instance LabelPolicy and activates it. Assets are baked into the image at
+    # /app/branding (logo-light.*, logo-dark.*, icon.*, icon-dark.*, font.*).
+    branding_enabled: bool = Field(default=True)
+    branding_dir: str = Field(default="/app/branding")
+
     # ── Logging ───────────────────────────────────────────────────────────
     sync_log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(default="INFO")
     sync_log_format: Literal["console", "json"] = Field(default="console")

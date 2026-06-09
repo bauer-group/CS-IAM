@@ -85,6 +85,34 @@ class ZitadelClient:
             h.update(extra)
         return h
 
+    # ── branding (Login v2 LabelPolicy assets) ─────────────────────────────
+    def upload_label_asset(self, path: str, filename: str, content: bytes, content_type: str) -> None:
+        """Upload a binary asset to the instance LabelPolicy preview.
+
+        `path` is the asset suffix: "logo", "logo/dark", "icon", "icon/dark",
+        "font" (verified against the fork's asset.yaml; perm iam.policy.write).
+        Multipart, like the user-avatar upload.
+        """
+        resp = self._client.post(
+            f"/assets/v1/instance/policy/label/{path}",
+            headers={"Authorization": f"Bearer {self.token()}"},
+            files={"file": (filename, content, content_type)},
+        )
+        if resp.status_code not in (200, 201):
+            raise ZitadelError(
+                f"label asset upload '{path}' failed ({resp.status_code}): {resp.text[:200]}"
+            )
+
+    def activate_label_policy(self) -> None:
+        """Promote the instance LabelPolicy preview (the uploaded assets) to active."""
+        resp = self._client.post(
+            "/admin/v1/policies/label/_activate", headers=self._headers(), json={}
+        )
+        if resp.status_code not in (200, 201):
+            raise ZitadelError(
+                f"label policy activate failed ({resp.status_code}): {resp.text[:200]}"
+            )
+
     # ── users ─────────────────────────────────────────────────────────────
     def find_user_id_by_email(self, email: str) -> Optional[str]:
         resp = self._client.post(

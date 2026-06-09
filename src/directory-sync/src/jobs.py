@@ -25,6 +25,55 @@ from zitadel import ZitadelClient
 
 _SAFE_RE = re.compile(r"[^a-zA-Z0-9._:-]+")
 
+# ── Login v2 branding (LabelPolicy logo / icon / font) ────────────────────────
+# Logical asset stem (file name in branding_dir) → its instance LabelPolicy
+# upload path. Drop a file named like the stem and it gets uploaded; missing
+# ones are skipped. Colours come from the baked DefaultInstance config.
+_BRAND_ASSETS = [
+    ("logo-light", "logo"),
+    ("logo-dark", "logo/dark"),
+    ("icon", "icon"),
+    ("icon-dark", "icon/dark"),
+    ("font", "font"),
+]
+_BRAND_CONTENT_TYPES = {
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".ico": "image/x-icon",
+    ".woff2": "font/woff2",
+    ".woff": "font/woff",
+    ".ttf": "font/ttf",
+    ".otf": "font/otf",
+}
+
+
+def brand(settings: Settings, zit: ZitadelClient) -> None:
+    """Upload the Login v2 branding assets (logo/icon/font) to the instance
+    LabelPolicy and activate it. Idempotent — re-running simply re-uploads."""
+    if not settings.branding_enabled:
+        logger.info("BRANDING_ENABLED=false — skipping login branding")
+        return
+    base = Path(settings.branding_dir)
+    uploaded = 0
+    for stem, path in _BRAND_ASSETS:
+        match = next(
+            (p for p in sorted(base.glob(f"{stem}.*")) if p.suffix.lower() in _BRAND_CONTENT_TYPES),
+            None,
+        )
+        if match is None:
+            continue
+        content_type = _BRAND_CONTENT_TYPES[match.suffix.lower()]
+        zit.upload_label_asset(path, match.name, match.read_bytes(), content_type)
+        logger.info("branding: uploaded %s -> label/%s (%s)", match.name, path, content_type)
+        uploaded += 1
+    if uploaded == 0:
+        logger.warning("branding: no assets found in %s — nothing to upload", base)
+        return
+    zit.activate_label_policy()
+    logger.info("branding: activated instance LabelPolicy with %d asset(s)", uploaded)
+
 
 def role_key_for_group(prefix: str, group: dict) -> str:
     """Stable, namespaced role key for an Entra group (uses the immutable id)."""

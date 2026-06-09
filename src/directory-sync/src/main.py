@@ -26,7 +26,7 @@ from graph import GraphClient  # noqa: E402
 from logging_setup import logger, print_banner, setup_logging  # noqa: E402
 from zitadel import ZitadelClient  # noqa: E402
 
-_COMMANDS = {"import-users", "sync-profiles", "sync-groups", "discover-subject-keys"}
+_COMMANDS = {"import-users", "sync-profiles", "sync-groups", "discover-subject-keys", "brand"}
 
 
 def wait_for_ready(settings: Settings) -> bool:
@@ -65,6 +65,21 @@ def run_cli(command: str, argv: list[str], settings: Settings) -> int:
     if command == "discover-subject-keys":
         jobs.discover_subject_keys(settings)
         return 0
+
+    # Branding is Zitadel-only (no Graph): wait for readiness, upload, activate.
+    if command == "brand":
+        if not wait_for_ready(settings):
+            return 1
+        zit = ZitadelClient(
+            issuer=settings.issuer(),
+            key_file=settings.zitadel_jwt_profile_file,
+            verify_tls=not settings.zitadel_insecure,
+        )
+        try:
+            jobs.brand(settings, zit)
+            return 0
+        finally:
+            zit.close()
 
     if not settings.graph_configured():
         logger.error("AZURE_* not configured — cannot run %s", command)
