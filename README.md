@@ -75,6 +75,7 @@ docs/             setup / management / operation / migration guides
 | Guide | Topic |
 |---|---|
 | [installation.md](docs/installation.md) | deploy (dev / Traefik / Coolify), first login |
+| [endpoints-and-portals.md](docs/endpoints-and-portals.md) | every URL/portal: Console, Login v2, OIDC endpoints, APIs, dev vs prod |
 | [configuration.md](docs/configuration.md) | `.env` + `defaults.yaml`/`steps.yaml` reference |
 | [provisioning-terraform.md](docs/provisioning-terraform.md) | IaC, state, non-destructive guard, adding apps/IdPs |
 | [applications-oidc.md](docs/applications-oidc.md) | connect your apps as OIDC clients (internal/external tiers, scopes, claims) |

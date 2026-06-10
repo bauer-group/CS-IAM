@@ -67,4 +67,6 @@ docker compose -f docker-compose.traefik.yml logs provisioner
 cd terraform && tofu output app_client_ids   # generated OIDC client ids
 ```
 
-See [configuration.md](configuration.md) for every setting.
+See [configuration.md](configuration.md) for every setting, and
+[endpoints-and-portals.md](endpoints-and-portals.md) for every reachable URL
+(Console self-service, Login v2, OIDC endpoints, APIs, dev vs prod).
