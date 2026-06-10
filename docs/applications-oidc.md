@@ -71,6 +71,27 @@ Because of `has_project_check`, a user must hold a **grant** to sign in:
 See [users-roles-groups.md](users-roles-groups.md) for roles, grants and the
 self-service model.
 
+## Visual alternative — the Console (web admin)
+
+Yes, you can create the same apps **click-by-click** in the Zitadel Console
+(`https://<IAM_HOSTNAME>`, sign in as the admin):
+
+1. Pick the org → **Projects** → open `BAUER GROUP` (internal) or `External Apps`
+   (external). Choosing the project is the visual equivalent of the `audience` field.
+2. **New Application** → OIDC → *Web* (or *User Agent* / *Native* with PKCE for a
+   public client) → enter the redirect URI(s) → create. The Console then shows the
+   generated `client_id` / `client_secret`.
+3. **Authorizations** → grant the user a role in that project so they can sign in
+   (`has_project_check` still applies — no grant, no token).
+
+**Safe, but not IaC.** The non-destructive provisioner **never deletes UI-made
+resources** (they aren't in its Terraform state), so a Console app keeps working
+across deploys. But it is **drift**: not version-controlled, it won't reappear on
+a fresh deploy, and its secret isn't in `tofu output`. Use the Console for quick
+prototypes; **codify the keepers in Terraform** (`APP_REDIRECT_URIS` /
+`applications.tf`) so the source of truth stays complete. Either way, Console apps
+are captured by the Postgres backup.
+
 ## Client-side OIDC configuration (what your app needs)
 
 | Setting | Value |
