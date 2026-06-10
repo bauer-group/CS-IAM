@@ -1,3 +1,9 @@
+## [0.9.0](https://github.com/bauer-group/CS-IAM/compare/v0.8.0...v0.9.0) (2026-06-09)
+
+### 🚀 Features
+
+* **login:** automated logo/icon/font branding + login background ([d1d1c73](https://github.com/bauer-group/CS-IAM/commit/d1d1c73da5d9cee5fb1d1b2d490e4c7afaeddd72))
+
 ## [0.8.0](https://github.com/bauer-group/CS-IAM/compare/v0.7.3...v0.8.0) (2026-06-09)
 
 ### 🚀 Features
