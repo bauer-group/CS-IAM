@@ -126,6 +126,41 @@ For reference (all discoverable via the document above): `…/oauth/v2/authorize
 `…/oauth/v2/token`, `…/oidc/v1/userinfo`, `…/oauth/v2/keys`,
 `…/oidc/v1/end_session`. Prefer discovery over hard-coding these.
 
+## Test the OIDC flow (with a hosted test client)
+
+No client is bundled — use a purpose-built **hosted OIDC test client** to run the
+real auth-code flow against the IAM and inspect the issued tokens:
+**openidconnect.net** (Auth0 OIDC Playground) · **oauth.tools** (Curity) ·
+**oidcdebugger.com**.
+
+Quick run against the shipped **Demo** app:
+
+1. **Allow the tester's redirect URI** on the app — add its callback (e.g.
+   `https://openidconnect.net/callback` or `https://oidcdebugger.com/debug`) to
+   the Demo app's `redirect_uris` in `terraform/demo.tf` (codified), or add it
+   temporarily in the Console (project `pDemo` → app `Demo` → Redirect URIs).
+2. **Get the credentials:** `cd terraform && tofu output demo_app_client_id` +
+   `tofu output -raw demo_app_client_secret`.
+3. In the tester set **Discovery** = `https://<IAM_HOSTNAME>/.well-known/openid-configuration`,
+   the **client_id/secret**, **scopes** `openid profile email offline_access urn:zitadel:iam:user:metadata`,
+   flow **Authorization Code (+ PKCE)**.
+4. Run it → sign in as **`demo@bauer-group.com` / `DEMO_USER_PASSWORD`** (set up
+   MFA on first login) → the tester returns the **ID + access token**.
+5. **Verify:** decode the token (the tester does, or paste into jwt.io) → check
+   `sub`, `email`, and the roles claim **`urn:zitadel:iam:org:project:roles`**
+   contains `rUser` + `rManager` (and **not** `rAdministrator`) — proving the
+   grant + role assertion + isolation all work.
+
+> Hosted tools need a **reachable issuer** (your deployed domain). For purely
+> **local dev** the issuer hostname must resolve identically for the browser and
+> the backend (which a hosted tool can't), so test the flow after deploy — or ask
+> for the in-stack client below.
+
+**In-stack option (on request):** a small **dev-profile OIDC client container**
+wired to the Demo app, so `docker compose --profile test up` gives a one-click
+local round-trip that prints the decoded ID/access token + roles. Say the word
+and it's added.
+
 ## App types (web / SPA / native)
 
 The default (`terraform/applications.tf`) creates **confidential web** clients
