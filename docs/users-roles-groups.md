@@ -74,10 +74,13 @@ How they combine on a login:
 Mnemonic: **grant = the key (in/out), role = what you may do inside, scope = what
 info you carry with you.**
 
-Example (the shipped demo): the catalog has `user`/`admin`; `demo.tf` grants the
-demo user the `user` role in the BAUER GROUP project (→ can sign into `demo-app`,
-token role `user`); `demo-app` requests `openid profile email … metadata` → its
-token carries those claims **plus** the `user` role.
+Example (the shipped demo, fully isolated): project `pDemo` defines
+`rUser`/`rManager`/`rAdministrator`; `demo.tf` grants the demo user
+`rUser`+`rManager` in `pDemo` (→ can sign into the `Demo` app there; token roles
+`rUser`,`rManager` — note: not `rAdministrator`); the app requests
+`openid profile email … metadata` → the token carries those claims **plus** the
+two roles. The grant exists **only in `pDemo`**, so the user can't reach the
+BAUER GROUP or External apps — clean isolation.
 
 ## Self-service UI (goal f)
 

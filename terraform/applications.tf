@@ -12,10 +12,11 @@
 # All apps are owned by the internal org; externals reach the external ones via
 # the project grant in projects.tf.
 #
-# A visible demo app `demo-app` (internal tier, demo.app.bauer-group.com) ships
-# via the APP_REDIRECT_URIS default in .env.example → it appears in the Console
-# and in `tofu output app_client_ids`. Drop it from APP_REDIRECT_URIS for a clean
-# prod. See docs/applications-oidc.md.
+# The illustrative demo lives in its OWN isolated project — see terraform/demo.tf
+# (project "pDemo", roles rUser/rManager/rAdministrator, the OIDC app "Demo", and
+# a demo user granted rUser+rManager). Gated on DEMO_USER_PASSWORD. Not part of
+# APP_REDIRECT_URIS (which is for your real internal/external apps). See
+# docs/applications-oidc.md.
 # =============================================================================
 
 resource "zitadel_application_oidc" "app" {

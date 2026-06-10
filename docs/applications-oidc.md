@@ -16,17 +16,18 @@ user who holds a grant with a role in that project. The internal project is neve
 granted to the external org, so the tiers can't cross. Full gating model:
 [users-roles-groups.md](users-roles-groups.md).
 
-> **Live example shipped — fully loginable.** Out of the box you get a complete,
-> working example end-to-end: the app `demo-app` (internal tier,
-> `demo.app.bauer-group.com`, via the `APP_REDIRECT_URIS` default), a demo user
-> **`demo@bauer-group.com`** (password `DEMO_USER_PASSWORD` in `.env.example`),
-> and a `user`-role **grant** (`terraform/demo.tf`) so the user can actually sign
-> in. MFA is set up on first login (`ForceMFALocalOnly`). Read the app's
-> credentials with `tofu output app_client_ids` / `tofu output -raw app_client_secrets`.
+> **Live example shipped — fully loginable & isolated.** Out of the box you get a
+> complete, self-contained demo in its OWN project (`terraform/demo.tf`): project
+> **`pDemo`** with roles **`rUser` / `rManager` / `rAdministrator`**, the OIDC app
+> **`Demo`** (`demo.app.bauer-group.com`), and a demo user **`demo@bauer-group.com`**
+> granted **`rUser` + `rManager` in `pDemo` only** — so it can use the `Demo` app
+> and nothing else (cleanly isolated from the BAUER GROUP / External Apps
+> projects; production-safe). Enabled by `DEMO_USER_PASSWORD`; MFA is set up on
+> first login. App creds: `tofu output demo_app_client_id` /
+> `tofu output -raw demo_app_client_secret`.
 >
-> **Remove for a clean prod:** clear `DEMO_USER_PASSWORD`, drop `demo-app` from
-> `APP_REDIRECT_URIS`, then `tofu state rm` the demo resources — the
-> non-destructive provisioner won't auto-destroy them.
+> **Remove for a clean prod:** clear `DEMO_USER_PASSWORD`, then `tofu state rm` the
+> demo resources — the non-destructive provisioner won't auto-destroy them.
 
 ## Onboard an app — 4 steps
 

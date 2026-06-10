@@ -51,3 +51,14 @@ output "app_client_secrets" {
   sensitive   = true
   description = "Per-app OIDC client_secret (sensitive)."
 }
+
+output "demo_app_client_id" {
+  value       = try(zitadel_application_oidc.demo[0].client_id, null)
+  description = "Demo OIDC app client_id (project pDemo; null when DEMO_USER_PASSWORD is unset)."
+}
+
+output "demo_app_client_secret" {
+  value       = try(zitadel_application_oidc.demo[0].client_secret, null)
+  sensitive   = true
+  description = "Demo OIDC app client_secret (sensitive)."
+}
