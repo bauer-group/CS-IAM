@@ -1,3 +1,9 @@
+## [0.11.0](https://github.com/bauer-group/CS-IAM/compare/v0.10.1...v0.11.0) (2026-06-10)
+
+### 🚀 Features
+
+* **apps:** isolated the demo into its own pDemo project (roles + app + user + grant) ([708fd92](https://github.com/bauer-group/CS-IAM/commit/708fd921669478513a09c72d613f45f5bfa5bc66))
+
 ## [0.10.1](https://github.com/bauer-group/CS-IAM/compare/v0.10.0...v0.10.1) (2026-06-10)
 
 ## [0.10.0](https://github.com/bauer-group/CS-IAM/compare/v0.9.0...v0.10.0) (2026-06-10)
