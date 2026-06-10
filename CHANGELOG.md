@@ -1,3 +1,9 @@
+## [0.10.0](https://github.com/bauer-group/CS-IAM/compare/v0.9.0...v0.10.0) (2026-06-10)
+
+### 🚀 Features
+
+* **apps:** made the demo OIDC app fully loginable (user + grant) ([4086c0e](https://github.com/bauer-group/CS-IAM/commit/4086c0e95450012aadb7a3856944d99cea831ea1))
+
 ## [0.9.0](https://github.com/bauer-group/CS-IAM/compare/v0.8.0...v0.9.0) (2026-06-09)
 
 ### 🚀 Features
