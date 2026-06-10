@@ -83,6 +83,7 @@ docs/             setup / management / operation / migration guides
 | [users-roles-groups.md](docs/users-roles-groups.md) | local vs federated, role/grant app-gating, self-service |
 | [migration.md](docs/migration.md) | Entra → Zitadel cutover (avatar + data preserved) |
 | [operations.md](docs/operations.md) | health, upgrades, HA path, decoupling |
+| [decoupling-from-entra.md](docs/decoupling-from-entra.md) | step-by-step runbook to go MS-free (credential migration, clean IdP removal) |
 | [sizing-and-tuning.md](docs/sizing-and-tuning.md) | PG18 presets (SSD/HDD + RAM size) |
 | [backup-and-restore.md](docs/backup-and-restore.md) | pg_dump snapshots, off-site, restore |
 | [security-hardening.md](docs/security-hardening.md) | security posture |

@@ -45,10 +45,12 @@ The sidecars stay single-instance (cron). Move them to scheduled jobs
 
 ## Decoupling from Entra (goal i)
 
-Because local accounts + the native role catalog are first-class, you can run
-without Entra:
+Because local accounts + the native role catalog are first-class, the stack can
+run fully MS-free. At runtime nothing breaks if Entra is removed (`directory-sync`
+idles, local + admin logins keep working) — decoupling is a deliberate user
+migration, not a fix. The critical step is that **federated users are
+password-less**, so they need their own credential (a passkey covers credential +
+MFA) **before** Entra is dropped; the Entra IdP must also be retired cleanly so
+the non-destructive provisioner doesn't abort on the destroy.
 
-1. Create local accounts (or keep the imported ones) and set passwords.
-2. Remove/disable the Entra IdP (delete `terraform/idps.tf` entry, `tofu apply`).
-3. Stop `directory-sync`.
-Zitadel remains the authoritative IdP for all apps — no app reconfiguration.
+→ Full, step-by-step process: **[decoupling-from-entra.md](decoupling-from-entra.md)**.
