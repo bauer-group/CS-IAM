@@ -1,3 +1,5 @@
+## [0.10.1](https://github.com/bauer-group/CS-IAM/compare/v0.10.0...v0.10.1) (2026-06-10)
+
 ## [0.10.0](https://github.com/bauer-group/CS-IAM/compare/v0.9.0...v0.10.0) (2026-06-10)
 
 ### 🚀 Features
