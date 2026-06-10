@@ -157,3 +157,10 @@ variable "app_redirect_uris" {
   default     = "[]"
   description = "JSON array of {name, redirect_uris[]} OIDC application definitions."
 }
+
+variable "demo_user_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Password for the illustrative demo user (demo.tf). Empty = no demo user/grant created. Set via DEMO_USER_PASSWORD."
+}

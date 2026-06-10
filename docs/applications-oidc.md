@@ -16,13 +16,17 @@ user who holds a grant with a role in that project. The internal project is neve
 granted to the external org, so the tiers can't cross. Full gating model:
 [users-roles-groups.md](users-roles-groups.md).
 
-> **Live example shipped.** A demo app `demo-app` (internal tier,
-> `demo.app.bauer-group.com`) is provisioned out of the box via the
-> `APP_REDIRECT_URIS` default in `.env.example` — so you can immediately see a
-> real OIDC client in the Console (BAUER GROUP project) and read its credentials
-> with `tofu output app_client_ids` / `tofu output -raw app_client_secrets`. It
-> has no grant yet, so no one can sign in until you grant a role (step 4). Remove
-> it from `APP_REDIRECT_URIS` for a clean production stack.
+> **Live example shipped — fully loginable.** Out of the box you get a complete,
+> working example end-to-end: the app `demo-app` (internal tier,
+> `demo.app.bauer-group.com`, via the `APP_REDIRECT_URIS` default), a demo user
+> **`demo@bauer-group.com`** (password `DEMO_USER_PASSWORD` in `.env.example`),
+> and a `user`-role **grant** (`terraform/demo.tf`) so the user can actually sign
+> in. MFA is set up on first login (`ForceMFALocalOnly`). Read the app's
+> credentials with `tofu output app_client_ids` / `tofu output -raw app_client_secrets`.
+>
+> **Remove for a clean prod:** clear `DEMO_USER_PASSWORD`, drop `demo-app` from
+> `APP_REDIRECT_URIS`, then `tofu state rm` the demo resources — the
+> non-destructive provisioner won't auto-destroy them.
 
 ## Onboard an app — 4 steps
 

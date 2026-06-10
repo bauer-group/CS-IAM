@@ -179,6 +179,7 @@ services:
       TF_VAR_external_oauth_idps: ${EXTERNAL_OAUTH_IDPS:-}
       TF_VAR_external_oidc_idps: ${EXTERNAL_OIDC_IDPS:-}
       TF_VAR_app_redirect_uris: ${APP_REDIRECT_URIS:-[]}
+      TF_VAR_demo_user_password: ${DEMO_USER_PASSWORD:-}
     volumes:
       - machinekey:/data/machinekey:ro
       - tfstate:/tfstate
