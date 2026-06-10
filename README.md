@@ -81,7 +81,8 @@ docs/             setup / management / operation / migration guides
 | [identity-providers.md](docs/identity-providers.md) | per-org IdPs: Entra single/multi-tenant, Google + social catalog |
 | [branding-and-login.md](docs/branding-and-login.md) | brand colors/logo/font, Login v2 theming, translations, IdP-logo plan |
 | [directory-sync.md](docs/directory-sync.md) | freshness model (JIT + delta), namespacing |
-| [users-roles-groups.md](docs/users-roles-groups.md) | local vs federated, role/grant app-gating, self-service |
+| [users-roles-groups.md](docs/users-roles-groups.md) | local vs federated, role/grant app-gating, grants-vs-scopes-vs-roles, self-service |
+| [console-guide.md](docs/console-guide.md) | view/manage each thing in the Console + how code (TF/branding) re-applies on deploy |
 | [migration.md](docs/migration.md) | Entra → Zitadel cutover (avatar + data preserved) |
 | [operations.md](docs/operations.md) | health, upgrades, HA path, decoupling |
 | [decoupling-from-entra.md](docs/decoupling-from-entra.md) | step-by-step runbook to go MS-free (credential migration, clean IdP removal) |

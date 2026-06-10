@@ -51,6 +51,34 @@ To gate an app on a specific Entra group, ensure the app is in the project and
 grant the corresponding `entra:<group>` role (the sync does this automatically
 for group members).
 
+## Grants vs scopes vs roles — what controls what
+
+Three distinct things, often confused:
+
+| Concept | Set where | Controls |
+|---|---|---|
+| **Scope** | the **app** requests it in the auth request | **what's in the token** (which claims/data) + behaviour — `openid` (required), `profile`/`email`, `offline_access` (refresh), `urn:zitadel:iam:user:metadata`. Not *who* may log in. |
+| **Role** | the **project** role catalog (`roles.tf`) | a **named permission** (a label like `user`/`admin`). On its own grants nothing — it must be assigned. |
+| **Grant** | binds **user ↔ project ↔ roles** (`grants.tf`, the sync, `demo.tf`, or Console authorizations) | **who may access** the project's apps (with `has_project_check` → no grant, no token) and **which roles** that user carries. |
+
+How they combine on a login:
+
+1. **Access gate = the grant.** `has_project_check` → a user must hold a grant
+   (any role) in the app's project to get a token at all. No grant → no login.
+2. **What the user may do inside = the roles** in that grant. Role assertion puts
+   them in the token (`urn:zitadel:iam:org:project:roles`); the **app** reads the
+   claim and enforces feature-level authz (e.g. show admin actions only for `admin`).
+3. **What the token carries = the scopes** the app requested. Scopes shape the
+   claims (profile, email, metadata, roles/audience), not access.
+
+Mnemonic: **grant = the key (in/out), role = what you may do inside, scope = what
+info you carry with you.**
+
+Example (the shipped demo): the catalog has `user`/`admin`; `demo.tf` grants the
+demo user the `user` role in the BAUER GROUP project (→ can sign into `demo-app`,
+token role `user`); `demo-app` requests `openid profile email … metadata` → its
+token carries those claims **plus** the `user` role.
+
 ## Self-service UI (goal f)
 
 Zitadel ships the **Console** and the **Login v2** UI. Users manage their own
