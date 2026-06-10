@@ -11,6 +11,11 @@
 #   "external"           → the External Apps project (granted to customers)
 # All apps are owned by the internal org; externals reach the external ones via
 # the project grant in projects.tf.
+#
+# A visible demo app `demo-app` (internal tier, demo.app.bauer-group.com) ships
+# via the APP_REDIRECT_URIS default in .env.example → it appears in the Console
+# and in `tofu output app_client_ids`. Drop it from APP_REDIRECT_URIS for a clean
+# prod. See docs/applications-oidc.md.
 # =============================================================================
 
 resource "zitadel_application_oidc" "app" {
