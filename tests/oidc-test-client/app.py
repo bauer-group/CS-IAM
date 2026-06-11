@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import html
 import json
 import os
 import secrets
@@ -118,7 +119,7 @@ def index():
         "scopes": SCOPES, "redirect_uri": REDIRECT_URI,
         "expected_roles": EXPECTED_ROLES, "forbidden_roles": FORBIDDEN_ROLES,
     }
-    rows = "".join(f"<tr><td><b>{k}</b></td><td><code>{v}</code></td></tr>" for k, v in cfg.items())
+    rows = "".join(f"<tr><td><b>{k}</b></td><td><code>{html.escape(str(v))}</code></td></tr>" for k, v in cfg.items())
     warn = "" if CLIENT_ID else "<p style='color:#b00'>⚠ OIDC_CLIENT_ID/SECRET not set — set the Demo app creds (tofu output demo_app_client_id / -raw demo_app_client_secret).</p>"
     return _page("IAM OIDC test client", f"""
       <p>Runs the authorization-code + PKCE flow against the IAM and validates the
@@ -149,7 +150,9 @@ def callback():
     if not request.args.get("code") and not request.args.get("error"):
         return redirect("/")  # e.g. landing here after logout
     if request.args.get("error"):
-        return _page("Login error", f"<pre>{request.args.get('error')}: {request.args.get('error_description','')}</pre>"), 400
+        err = html.escape(request.args.get("error", ""))
+        desc = html.escape(request.args.get("error_description", ""))
+        return _page("Login error", f"<pre>{err}: {desc}</pre>"), 400
     if request.args.get("state") != session.get("state"):
         return _page("Login error", "<pre>state mismatch (CSRF)</pre>"), 400
 
@@ -165,7 +168,7 @@ def callback():
         verify=VERIFY_TLS, timeout=15,
     )
     if token_res.status_code != 200:
-        return _page("Token error", f"<pre>{token_res.status_code}\n{token_res.text}</pre>"), 400
+        return _page("Token error", f"<pre>{token_res.status_code}\n{html.escape(token_res.text)}</pre>"), 400
     tokens = token_res.json()
 
     id_token = tokens["id_token"]
@@ -189,16 +192,20 @@ def callback():
     session["last_result"] = result
 
     rows = "".join(
-        f"<tr><td>{'✅' if c['ok'] else '❌'}</td><td>{c['name']}</td><td><code>{c['detail']}</code></td></tr>"
+        f"<tr><td>{'✅' if c['ok'] else '❌'}</td>"
+        f"<td>{html.escape(str(c['name']))}</td>"
+        f"<td><code>{html.escape(str(c['detail']))}</code></td></tr>"
         for c in result["checks"]
     )
     banner = ("<div class='ok'>PASS — the demo user has exactly the expected roles.</div>"
               if result["ok"] else "<div class='fail'>FAIL — see the red checks below.</div>")
+    id_json = html.escape(json.dumps(result["id_claims"], indent=2, ensure_ascii=False))
+    ui_json = html.escape(json.dumps(result["userinfo"], indent=2, ensure_ascii=False))
     return _page("Validation result", f"""
       {banner}
       <table><tr><th></th><th>check</th><th>detail</th></tr>{rows}</table>
-      <h3>ID token claims</h3><pre>{json.dumps(result['id_claims'], indent=2, ensure_ascii=False)}</pre>
-      <h3>UserInfo</h3><pre>{json.dumps(result['userinfo'], indent=2, ensure_ascii=False)}</pre>
+      <h3>ID token claims</h3><pre>{id_json}</pre>
+      <h3>UserInfo</h3><pre>{ui_json}</pre>
       <p><a class="btn" href="/validate">JSON result</a> · <a href="/logout">logout</a> · <a href="/">home</a></p>
     """)
 
