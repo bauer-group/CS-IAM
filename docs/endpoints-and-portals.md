@@ -58,10 +58,11 @@ machine-key file existing — see [installation.md](installation.md).
 - **Prod (Traefik / Coolify):** one host, `https://<IAM_HOSTNAME>`, TLS at the
   proxy, **h2c** to the core. Path split: `/ui/v2/login` → login container
   (priority), all else → core (`:8080`).
-- **Dev:** core on `http://localhost:8080` (Console + issuer + APIs); login on a
-  **separate host port** `http://localhost:<IAM_LOGIN_PORT>` (default 3000).
-  Browse via `<IAM_DEV_HOSTNAME>` (e.g. `zitadel.localhost`, which resolves to
-  loopback) so the browser URL matches the issuer.
+- **Dev:** the instance domain is `zitadel` — add `127.0.0.1 zitadel` to your
+  hosts file and browse **`http://zitadel:8080`** (Console + issuer + APIs).
+  `http://localhost:8080` returns *"instance not found"* (Host ≠ instance domain).
+  The login UI is on a **separate host port** `http://localhost:<IAM_LOGIN_PORT>`
+  (default 3000) under `/ui/v2/login`.
 - **Internal (compose network):** the login service calls the core at
   `http://zitadel:8080` (with a `Host:<IAM_HOSTNAME>` header override in prod);
   `provisioner`/`directory-sync` use the public issuer URL. **End users only ever

@@ -31,9 +31,14 @@ This fills `ZITADEL_MASTERKEY` (32 chars), `ZITADEL_DB_PASSWORD` and a complex
 docker compose -f docker-compose.development.yml up -d --build
 ```
 
-- Console + issuer: `http://zitadel.localhost:8080` (resolves to loopback in the
-  browser and to the container internally — keeps the OIDC issuer consistent).
-- Login: `admin@bauer-group.com` / `ZITADEL_ADMIN_PASSWORD`.
+- The dev instance domain is **`zitadel`** (so the in-container `provisioner`/
+  `directory-sync` resolve the core via Docker DNS *and* it matches the issuer).
+  For browser access, add `127.0.0.1 zitadel` to your hosts file, then open
+  **`http://zitadel:8080/ui/console`** (Console / admin / self-service).
+  > `http://localhost:8080` returns *"instance not found"* — the Host must match
+  > the `zitadel` instance domain. `*.localhost` can't be used either (forced to
+  > 127.0.0.1 inside every container, which would break the automation containers).
+- Admin login: `admin@bauer-group.com` / `ZITADEL_ADMIN_PASSWORD`.
 
 ## 2b. Production — Traefik
 

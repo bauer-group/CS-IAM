@@ -23,11 +23,20 @@ By design — it refuses unattended destroy/replace to protect managed and
 UI-made resources. Review and apply manually:
 `cd terraform && tofu plan && tofu apply`.
 
+## "Instance not found" / `unable to set instance using origin` (dev)
+
+You opened `http://localhost:8080` (or `zitadel.localhost`). Zitadel binds each
+request to its **instance domain**, which in dev is **`zitadel`** — so the browser
+`Host` must be `zitadel`. Fix: add `127.0.0.1 zitadel` to your hosts file and open
+**`http://zitadel:8080/ui/console`**. `localhost` won't match the instance domain,
+and `*.localhost` can't be the domain (it's forced to 127.0.0.1 inside every
+container, which would break the in-container provisioner/sync).
+
 ## Provider/JWT "audience" or token errors
 
 The automation containers must reach Zitadel at the **same URL as its issuer**.
-- dev: `IAM_DEV_HOSTNAME=zitadel.localhost` (alias resolves both in browser and
-  containers).
+- dev: the instance domain is `zitadel`; containers reach it via Docker DNS
+  (`http://zitadel:8080`), the browser via the `127.0.0.1 zitadel` hosts entry.
 - prod: provision/sync are on the `proxy` network and use `https://IAM_HOSTNAME`.
 A mismatch (e.g. pointing at `http://zitadel:8080` while the issuer is the public
 HTTPS host) fails JWT audience validation.
