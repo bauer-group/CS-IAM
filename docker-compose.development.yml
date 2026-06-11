@@ -134,9 +134,11 @@ services:
       ZITADEL_EXTERNALSECURE: "false"
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:?Set ZITADEL_ADMIN_PASSWORD in .env}
       # Login v2 — route all apps to the hosted login served by the `login`
-      # container. Dev: reachable on the host at :${IAM_LOGIN_PORT}.
+      # container. Dev: reach it on the `zitadel` host (same domain as the core,
+      # via the `127.0.0.1 zitadel` hosts entry) at :${IAM_LOGIN_PORT}, so the
+      # browser host matches the instance domain through the whole flow.
       ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "true"
-      ZITADEL_OIDC_DEFAULTLOGINURLV2: http://localhost:${IAM_LOGIN_PORT:-3000}/ui/v2/login/login?authRequest=
+      ZITADEL_OIDC_DEFAULTLOGINURLV2: http://${IAM_DEV_HOSTNAME:-zitadel}:${IAM_LOGIN_PORT:-3000}/ui/v2/login/login?authRequest=
     volumes:
       # Config (defaults.yaml/steps.yaml) is baked into the image. To customise
       # without rebuilding, uncomment and edit the host files:
@@ -170,6 +172,15 @@ services:
     environment:
       TZ: ${TIME_ZONE:-Etc/UTC}
       ZITADEL_API_URL: http://zitadel:8080
+      # Dev instance pin (same mechanism as prod). The login resolves the Zitadel
+      # instance from the incoming browser host; in dev the login (:3000) and the
+      # core (:8080) are on different host:port pairs, so without this override
+      # the login forwards the wrong origin and the core answers "instance not
+      # found". Pin the full Host:port on every login->core API call — the port
+      # matters in dev (ExternalPort 8080 is non-standard), otherwise the core
+      # derives the issuer as `http://zitadel` (no port) and it diverges from the
+      # browser's `http://zitadel:8080`. Prod omits the port (443 is implicit).
+      CUSTOM_REQUEST_HEADERS: "Host:${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}"
       ZITADEL_SERVICE_USER_TOKEN_FILE: /data/machinekey/iam-admin.pat
       NEXT_PUBLIC_BASE_PATH: /ui/v2/login
       NEXT_PUBLIC_THEME_LAYOUT: ${LOGIN_THEME_LAYOUT:-side-by-side}

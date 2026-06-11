@@ -32,6 +32,15 @@ request to its **instance domain**, which in dev is **`zitadel`** — so the bro
 and `*.localhost` can't be the domain (it's forced to 127.0.0.1 inside every
 container, which would break the in-container provisioner/sync).
 
+**Same root cause on the Login v2 page** (`{"error":"Internal server error"}` while
+signing in, with `unable to set instance using origin localhost:3000` in
+`docker compose logs login`): the login container resolves the instance from the
+incoming browser host. The dev compose pins it with
+`CUSTOM_REQUEST_HEADERS: "Host:zitadel:8080"` and routes the browser to the login
+on the `zitadel` host (`ZITADEL_OIDC_DEFAULTLOGINURLV2`). If you see this, recreate
+the stack so those settings apply (`docker compose -f docker-compose.development.yml
+up -d zitadel login`) and reach everything via the `127.0.0.1 zitadel` hosts entry.
+
 ## Provider/JWT "audience" or token errors
 
 The automation containers must reach Zitadel at the **same URL as its issuer**.

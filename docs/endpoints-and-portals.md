@@ -9,7 +9,7 @@ everything else → the Zitadel core. This page lists each portal and endpoint.
 | Portal | Prod | Dev | Who / what |
 |--------|------|-----|------------|
 | **Console** — self-service + admin | `https://<IAM_HOSTNAME>/ui/console` | `http://<IAM_DEV_HOSTNAME>:8080/ui/console` | **Every user** manages their own profile, password, MFA/passkeys, sessions and sees their authorizations. **Admins** additionally manage orgs, projects, apps, users, roles/grants, policies, branding. First admin: `admin@bauer-group.com` / `ZITADEL_ADMIN_PASSWORD`. |
-| **Login v2** — the sign-in flow | `https://<IAM_HOSTNAME>/ui/v2/login` | `http://localhost:<IAM_LOGIN_PORT>/ui/v2/login` | Sign-in, registration, password reset, MFA/passkey setup *during login*. Apps redirect here — you don't browse it directly. |
+| **Login v2** — the sign-in flow | `https://<IAM_HOSTNAME>/ui/v2/login` | `http://zitadel:<IAM_LOGIN_PORT>/ui/v2/login` (same `zitadel` host as the core, via the hosts entry) | Sign-in, registration, password reset, MFA/passkey setup *during login*. Apps redirect here — you don't browse it directly. |
 
 > **Console vs Login v2:** Login v2 is the *door* (authentication). The Console
 > is the *dashboard* (self-management for users, full management for admins) —
@@ -61,8 +61,9 @@ machine-key file existing — see [installation.md](installation.md).
 - **Dev:** the instance domain is `zitadel` — add `127.0.0.1 zitadel` to your
   hosts file and browse **`http://zitadel:8080`** (Console + issuer + APIs).
   `http://localhost:8080` returns *"instance not found"* (Host ≠ instance domain).
-  The login UI is on a **separate host port** `http://localhost:<IAM_LOGIN_PORT>`
-  (default 3000) under `/ui/v2/login`.
+  The login UI is on a **separate host port** `http://zitadel:<IAM_LOGIN_PORT>`
+  (default 3000) under `/ui/v2/login` — same `zitadel` host as the core, so the
+  browser host matches the instance domain through the whole sign-in flow.
 - **Internal (compose network):** the login service calls the core at
   `http://zitadel:8080` (with a `Host:<IAM_HOSTNAME>` header override in prod);
   `provisioner`/`directory-sync` use the public issuer URL. **End users only ever
