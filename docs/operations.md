@@ -14,6 +14,24 @@ curl https://id.bauer-group.com/.well-known/openid-configuration
 healthchecks. `zitadel` itself has no in-container healthcheck (distroless) —
 readiness is verified via the discovery endpoint and polled by dependents.
 
+## Validate the deployment
+
+`scripts/validate-stack.py` asserts — via the Management/Admin/OIDC APIs, using
+the machine key — that everything the IaC provisions is actually in place:
+discovery, orgs, projects + authorization flags, role catalogs, the Demo app's
+OIDC config, the demo user + grant/roles, the branding LabelPolicy and the
+LoginPolicy. It prints a PASS/FAIL matrix and exits non-zero on any failure (a
+full-stack smoke test). Run it from the toolkit container (it has the deps +
+the machine key):
+
+```bash
+docker compose -f docker-compose.development.yml cp \
+  scripts/validate-stack.py directory-sync:/tmp/validate-stack.py
+docker compose -f docker-compose.development.yml exec directory-sync \
+  python /tmp/validate-stack.py --issuer http://zitadel:8080 --insecure
+# prod: --issuer https://<IAM_HOSTNAME>  (drop --insecure)
+```
+
 ## Upgrades
 
 - **Zitadel/Postgres/base images**: Dependabot opens PRs; the daily base-image
