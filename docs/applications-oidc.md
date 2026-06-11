@@ -158,7 +158,7 @@ Quick run against the shipped **Demo** app:
 
 ### In-stack test client (local, repo-owned)
 
-`src/oidc-test-client` is a tiny confidential OIDC client (dev **`test`** profile)
+`tests/oidc-test-client` is a tiny confidential OIDC client (dev **`test`** profile)
 wired to the Demo app. It runs the real auth-code + PKCE flow and **validates the
 demo user's roles** with a pass/fail report — plus a JSON `/validate` endpoint as
 an automation hook. Built locally (with a pytest gate on the validation logic);

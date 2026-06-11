@@ -52,7 +52,7 @@ resource "zitadel_application_oidc" "demo" {
   name       = "Demo"
 
   # demo.app.bauer-group.com = a real app you'd put behind it; localhost:8888 =
-  # the in-stack OIDC test client (src/oidc-test-client, dev `test` profile).
+  # the in-stack OIDC test client (tests/oidc-test-client, dev `test` profile).
   redirect_uris             = ["https://demo.app.bauer-group.com/auth/callback", "http://localhost:8888/callback"]
   post_logout_redirect_uris = ["https://demo.app.bauer-group.com/", "http://localhost:8888/"]
 

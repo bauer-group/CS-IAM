@@ -342,7 +342,7 @@ services:
   oidc-test-client:
     profiles: ["test"]
     build:
-      context: ./src/oidc-test-client
+      context: ./tests/oidc-test-client
     container_name: ${STACK_NAME:-iam}_OIDC_TEST
     restart: "no"
     <<: *logging
