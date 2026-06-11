@@ -1,3 +1,9 @@
+## [0.12.2](https://github.com/bauer-group/CS-IAM/compare/v0.12.1...v0.12.2) (2026-06-11)
+
+### 🐛 Bug Fixes
+
+* **provisioner:** marked client_id outputs non-sensitive (apply was failing) ([6d36adf](https://github.com/bauer-group/CS-IAM/commit/6d36adf0d7173b1bd083b185b5fc6ce6cd8bef20))
+
 ## [0.12.1](https://github.com/bauer-group/CS-IAM/compare/v0.12.0...v0.12.1) (2026-06-11)
 
 ## [0.12.0](https://github.com/bauer-group/CS-IAM/compare/v0.11.0...v0.12.0) (2026-06-11)
