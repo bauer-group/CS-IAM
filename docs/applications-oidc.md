@@ -156,10 +156,37 @@ Quick run against the shipped **Demo** app:
 > the backend (which a hosted tool can't), so test the flow after deploy — or ask
 > for the in-stack client below.
 
-**In-stack option (on request):** a small **dev-profile OIDC client container**
-wired to the Demo app, so `docker compose --profile test up` gives a one-click
-local round-trip that prints the decoded ID/access token + roles. Say the word
-and it's added.
+### In-stack test client (local, repo-owned)
+
+`src/oidc-test-client` is a tiny confidential OIDC client (dev **`test`** profile)
+wired to the Demo app. It runs the real auth-code + PKCE flow and **validates the
+demo user's roles** with a pass/fail report — plus a JSON `/validate` endpoint as
+an automation hook. Built locally (with a pytest gate on the validation logic);
+not published.
+
+```bash
+# 1. Bring up dev — the provisioner creates pDemo + the Demo app + the demo user.
+docker compose -f docker-compose.development.yml up -d
+# 2. Wire the Demo app's generated creds into .env:
+cd terraform
+tofu output demo_app_client_id            # → OIDC_TEST_CLIENT_ID
+tofu output -raw demo_app_client_secret   # → OIDC_TEST_CLIENT_SECRET
+cd ..                                      # set both in .env
+# 3. Start the test client (opt-in profile):
+docker compose -f docker-compose.development.yml --profile test up oidc-test-client
+# 4. Open http://localhost:8888 → "Login & validate" → sign in as
+#    demo@bauer-group.com / DEMO_USER_PASSWORD (set up MFA on first login).
+```
+
+The report verifies signature, issuer, audience, nonce, `sub`, `email`, and that
+the roles are exactly **`rUser` + `rManager`** (and **not** `rAdministrator`).
+`GET http://localhost:8888/validate` returns the same as JSON (HTTP 200 pass /
+422 fail) — the basis for an automated test.
+
+> Needs `127.0.0.1 zitadel` in your hosts file (the dev browser-access entry), so
+> `zitadel:8080` resolves for both the browser and the client. Against a deployed
+> stack, set `OIDC_ISSUER=https://<IAM_HOSTNAME>`, `OIDC_BACKEND_URL=http://zitadel:8080`
+> and `OIDC_BACKEND_HOST=<IAM_HOSTNAME>`.
 
 ## App types (web / SPA / native)
 

@@ -330,6 +330,35 @@ services:
     networks:
       - local
 
+  # ── OIDC test client (opt-in: --profile test) ───────────────────────────────
+  # Runs the real auth-code+PKCE flow against the IAM and validates the demo
+  # user's roles (rUser+rManager in pDemo, not rAdministrator). Browse
+  # http://localhost:8888 → "Login & validate"; GET /validate returns JSON.
+  # Needs the Demo app creds — after the stack is up:
+  #   cd terraform && tofu output demo_app_client_id   (+ -raw demo_app_client_secret)
+  # then set OIDC_TEST_CLIENT_ID / OIDC_TEST_CLIENT_SECRET in .env and:
+  #   docker compose -f docker-compose.development.yml --profile test up oidc-test-client
+  # (Browser + container both resolve `zitadel` via the 127.0.0.1 hosts entry.)
+  oidc-test-client:
+    profiles: ["test"]
+    build:
+      context: ./src/oidc-test-client
+    container_name: ${STACK_NAME:-iam}_OIDC_TEST
+    restart: "no"
+    <<: *logging
+    environment:
+      OIDC_ISSUER: http://${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}
+      OIDC_CLIENT_ID: ${OIDC_TEST_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_TEST_CLIENT_SECRET:-}
+      OIDC_REDIRECT_URI: http://localhost:8888/callback
+      OIDC_EXPECTED_ROLES: rUser,rManager
+      OIDC_FORBIDDEN_ROLES: rAdministrator
+      OIDC_VERIFY_TLS: "false"
+    ports:
+      - "8888:8888"
+    networks:
+      - local
+
 
 ### Volumes ###
 volumes:

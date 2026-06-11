@@ -51,8 +51,10 @@ resource "zitadel_application_oidc" "demo" {
   project_id = zitadel_project.demo[0].id
   name       = "Demo"
 
-  redirect_uris             = ["https://demo.app.bauer-group.com/auth/callback"]
-  post_logout_redirect_uris = ["https://demo.app.bauer-group.com/"]
+  # demo.app.bauer-group.com = a real app you'd put behind it; localhost:8888 =
+  # the in-stack OIDC test client (src/oidc-test-client, dev `test` profile).
+  redirect_uris             = ["https://demo.app.bauer-group.com/auth/callback", "http://localhost:8888/callback"]
+  post_logout_redirect_uris = ["https://demo.app.bauer-group.com/", "http://localhost:8888/"]
 
   response_types   = ["OIDC_RESPONSE_TYPE_CODE"]
   grant_types      = ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE", "OIDC_GRANT_TYPE_REFRESH_TOKEN"]
