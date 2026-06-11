@@ -42,7 +42,9 @@ output "external_idp_ids" {
 }
 
 output "app_client_ids" {
-  value       = { for k, v in zitadel_application_oidc.app : k => v.client_id }
+  # client_id is non-secret but the provider marks it sensitive — unmark per item
+  # so the map can be shown (the secrets stay sensitive in app_client_secrets).
+  value       = { for k, v in zitadel_application_oidc.app : k => nonsensitive(v.client_id) }
   description = "Per-app OIDC client_id."
 }
 
@@ -53,7 +55,7 @@ output "app_client_secrets" {
 }
 
 output "demo_app_client_id" {
-  value       = try(zitadel_application_oidc.demo[0].client_id, null)
+  value       = try(nonsensitive(zitadel_application_oidc.demo[0].client_id), null)
   description = "Demo OIDC app client_id (project pDemo; null when DEMO_USER_PASSWORD is unset)."
 }
 
