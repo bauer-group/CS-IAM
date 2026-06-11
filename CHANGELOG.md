@@ -1,3 +1,9 @@
+## [0.12.3](https://github.com/bauer-group/CS-IAM/compare/v0.12.2...v0.12.3) (2026-06-11)
+
+### ♻️ Refactoring
+
+* moved oidc-test-client from src/ to tests/ ([20ef68b](https://github.com/bauer-group/CS-IAM/commit/20ef68bbd477070706e2ae95e17bd07f531908e5))
+
 ## [0.12.2](https://github.com/bauer-group/CS-IAM/compare/v0.12.1...v0.12.2) (2026-06-11)
 
 ### 🐛 Bug Fixes
