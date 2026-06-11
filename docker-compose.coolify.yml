@@ -101,7 +101,10 @@ services:
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:?Set ZITADEL_ADMIN_PASSWORD}
       # Login v2 — hosted login served by the `login` service at /ui/v2/login.
       ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "true"
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: https://${IAM_HOSTNAME}/ui/v2/login/
       ZITADEL_OIDC_DEFAULTLOGINURLV2: https://${IAM_HOSTNAME}/ui/v2/login/login?authRequest=
+      ZITADEL_OIDC_DEFAULTLOGOUTURLV2: https://${IAM_HOSTNAME}/ui/v2/login/logout?post_logout_redirect=
+      ZITADEL_SAML_DEFAULTLOGINURLV2: https://${IAM_HOSTNAME}/ui/v2/login/login?samlRequest=
     volumes:
       # Config (defaults.yaml/steps.yaml) is baked into the image. To override
       # without rebuilding, uncomment and edit the host files:
@@ -115,7 +118,11 @@ services:
         condition: service_completed_successfully
     labels:
       - "traefik.enable=true"
+      # Explicit LOW priority: Traefik defaults a router's priority to its rule
+      # length, and this catch-all rule outscores the login's explicit
+      # priority=20 — so it would wrongly win for /ui/v2/login. Pin it below.
       - "traefik.http.routers.${STACK_NAME:-iam}.rule=Host(`${IAM_HOSTNAME}`)"
+      - "traefik.http.routers.${STACK_NAME:-iam}.priority=10"
       - "traefik.http.routers.${STACK_NAME:-iam}.entrypoints=https"
       - "traefik.http.routers.${STACK_NAME:-iam}.tls=true"
       - "traefik.http.services.${STACK_NAME:-iam}.loadBalancer.server.port=8080"
@@ -131,14 +138,19 @@ services:
       TZ: ${TIME_ZONE:-Etc/UTC}
       ZITADEL_API_URL: http://zitadel:8080
       ZITADEL_SERVICE_USER_TOKEN_FILE: /data/machinekey/iam-admin.pat
-      CUSTOM_REQUEST_HEADERS: "Host:${IAM_HOSTNAME}"
+      # Pin the public host + scheme on login->core calls (Coolify's proxy
+      # terminates TLS; X-Forwarded-Proto keeps the issuer https end-to-end).
+      CUSTOM_REQUEST_HEADERS: "Host:${IAM_HOSTNAME},X-Forwarded-Proto:https"
       NEXT_PUBLIC_BASE_PATH: /ui/v2/login
-      NEXT_PUBLIC_THEME_LAYOUT: ${LOGIN_THEME_LAYOUT:-side-by-side}
+      # Centred layout (upstream default). `side-by-side` needs a background, but
+      # Next.js 16 bakes the public/ manifest at build time so the runtime-
+      # overlaid background/favicon 404 — keep top-to-bottom + no background
+      # until branding moves into the image build (see src/login).
+      NEXT_PUBLIC_THEME_LAYOUT: ${LOGIN_THEME_LAYOUT:-top-to-bottom}
       NEXT_PUBLIC_THEME_ROUNDNESS: ${LOGIN_THEME_ROUNDNESS:-mid}
       NEXT_PUBLIC_THEME_SPACING: ${LOGIN_THEME_SPACING:-regular}
       NEXT_PUBLIC_THEME_APPEARANCE: ${LOGIN_THEME_APPEARANCE:-material}
-      # Login-page background (shipped in the overlay at /images). Empty = none.
-      NEXT_PUBLIC_THEME_BACKGROUND_IMAGE: ${LOGIN_BACKGROUND_IMAGE:-/ui/v2/login/images/login-background.jpg}
+      NEXT_PUBLIC_THEME_BACKGROUND_IMAGE: ${LOGIN_BACKGROUND_IMAGE:-}
     volumes:
       - machinekey:/data/machinekey:ro
     depends_on:

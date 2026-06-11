@@ -109,7 +109,7 @@ are captured by the Postgres backup.
 
 | Setting | Value |
 |---|---|
-| **Issuer** | `https://<IAM_HOSTNAME>` (dev: `http://zitadel:8080` — needs the `127.0.0.1 zitadel` hosts entry) |
+| **Issuer** | `https://<IAM_HOSTNAME>` (dev: `https://zitadel:8080` — needs the `127.0.0.1 zitadel` hosts entry + accepting the self-signed cert) |
 | **Discovery** | `<issuer>/.well-known/openid-configuration` — point your OIDC library here; it auto-configures every endpoint |
 | **client_id / client_secret** | from step 3 |
 | **Redirect URI** | must exactly match one you declared |

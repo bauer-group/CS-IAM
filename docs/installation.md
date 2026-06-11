@@ -33,12 +33,20 @@ docker compose -f docker-compose.development.yml up -d --build
 
 - The dev instance domain is **`zitadel`** (so the in-container `provisioner`/
   `directory-sync` resolve the core via Docker DNS *and* it matches the issuer).
+  A Traefik `proxy` terminates TLS (self-signed) and serves **one HTTPS origin**,
+  path-routing `/ui/v2/login` to the login and everything else to the core.
   For browser access, add `127.0.0.1 zitadel` to your hosts file, then open
-  **`http://zitadel:8080/ui/console`** (Console / admin / self-service).
-  > `http://localhost:8080` returns *"instance not found"* — the Host must match
-  > the `zitadel` instance domain. `*.localhost` can't be used either (forced to
-  > 127.0.0.1 inside every container, which would break the automation containers).
-- Admin login: `admin@bauer-group.com` / `ZITADEL_ADMIN_PASSWORD`.
+  **`https://zitadel:8080/ui/console`** and accept the self-signed cert once.
+  > **HTTPS is required in dev**, not optional: the Login v2 session cookie is
+  > `Secure` (baked into the production image), so over plain HTTP the browser
+  > drops it and the login fails mid-flow with *"session expired"*. The proxy
+  > provides the HTTPS origin so the full login (incl. MFA) works locally.
+  > `https://localhost:8080` won't work — the Host must match the `zitadel`
+  > instance domain (and `*.localhost` is forced to 127.0.0.1 inside containers).
+- Admin login: the org loginname **`admin@bauer-group.zitadel`** (= the admin
+  username `admin` + the org's generated domain `bauer-group.<instance-domain>`,
+  *not* the email `admin@bauer-group.com`) / `ZITADEL_ADMIN_PASSWORD`. On first
+  login you set up MFA (Authenticator app or security key).
 
 ## 2b. Production — Traefik
 

@@ -23,32 +23,40 @@ By design — it refuses unattended destroy/replace to protect managed and
 UI-made resources. Review and apply manually:
 `cd terraform && tofu plan && tofu apply`.
 
-## "Instance not found" / `unable to set instance using origin` (dev)
+## Dev login fails: "session expired" mid-login, or "instance not found"
 
-You opened `http://localhost:8080` (or `zitadel.localhost`). Zitadel binds each
-request to its **instance domain**, which in dev is **`zitadel`** — so the browser
-`Host` must be `zitadel`. Fix: add `127.0.0.1 zitadel` to your hosts file and open
-**`http://zitadel:8080/ui/console`**. `localhost` won't match the instance domain,
-and `*.localhost` can't be the domain (it's forced to 127.0.0.1 inside every
-container, which would break the in-container provisioner/sync).
+The dev stack serves **one HTTPS origin** via the Traefik `proxy`. Browse
+**`https://zitadel:8080/ui/console`** (add `127.0.0.1 zitadel` to your hosts file
+and accept the self-signed cert once). Common symptoms when this isn't set up:
 
-**Same root cause on the Login v2 page** (`{"error":"Internal server error"}` while
-signing in, with `unable to set instance using origin localhost:3000` in
-`docker compose logs login`): the login container resolves the instance from the
-incoming browser host. The dev compose pins it with
-`CUSTOM_REQUEST_HEADERS: "Host:zitadel:8080"` and routes the browser to the login
-on the `zitadel` host (`ZITADEL_OIDC_DEFAULTLOGINURLV2`). If you see this, recreate
-the stack so those settings apply (`docker compose -f docker-compose.development.yml
-up -d zitadel login`) and reach everything via the `127.0.0.1 zitadel` hosts entry.
+- **`Ihre Sitzung ist abgelaufen` / "session expired" on the MFA or password
+  step:** you opened the stack over **plain HTTP**. The Login v2 session cookie
+  is `Secure` (baked into the production image), so the browser drops it over
+  HTTP and the session is lost mid-login. Use **`https://zitadel:8080`** — the
+  proxy provides the required HTTPS origin.
+- **`unable to set instance using origin … (ExternalDomain is zitadel)` / "instance
+  not found":** the browser `Host` must match the instance domain `zitadel`.
+  `localhost` won't (and `*.localhost` is forced to 127.0.0.1 inside containers,
+  breaking the in-container provisioner/sync). Use the `127.0.0.1 zitadel` hosts
+  entry and the `zitadel` host.
+- **Broken/missing login background or favicon:** known limitation — Next.js 16
+  bakes the `public/` asset manifest at build time, so the runtime branding
+  overlay 404s. Dev defaults to the centred `top-to-bottom` layout (no
+  background) until branding moves into the image build.
 
 ## Provider/JWT "audience" or token errors
 
-The automation containers must reach Zitadel at the **same URL as its issuer**.
-- dev: the instance domain is `zitadel`; containers reach it via Docker DNS
-  (`http://zitadel:8080`), the browser via the `127.0.0.1 zitadel` hosts entry.
+The automation containers must reach Zitadel at the **same host as its issuer**
+(the SDK takes the JWT audience from the discovered issuer, so the *host* must
+match — the scheme may differ).
+- dev: the issuer is `https://zitadel:8080` (via the proxy); the containers reach
+  the core directly over internal **http** at `http://zitadel:8080` with
+  `ZITADEL_INSECURE=true`. Same host (`zitadel:8080`) → audience matches even
+  though the connection is plain http. The browser uses the `127.0.0.1 zitadel`
+  hosts entry over HTTPS.
 - prod: provision/sync are on the `proxy` network and use `https://IAM_HOSTNAME`.
-A mismatch (e.g. pointing at `http://zitadel:8080` while the issuer is the public
-HTTPS host) fails JWT audience validation.
+A real mismatch — pointing at a **different host** than the issuer — fails JWT
+audience validation.
 
 ## Federated login creates a duplicate user
 

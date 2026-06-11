@@ -7,9 +7,15 @@
 # runs on plain HTTP. The OpenTofu provisioner applies the IdPs/projects/apps,
 # and the directory-sync sidecar keeps profiles/groups fresh from Entra.
 #
-# Access:
-#   - Console / Issuer   http://${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}
-#   - Login              admin@bauer-group.com / ${ZITADEL_ADMIN_PASSWORD}
+# Access (add `127.0.0.1 ${IAM_DEV_HOSTNAME:-zitadel}` to your hosts file first):
+#   - Console / Issuer   https://${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}/ui/console
+#   - Login              the org loginname (e.g. admin@bauer-group.zitadel) /
+#                        ${ZITADEL_ADMIN_PASSWORD}
+# A Traefik `proxy` terminates TLS (self-signed) and fronts :${IAM_DEV_PORT:-8080},
+# path-routing /ui/v2/login to the login container and everything else to the
+# core (h2c) — one HTTPS origin, like prod. HTTPS is required: the Login v2
+# session cookie is `Secure`, so plain HTTP drops it mid-login. Accept the
+# self-signed cert once in your browser. Core and login are not published directly.
 #
 # Bootstrap order:
 #   database-server (healthy) -> zitadel (writes the machine key) ->
@@ -30,6 +36,76 @@ x-logging: &logging
 
 
 services:
+
+  # ── Reverse proxy (Traefik) — single HTTPS dev origin for core + login ──────
+  # The Login v2 (a) derives asset/cookie/issuer URLs from the request host and
+  # (b) sets its session cookie with `Secure` (baked into the production image),
+  # so the browser only keeps it over HTTPS. This proxy terminates TLS with a
+  # self-signed cert and serves ONE origin (https://${IAM_DEV_HOSTNAME}:${IAM_DEV_PORT}),
+  # path-routing `/ui/v2/login` -> login and everything else -> core (h2c) —
+  # exactly how Traefik/Coolify route in prod. Browse via the
+  # `127.0.0.1 ${IAM_DEV_HOSTNAME}` hosts entry and accept the cert once.
+  proxy:
+    image: ${TRAEFIK_IMAGE:-traefik}:${TRAEFIK_VERSION:-v3.6.8}
+    container_name: ${STACK_NAME:-iam}_PROXY
+    restart: unless-stopped
+    <<: *logging
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=${STACK_NAME:-iam}
+      - --providers.file.filename=/etc/traefik/dynamic/tls.yml
+      - --entrypoints.web.address=:8080
+      - --entrypoints.web.http.tls=true
+      - --entrypoints.ping.address=:8081
+      - --ping=true
+      - --ping.entrypoint=ping
+      - --log.level=${TRAEFIK_LOG_LEVEL:-ERROR}
+    ports:
+      - "${IAM_DEV_PORT:-8080}:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - certs:/certs:ro
+      - ./config/traefik/tls.yml:/etc/traefik/dynamic/tls.yml:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      prepare-cert:
+        condition: service_completed_successfully
+      zitadel:
+        condition: service_started
+      login:
+        condition: service_healthy
+    networks:
+      - local
+
+  # ── Generate a self-signed dev cert (once) for the HTTPS proxy origin ───────
+  # Idempotent: writes /certs/local.{crt,key} for `zitadel` into the `certs`
+  # volume only if absent. Browsers show a one-time warning — accept it.
+  # Regenerate by removing the `certs` volume.
+  prepare-cert:
+    image: ${ALPINE_IMAGE:-alpine}:${ALPINE_VERSION:-3.23}
+    container_name: ${STACK_NAME:-iam}_CERT
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - |
+        test -f /certs/local.crt && exit 0
+        apk add --no-cache openssl
+        openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+          -keyout /certs/local.key -out /certs/local.crt \
+          -subj "/CN=${IAM_DEV_HOSTNAME:-zitadel}" \
+          -addext "subjectAltName=DNS:${IAM_DEV_HOSTNAME:-zitadel},DNS:localhost,IP:127.0.0.1"
+        chmod 0644 /certs/local.crt /certs/local.key
+    volumes:
+      - certs:/certs
+    networks:
+      - local
 
   # ── Prepare the shared machine-key volume ───────────────────────────────────
   # Fresh named volumes are root:root, but Zitadel runs as the non-root
@@ -123,30 +199,39 @@ services:
       ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ${ZITADEL_DB_USER:-zitadel}
       ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${ZITADEL_DB_PASSWORD}
       ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
-      # External access — dev issuer is the service name `zitadel` so the
-      # automation containers reach it via Docker DNS and the issuer / JWT
-      # audience match. (`*.localhost` can't be used here: musl/glibc force it
-      # to 127.0.0.1 inside every container, shadowing the network alias.)
-      # For browser console access from the host, add `127.0.0.1 zitadel` to
-      # your hosts file and open http://zitadel:8080.
+      # External access — the public dev origin is https://${IAM_DEV_HOSTNAME}:
+      # ${IAM_DEV_PORT}, served by the `proxy` (TLS termination). ExternalSecure
+      # is true so the issuer is https (required: the Login v2 cookie is `Secure`,
+      # so the whole flow must run over HTTPS). The core itself stays plain-http
+      # behind the proxy (`--tlsMode disabled`); the automation containers reach
+      # it directly via Docker DNS (`zitadel:8080`) and the issuer/JWT audience
+      # still match. (`*.localhost` can't be used: musl/glibc force it to
+      # 127.0.0.1 inside every container.) For browser access add
+      # `127.0.0.1 zitadel` to your hosts file and open https://zitadel:8080.
       ZITADEL_EXTERNALDOMAIN: ${IAM_DEV_HOSTNAME:-zitadel}
       ZITADEL_EXTERNALPORT: ${IAM_DEV_PORT:-8080}
-      ZITADEL_EXTERNALSECURE: "false"
+      ZITADEL_EXTERNALSECURE: "true"
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:?Set ZITADEL_ADMIN_PASSWORD in .env}
-      # Login v2 — route all apps to the hosted login served by the `login`
-      # container. Dev: reach it on the `zitadel` host (same domain as the core,
-      # via the `127.0.0.1 zitadel` hosts entry) at :${IAM_LOGIN_PORT}, so the
-      # browser host matches the instance domain through the whole flow.
+      # Login v2 — the `proxy` serves the core and the login under ONE HTTPS
+      # origin; `/ui/v2/login` routes to the login, everything else to the core.
+      # All four URLs are on that single origin so cookies/assets/issuer stay
+      # consistent: BASEURI (where login lives), LOGINURLV2 / LOGOUTURLV2 (OIDC
+      # auth + RP-logout), SAML login. Port = the core's, not the login's 3000.
       ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "true"
-      ZITADEL_OIDC_DEFAULTLOGINURLV2: http://${IAM_DEV_HOSTNAME:-zitadel}:${IAM_LOGIN_PORT:-3000}/ui/v2/login/login?authRequest=
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: https://${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}/ui/v2/login/
+      ZITADEL_OIDC_DEFAULTLOGINURLV2: https://${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}/ui/v2/login/login?authRequest=
+      ZITADEL_OIDC_DEFAULTLOGOUTURLV2: https://${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}/ui/v2/login/logout?post_logout_redirect=
+      ZITADEL_SAML_DEFAULTLOGINURLV2: https://${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}/ui/v2/login/login?samlRequest=
     volumes:
       # Config (defaults.yaml/steps.yaml) is baked into the image. To customise
       # without rebuilding, uncomment and edit the host files:
       # - ./config/zitadel/defaults.yaml:/zitadel/config/defaults.yaml:ro
       # - ./config/zitadel/steps.yaml:/zitadel/config/steps.yaml:ro
       - machinekey:/data/machinekey
-    ports:
-      - "${IAM_DEV_PORT:-8080}:8080"
+    # No host port — the `proxy` publishes :${IAM_DEV_PORT} and path-routes to
+    # the core (everything except /ui/v2/login) and the login.
+    expose:
+      - "8080"
     depends_on:
       database-server:
         condition: service_healthy
@@ -154,6 +239,15 @@ services:
         condition: service_completed_successfully
     networks:
       - local
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${STACK_NAME:-iam}"
+      - "traefik.http.services.cs-core.loadbalancer.server.port=8080"
+      - "traefik.http.services.cs-core.loadbalancer.server.scheme=h2c"
+      - "traefik.http.routers.cs-core.rule=Host(`${IAM_DEV_HOSTNAME:-zitadel}`) && !PathPrefix(`/ui/v2/login`)"
+      - "traefik.http.routers.cs-core.entrypoints=web"
+      - "traefik.http.routers.cs-core.service=cs-core"
+      - "traefik.http.routers.cs-core.priority=100"
 
   # ── Login v2 (official hosted login UI; branded via LabelPolicy + theme) ────
   # Waits for the machine-key PAT to appear, then serves the login at
@@ -171,33 +265,44 @@ services:
     <<: *logging
     environment:
       TZ: ${TIME_ZONE:-Etc/UTC}
+      # Internal API URL (Docker DNS) — server-side login->core calls.
       ZITADEL_API_URL: http://zitadel:8080
-      # Dev instance pin (same mechanism as prod). The login resolves the Zitadel
-      # instance from the incoming browser host; in dev the login (:3000) and the
-      # core (:8080) are on different host:port pairs, so without this override
-      # the login forwards the wrong origin and the core answers "instance not
-      # found". Pin the full Host:port on every login->core API call — the port
-      # matters in dev (ExternalPort 8080 is non-standard), otherwise the core
-      # derives the issuer as `http://zitadel` (no port) and it diverges from the
-      # browser's `http://zitadel:8080`. Prod omits the port (443 is implicit).
-      CUSTOM_REQUEST_HEADERS: "Host:${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}"
+      # Pin the instance/issuer on every login->core call to the public proxy
+      # origin (same mechanism as prod's `Host:${IAM_HOSTNAME}`). The port is
+      # required in dev (ExternalPort 8080 is non-standard) so the core derives
+      # the issuer as `https://zitadel:8080`, matching the browser. X-Forwarded-
+      # Proto keeps the scheme https end-to-end behind the TLS proxy.
+      CUSTOM_REQUEST_HEADERS: "Host:${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080},X-Forwarded-Proto:https"
       ZITADEL_SERVICE_USER_TOKEN_FILE: /data/machinekey/iam-admin.pat
       NEXT_PUBLIC_BASE_PATH: /ui/v2/login
-      NEXT_PUBLIC_THEME_LAYOUT: ${LOGIN_THEME_LAYOUT:-side-by-side}
+      # Centred layout (upstream default). `side-by-side` needs a background
+      # image on the second panel — but Next.js 16 bakes the public/ asset
+      # manifest at BUILD time, so the runtime-overlaid background/favicon 404
+      # (see src/login). Until branding moves into the build, keep top-to-bottom
+      # and no background so the page is clean and centred.
+      NEXT_PUBLIC_THEME_LAYOUT: ${LOGIN_THEME_LAYOUT:-top-to-bottom}
       NEXT_PUBLIC_THEME_ROUNDNESS: ${LOGIN_THEME_ROUNDNESS:-mid}
       NEXT_PUBLIC_THEME_SPACING: ${LOGIN_THEME_SPACING:-regular}
       NEXT_PUBLIC_THEME_APPEARANCE: ${LOGIN_THEME_APPEARANCE:-material}
-      # Login-page background (shipped in the overlay at /images). Empty = none.
-      NEXT_PUBLIC_THEME_BACKGROUND_IMAGE: ${LOGIN_BACKGROUND_IMAGE:-/ui/v2/login/images/login-background.jpg}
+      NEXT_PUBLIC_THEME_BACKGROUND_IMAGE: ${LOGIN_BACKGROUND_IMAGE:-}
     volumes:
       - machinekey:/data/machinekey:ro
-    ports:
-      - "${IAM_LOGIN_PORT:-3000}:3000"
+    # No host port — the `proxy` path-routes /ui/v2/login to this container.
+    expose:
+      - "3000"
     depends_on:
       zitadel:
         condition: service_started
     networks:
       - local
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${STACK_NAME:-iam}"
+      - "traefik.http.services.cs-login.loadbalancer.server.port=3000"
+      - "traefik.http.routers.cs-login.rule=Host(`${IAM_DEV_HOSTNAME:-zitadel}`) && PathPrefix(`/ui/v2/login`)"
+      - "traefik.http.routers.cs-login.entrypoints=web"
+      - "traefik.http.routers.cs-login.service=cs-login"
+      - "traefik.http.routers.cs-login.priority=250"
 
   # ── Provisioner (OpenTofu IaC, one-shot, non-destructive) ───────────────────
   provisioner:
@@ -358,7 +463,11 @@ services:
     restart: "no"
     <<: *logging
     environment:
-      OIDC_ISSUER: http://${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}
+      # Browser-facing issuer (https proxy origin); backend token/userinfo calls
+      # go straight to the core over internal http with a Host override.
+      OIDC_ISSUER: https://${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}
+      OIDC_BACKEND_URL: http://zitadel:8080
+      OIDC_BACKEND_HOST: ${IAM_DEV_HOSTNAME:-zitadel}:${IAM_DEV_PORT:-8080}
       OIDC_CLIENT_ID: ${OIDC_TEST_CLIENT_ID:-}
       OIDC_CLIENT_SECRET: ${OIDC_TEST_CLIENT_SECRET:-}
       OIDC_REDIRECT_URI: http://localhost:8888/callback
@@ -388,6 +497,9 @@ volumes:
   backup-data:
     driver: local
     name: ${STACK_NAME:-iam}-backup
+  certs:
+    driver: local
+    name: ${STACK_NAME:-iam}-certs
 
 
 ### Networks ###

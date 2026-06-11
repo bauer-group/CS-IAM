@@ -8,8 +8,8 @@ everything else → the Zitadel core. This page lists each portal and endpoint.
 
 | Portal | Prod | Dev | Who / what |
 |--------|------|-----|------------|
-| **Console** — self-service + admin | `https://<IAM_HOSTNAME>/ui/console` | `http://<IAM_DEV_HOSTNAME>:8080/ui/console` | **Every user** manages their own profile, password, MFA/passkeys, sessions and sees their authorizations. **Admins** additionally manage orgs, projects, apps, users, roles/grants, policies, branding. First admin: `admin@bauer-group.com` / `ZITADEL_ADMIN_PASSWORD`. |
-| **Login v2** — the sign-in flow | `https://<IAM_HOSTNAME>/ui/v2/login` | `http://zitadel:<IAM_LOGIN_PORT>/ui/v2/login` (same `zitadel` host as the core, via the hosts entry) | Sign-in, registration, password reset, MFA/passkey setup *during login*. Apps redirect here — you don't browse it directly. |
+| **Console** — self-service + admin | `https://<IAM_HOSTNAME>/ui/console` | `https://<IAM_DEV_HOSTNAME>:8080/ui/console` (self-signed cert) | **Every user** manages their own profile, password, MFA/passkeys, sessions and sees their authorizations. **Admins** additionally manage orgs, projects, apps, users, roles/grants, policies, branding. First admin loginname: `admin@bauer-group.zitadel` (org domain, not the email) / `ZITADEL_ADMIN_PASSWORD`. |
+| **Login v2** — the sign-in flow | `https://<IAM_HOSTNAME>/ui/v2/login` | `https://<IAM_DEV_HOSTNAME>:8080/ui/v2/login` (path-routed by the proxy, same origin as the core) | Sign-in, registration, password reset, MFA/passkey setup *during login*. Apps redirect here — you don't browse it directly. |
 
 > **Console vs Login v2:** Login v2 is the *door* (authentication). The Console
 > is the *dashboard* (self-management for users, full management for admins) —
@@ -58,12 +58,13 @@ machine-key file existing — see [installation.md](installation.md).
 - **Prod (Traefik / Coolify):** one host, `https://<IAM_HOSTNAME>`, TLS at the
   proxy, **h2c** to the core. Path split: `/ui/v2/login` → login container
   (priority), all else → core (`:8080`).
-- **Dev:** the instance domain is `zitadel` — add `127.0.0.1 zitadel` to your
-  hosts file and browse **`http://zitadel:8080`** (Console + issuer + APIs).
-  `http://localhost:8080` returns *"instance not found"* (Host ≠ instance domain).
-  The login UI is on a **separate host port** `http://zitadel:<IAM_LOGIN_PORT>`
-  (default 3000) under `/ui/v2/login` — same `zitadel` host as the core, so the
-  browser host matches the instance domain through the whole sign-in flow.
+- **Dev:** a Traefik `proxy` mirrors prod — one HTTPS origin, TLS (self-signed)
+  at the proxy, **h2c** to the core, same path split (`/ui/v2/login` → login,
+  else → core). Add `127.0.0.1 zitadel` to your hosts file and browse
+  **`https://zitadel:8080`** (Console, Login, issuer, APIs — all one origin);
+  accept the self-signed cert once. HTTPS is required (the Login v2 cookie is
+  `Secure`). `localhost:8080` returns *"instance not found"* (Host ≠ instance
+  domain).
 - **Internal (compose network):** the login service calls the core at
   `http://zitadel:8080` (with a `Host:<IAM_HOSTNAME>` header override in prod);
   `provisioner`/`directory-sync` use the public issuer URL. **End users only ever

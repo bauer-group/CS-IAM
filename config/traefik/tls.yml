@@ -1,0 +1,14 @@
+# Traefik dynamic config (dev only) — default TLS certificate for the local
+# HTTPS dev origin. The cert is a self-signed cert for `zitadel`, generated into
+# the `certs` volume by the `prepare-cert` init container on first `up`.
+#
+# Why dev needs TLS: the Login v2 sets its session cookie with `Secure` (baked
+# into the production image at build time), so the browser only keeps it over
+# HTTPS. Plain HTTP drops the cookie -> "session expired" mid-login. This serves
+# the single dev origin over HTTPS so the full login (incl. MFA) works locally.
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/local.crt
+        keyFile: /certs/local.key

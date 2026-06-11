@@ -27,6 +27,9 @@ import jwt
 
 
 def get_token(issuer: str, key_file: str, verify: bool) -> str:
+    # JWT-profile: `aud` must equal the URL the core is actually reached at (it
+    # validates against the request scheme/host, not the public issuer) — so in
+    # dev, reach + audience the core directly over http at http://zitadel:8080.
     key = json.loads(open(key_file, encoding="utf-8").read())
     now = int(time.time())
     assertion = jwt.encode(
@@ -48,6 +51,10 @@ def get_token(issuer: str, key_file: str, verify: bool) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
+    # The URL the core is reached at — also the JWT-profile audience. In dev the
+    # containers reach the core directly over http (the public issuer is https
+    # via the proxy, but the audience follows the reached scheme); in prod it is
+    # the public https origin. See get_token().
     ap.add_argument("--issuer", default="http://zitadel:8080")
     ap.add_argument("--key-file", default="/data/machinekey/iam-admin.json")
     ap.add_argument("--insecure", action="store_true")
