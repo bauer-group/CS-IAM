@@ -1,3 +1,11 @@
+## [0.12.1](https://github.com/bauer-group/CS-IAM/compare/v0.12.0...v0.12.1) (2026-06-11)
+
+## [0.12.0](https://github.com/bauer-group/CS-IAM/compare/v0.11.0...v0.12.0) (2026-06-11)
+
+### 🚀 Features
+
+* **test:** added an in-stack OIDC test client to validate the demo user ([7431a5f](https://github.com/bauer-group/CS-IAM/commit/7431a5f481349319833ac55f4feb2afd590e6b09))
+
 ## [0.11.0](https://github.com/bauer-group/CS-IAM/compare/v0.10.1...v0.11.0) (2026-06-10)
 
 ### 🚀 Features
