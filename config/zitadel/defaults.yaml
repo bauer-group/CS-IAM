@@ -71,8 +71,8 @@ DefaultInstance:
   # ── Privacy / support links (shown in the login UI) ────────────────────────
   PrivacyPolicy:
     TOSLink: ""
-    PrivacyLink: "https://www.bauer-group.com/datenschutz"
-    HelpLink: ""
+    PrivacyLink: "https://go.bauer-group.com/privacypolicy"
+    HelpLink: "https://go.bauer-group.com/iam-help"
     SupportEmail: "support@bauer-group.com"
 
   # ── Branding ───────────────────────────────────────────────────────────────
