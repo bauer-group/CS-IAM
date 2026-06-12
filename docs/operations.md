@@ -28,7 +28,7 @@ the machine key):
 docker compose -f docker-compose.development.yml cp \
   scripts/validate-stack.py directory-sync:/tmp/validate-stack.py
 docker compose -f docker-compose.development.yml exec directory-sync \
-  python /tmp/validate-stack.py --issuer http://zitadel:8080 --insecure
+  python /tmp/validate-stack.py --issuer http://iam.bauer-group.test:8080 --insecure
 # In dev the containers reach the core directly over http (the browser-facing
 # issuer is https via the proxy). prod: --issuer https://<IAM_HOSTNAME> (drop
 # --insecure).

@@ -19,7 +19,8 @@
 # =============================================================================
 
 FirstInstance:
-  InstanceName: "BAUER GROUP IAM"
+  # InstanceName is the TOTP/MFA issuer label shown in authenticator apps.
+  InstanceName: "BAUER GROUP"
   DefaultLanguage: de
 
   # Where the machine credentials are written (mounted `machinekey` volume,
@@ -31,8 +32,11 @@ FirstInstance:
     Name: "BAUER GROUP"
 
     # ── Human admin (console login; password via env) ──────────────────────
+    # With DomainPolicy.UserLoginMustBeDomain=false the username is the verbatim
+    # loginname (no org-domain suffix), so set it to the full email for a clean
+    # `admin@bauer-group.com` loginname + TOTP account label.
     Human:
-      UserName: admin
+      UserName: admin@bauer-group.com
       FirstName: IAM
       LastName: Administrator
       Email:

@@ -109,7 +109,7 @@ are captured by the Postgres backup.
 
 | Setting | Value |
 |---|---|
-| **Issuer** | `https://<IAM_HOSTNAME>` (dev: `https://zitadel:8080` — needs the `127.0.0.1 zitadel` hosts entry + accepting the self-signed cert) |
+| **Issuer** | `https://<IAM_HOSTNAME>` (dev: `https://iam.bauer-group.test:8080` — needs the `127.0.0.1 iam.bauer-group.test` hosts entry + accepting the self-signed cert) |
 | **Discovery** | `<issuer>/.well-known/openid-configuration` — point your OIDC library here; it auto-configures every endpoint |
 | **client_id / client_secret** | from step 3 |
 | **Redirect URI** | must exactly match one you declared |
@@ -183,10 +183,10 @@ the roles are exactly **`rUser` + `rManager`** (and **not** `rAdministrator`).
 `GET http://localhost:8888/validate` returns the same as JSON (HTTP 200 pass /
 422 fail) — the basis for an automated test.
 
-> Needs `127.0.0.1 zitadel` in your hosts file (the dev browser-access entry), so
-> `zitadel:8080` resolves for both the browser and the client. Against a deployed
-> stack, set `OIDC_ISSUER=https://<IAM_HOSTNAME>`, `OIDC_BACKEND_URL=http://zitadel:8080`
-> and `OIDC_BACKEND_HOST=<IAM_HOSTNAME>`.
+> Needs `127.0.0.1 iam.bauer-group.test` in your hosts file (the dev browser-access
+> entry) so the issuer resolves in the browser; the client reaches the core over
+> internal http. Against a deployed stack, set `OIDC_ISSUER=https://<IAM_HOSTNAME>`,
+> `OIDC_BACKEND_URL=http://zitadel:8080` and `OIDC_BACKEND_HOST=<IAM_HOSTNAME>`.
 
 ## App types (web / SPA / native)
 

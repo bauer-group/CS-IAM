@@ -20,7 +20,7 @@ Configuration lives in three places:
 |---|---|
 | `STACK_NAME` | container/volume/network prefix (default `iam`) |
 | `IAM_HOSTNAME` | production OIDC issuer host |
-| `IAM_DEV_HOSTNAME` / `IAM_DEV_PORT` | dev issuer (the Docker service name, `zitadel:8080`) |
+| `IAM_DEV_HOSTNAME` / `IAM_DEV_PORT` | dev domain + port (`iam.bauer-group.test:8080`) — a network alias on the core and the HTTPS proxy origin; a valid WebAuthn rp.id |
 | `PROXY_NETWORK` | external Traefik network |
 | `ZITADEL_MASTERKEY` | 32-char secrets-at-rest key (generated) |
 | `ZITADEL_ADMIN_PASSWORD` | first admin console password (generated) |

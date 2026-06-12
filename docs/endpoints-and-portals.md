@@ -8,7 +8,7 @@ everything else → the Zitadel core. This page lists each portal and endpoint.
 
 | Portal | Prod | Dev | Who / what |
 |--------|------|-----|------------|
-| **Console** — self-service + admin | `https://<IAM_HOSTNAME>/ui/console` | `https://<IAM_DEV_HOSTNAME>:8080/ui/console` (self-signed cert) | **Every user** manages their own profile, password, MFA/passkeys, sessions and sees their authorizations. **Admins** additionally manage orgs, projects, apps, users, roles/grants, policies, branding. First admin loginname: `admin@bauer-group.zitadel` (org domain, not the email) / `ZITADEL_ADMIN_PASSWORD`. |
+| **Console** — self-service + admin | `https://<IAM_HOSTNAME>/ui/console` | `https://<IAM_DEV_HOSTNAME>:8080/ui/console` (self-signed cert) | **Every user** manages their own profile, password, MFA/passkeys, sessions and sees their authorizations. **Admins** additionally manage orgs, projects, apps, users, roles/grants, policies, branding. First admin loginname: `admin@bauer-group.com` (org domain, not the email) / `ZITADEL_ADMIN_PASSWORD`. |
 | **Login v2** — the sign-in flow | `https://<IAM_HOSTNAME>/ui/v2/login` | `https://<IAM_DEV_HOSTNAME>:8080/ui/v2/login` (path-routed by the proxy, same origin as the core) | Sign-in, registration, password reset, MFA/passkey setup *during login*. Apps redirect here — you don't browse it directly. |
 
 > **Console vs Login v2:** Login v2 is the *door* (authentication). The Console
@@ -60,8 +60,8 @@ machine-key file existing — see [installation.md](installation.md).
   (priority), all else → core (`:8080`).
 - **Dev:** a Traefik `proxy` mirrors prod — one HTTPS origin, TLS (self-signed)
   at the proxy, **h2c** to the core, same path split (`/ui/v2/login` → login,
-  else → core). Add `127.0.0.1 zitadel` to your hosts file and browse
-  **`https://zitadel:8080`** (Console, Login, issuer, APIs — all one origin);
+  else → core). Add `127.0.0.1 iam.bauer-group.test` to your hosts file and browse
+  **`https://iam.bauer-group.test:8080`** (Console, Login, issuer, APIs — all one origin);
   accept the self-signed cert once. HTTPS is required (the Login v2 cookie is
   `Secure`). `localhost:8080` returns *"instance not found"* (Host ≠ instance
   domain).

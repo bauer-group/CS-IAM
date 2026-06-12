@@ -26,19 +26,19 @@ UI-made resources. Review and apply manually:
 ## Dev login fails: "session expired" mid-login, or "instance not found"
 
 The dev stack serves **one HTTPS origin** via the Traefik `proxy`. Browse
-**`https://zitadel:8080/ui/console`** (add `127.0.0.1 zitadel` to your hosts file
+**`https://iam.bauer-group.test:8080/ui/console`** (add `127.0.0.1 iam.bauer-group.test` to your hosts file
 and accept the self-signed cert once). Common symptoms when this isn't set up:
 
 - **`Ihre Sitzung ist abgelaufen` / "session expired" on the MFA or password
   step:** you opened the stack over **plain HTTP**. The Login v2 session cookie
   is `Secure` (baked into the production image), so the browser drops it over
-  HTTP and the session is lost mid-login. Use **`https://zitadel:8080`** — the
+  HTTP and the session is lost mid-login. Use **`https://iam.bauer-group.test:8080`** — the
   proxy provides the required HTTPS origin.
-- **`unable to set instance using origin … (ExternalDomain is zitadel)` / "instance
-  not found":** the browser `Host` must match the instance domain `zitadel`.
-  `localhost` won't (and `*.localhost` is forced to 127.0.0.1 inside containers,
-  breaking the in-container provisioner/sync). Use the `127.0.0.1 zitadel` hosts
-  entry and the `zitadel` host.
+- **`unable to set instance using origin …` / "instance not found":** the browser
+  `Host` must match the instance domain `iam.bauer-group.test`. `localhost` won't
+  (and `*.localhost` is forced to 127.0.0.1 inside containers, breaking the
+  in-container provisioner/sync). Use the `127.0.0.1 iam.bauer-group.test` hosts
+  entry and the `iam.bauer-group.test` host.
 - **Broken/missing login background or favicon:** known limitation — Next.js 16
   bakes the `public/` asset manifest at build time, so the runtime branding
   overlay 404s. Dev defaults to the centred `top-to-bottom` layout (no
@@ -49,11 +49,12 @@ and accept the self-signed cert once). Common symptoms when this isn't set up:
 The automation containers must reach Zitadel at the **same host as its issuer**
 (the SDK takes the JWT audience from the discovered issuer, so the *host* must
 match — the scheme may differ).
-- dev: the issuer is `https://zitadel:8080` (via the proxy); the containers reach
-  the core directly over internal **http** at `http://zitadel:8080` with
-  `ZITADEL_INSECURE=true`. Same host (`zitadel:8080`) → audience matches even
-  though the connection is plain http. The browser uses the `127.0.0.1 zitadel`
-  hosts entry over HTTPS.
+- dev: the issuer is `https://iam.bauer-group.test:8080` (via the proxy); the
+  containers reach the core directly over internal **http** at
+  `http://iam.bauer-group.test:8080` (a Docker network alias on the core) with
+  `ZITADEL_INSECURE=true`. Same host → audience matches even though the connection
+  is plain http. The browser uses the `127.0.0.1 iam.bauer-group.test` hosts entry
+  over HTTPS.
 - prod: provision/sync are on the `proxy` network and use `https://IAM_HOSTNAME`.
 A real mismatch — pointing at a **different host** than the issuer — fails JWT
 audience validation.
