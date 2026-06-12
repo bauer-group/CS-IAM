@@ -28,18 +28,26 @@ FirstInstance:
   MachineKeyPath: /data/machinekey/iam-admin.json
   PatPath: /data/machinekey/iam-admin.pat
 
+  # The FirstInstance org is the LOCAL break-glass home: "System Admins", a
+  # tenant with NO external IdP. The system administrator lives here so they can
+  # always sign in with a password — even when the workforce org (BAUER GROUP,
+  # created in terraform/) is set to Entra-only auto-redirect. The admin's
+  # loginname uses the non-federated domain `id-admin.bauer-group.com`, so
+  # domain discovery routes it here (never to the federated workforce org).
   Org:
-    Name: "BAUER GROUP"
+    Name: "System Admins"
 
-    # ── Human admin (console login; password via env) ──────────────────────
-    # UserLoginMustBeDomain=false → the username IS the verbatim loginname, so
-    # the full email gives a clean `admin@bauer-group.com` loginname (UPN model).
+    # ── Human break-glass admin (local password login) ─────────────────────
+    # UserLoginMustBeDomain=false → the username IS the verbatim loginname. Use
+    # the non-federated id-admin.bauer-group.com domain so it can never be routed
+    # to the Entra-federated workforce org. Reachable in prod at
+    # id-admin.bauer-group.com; in dev via the loginname on the single host.
     Human:
-      UserName: admin@bauer-group.com
+      UserName: admin@id-admin.bauer-group.com
       FirstName: IAM
       LastName: Administrator
       Email:
-        Address: admin@bauer-group.com
+        Address: admin@id-admin.bauer-group.com
         Verified: true
       PasswordChangeRequired: false
       # Password: injected via ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD

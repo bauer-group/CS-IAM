@@ -1,21 +1,26 @@
 # =============================================================================
-# Organisation lookup + project
+# Workforce org (BAUER GROUP) + projects
 # =============================================================================
-# The org is created by FirstInstance (steps.yaml); we look it up by name to
-# get its id for org-scoped resources. The project holds the OIDC apps and the
-# role catalog, with authorization-on-auth enabled so only users holding a role
-# grant may log into the project's apps (goal d).
+# BAUER GROUP is the workforce tenant (Entra-federated in prod). The FirstInstance
+# org is now the LOCAL break-glass "System Admins" org (steps.yaml), so BAUER
+# GROUP is created HERE in Terraform and everything below is org-scoped to it via
+# local.org_id. The project holds the OIDC apps + role catalog, with
+# authorization-on-auth so only users with a role grant may sign into its apps.
 # =============================================================================
 
-# NOTE: data-source/resource attribute names target the zitadel/zitadel v2
-# provider. `tofu validate` (CI) will flag any drift on a provider bump.
-data "zitadel_orgs" "bauer" {
-  name        = var.org_name
-  name_method = "TEXT_QUERY_METHOD_EQUALS"
+# NOTE: resource attribute names target the zitadel/zitadel v2 provider.
+# `tofu validate` (CI) will flag any drift on a provider bump.
+resource "zitadel_org" "bauer" {
+  name = var.org_name
+
+  # The workforce tenant must never be pruned by an unattended plan.
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 locals {
-  org_id = one(data.zitadel_orgs.bauer.ids)
+  org_id = zitadel_org.bauer.id
   apps   = jsondecode(var.app_redirect_uris)
 }
 

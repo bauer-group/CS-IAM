@@ -54,20 +54,10 @@ LABEL org.opencontainers.image.version="0.0.0"
 # ---------------------------------------------------------------------------
 # Everything under branding/public is merged onto /app/public; same-path files
 # replace the upstream asset. Empty by default (passthrough) until you add yours.
+# NOTE: the centred language/theme switcher, the favicon and the login
+# background are now baked into the base image (EP-Zitadel branches
+# feature/center-switcher + branding/bauer-group → production), so this overlay
+# carries no patch — it only re-tags the base under the cs-iam namespace.
 COPY branding/public/ /app/public/
 
-# ---------------------------------------------------------------------------
-# Centre the language / theme switcher
-# ---------------------------------------------------------------------------
-# Upstream right-aligns the footer switcher (`justify-end` + `md:max-w-full`),
-# which on wide screens pushes it far to the right ("verschoben"). The source
-# fix is in the EP-Zitadel fork (apps/login layout.tsx → justify-center); this
-# patches the compiled className literal in the standalone bundle so the fix is
-# applied without rebuilding Next.js. Idempotent — a no-op once the base image
-# already ships the centred class.
-USER root
-RUN find /app/apps/login/.next/server -type f -name '*.js' -exec \
-      sed -i 's/justify-end space-x-4 px-4 py-4 md:max-w-full md:px-8/justify-center space-x-4 px-4 py-4 md:px-8/g' {} +
-USER nextjs
-
-# Inherit ENTRYPOINT, ENV, HEALTHCHECK from the base image.
+# Inherit ENTRYPOINT, USER (nextjs), ENV, HEALTHCHECK from the base image.
