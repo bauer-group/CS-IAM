@@ -64,10 +64,15 @@ variable "external_org_name" {
   description = "Name of the second org holding customer/external accounts."
 }
 
-variable "external_password_min_length" {
-  type        = number
-  default     = 8
-  description = "Minimum password length for the external org (relaxed from the strict instance default)."
+# Internal (BAUER GROUP) org email domains for DOMAIN DISCOVERY: each verified
+# domain routes its @domain logins to the single Entra IdP. One tenant, many
+# domains. NOT used to build loginnames (UserLoginMustBeDomain=false → loginname
+# is the user's real email). Empty in dev (no Entra). In prod set the list AND
+# verify each via DNS (ValidateOrgDomains is on). Set via TF_VAR_internal_org_domains.
+variable "internal_org_domains" {
+  type        = list(string)
+  default     = []
+  description = "Verified email domains of the BAUER GROUP org for domain discovery (e.g. [\"bauer-group.com\",\"de.bauer-group.com\",\"us.bauer-group.com\"])."
 }
 
 variable "external_project_name" {

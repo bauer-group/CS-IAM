@@ -35,11 +35,14 @@ DefaultInstance:
     DisableLoginWithEmail: false
     DisableLoginWithPhone: true
     DefaultRedirectURI: "" # set per-instance via env if a global landing page is wanted
-    PasswordCheckLifetime: 240h
-    ExternalLoginCheckLifetime: 240h
-    MFAInitSkipLifetime: 720h
-    SecondFactorCheckLifetime: 18h
-    MultiFactorCheckLifetime: 12h
+    # Session/SSO lifetimes — generous (Microsoft-like) so users don't re-auth
+    # constantly across many apps. With SSO one password+MFA check covers every
+    # app for the lifetime below; these control when a *re-check* is forced.
+    PasswordCheckLifetime: 2160h        # 90d — primary SSO duration
+    ExternalLoginCheckLifetime: 2160h   # 90d — same for IdP logins
+    MFAInitSkipLifetime: 2160h          # 90d — grace before MFA setup is enforced
+    SecondFactorCheckLifetime: 720h     # 30d — re-prompt 2FA monthly
+    MultiFactorCheckLifetime: 720h      # 30d
     # Second/Multi factor catalogues (verify enum values against the installed
     # Zitadel version; unknown values are ignored). 1=OTP(TOTP) 2=U2F 6=OTPEmail 7=OTPSMS
     SecondFactors:
@@ -63,8 +66,15 @@ DefaultInstance:
     MaxOTPAttempts: 5
 
   # ── Domain handling ────────────────────────────────────────────────────────
+  # Loginname = the user's verbatim username, i.e. their real email
+  # (admin@bauer-group.com, jdoe@de.bauer-group.com) — the Microsoft UPN model.
+  # The org owns MULTIPLE verified domains (bauer-group.com, de.bauer-group.com,
+  # us.bauer-group.com, …) used for **domain discovery**: any @*.bauer-group.com
+  # login is routed to the single Entra IdP. These domains are NOT used to build
+  # the loginname (that is why UserLoginMustBeDomain stays false) — they only
+  # drive routing. Tenant isolation is at the ORG level, independent of this flag.
   DomainPolicy:
-    UserLoginMustBeDomain: false # usernames are not forced to carry the org domain
+    UserLoginMustBeDomain: false
     ValidateOrgDomains: true
     SMTPSenderAddressMatchesInstanceDomain: false
 

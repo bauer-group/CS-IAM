@@ -32,9 +32,8 @@ FirstInstance:
     Name: "BAUER GROUP"
 
     # ── Human admin (console login; password via env) ──────────────────────
-    # With DomainPolicy.UserLoginMustBeDomain=false the username is the verbatim
-    # loginname (no org-domain suffix), so set it to the full email for a clean
-    # `admin@bauer-group.com` loginname + TOTP account label.
+    # UserLoginMustBeDomain=false → the username IS the verbatim loginname, so
+    # the full email gives a clean `admin@bauer-group.com` loginname (UPN model).
     Human:
       UserName: admin@bauer-group.com
       FirstName: IAM

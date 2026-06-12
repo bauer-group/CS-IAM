@@ -23,16 +23,18 @@ resource "zitadel_org" "external" {
   }
 }
 
-# Org-level password policy override for the customer org. Internal accounts are
-# unaffected — they keep the strict 12-char instance default. Relaxed length for
-# customer usability; complexity (upper/lower/number) is retained, symbols are
-# optional. Note: org-level policy resources fully replace the instance default
-# for this org, so all has_* flags must be set explicitly.
-resource "zitadel_password_complexity_policy" "external" {
-  org_id        = zitadel_org.external.id
-  min_length    = var.external_password_min_length
-  has_uppercase = true
-  has_lowercase = true
-  has_number    = true
-  has_symbol    = false
+# NOTE: no per-org policy overrides. Password complexity, lockout, session and
+# credential lifetimes, branding and SMTP are all configured ONCE at the instance
+# level (config/zitadel/defaults.yaml + the SMTP env) and apply to every org.
+# This keeps the configuration in one place — no per-tenant "Individualkrämerei".
+
+# ── Internal org (BAUER GROUP) verified domains — for domain discovery ───────
+# One tenant, many email domains: each verified domain routes its @domain logins
+# to the single Entra IdP (AllowDomainDiscovery). Empty in dev; in prod set
+# var.internal_org_domains and verify each via DNS.
+resource "zitadel_domain" "internal" {
+  for_each = toset(var.internal_org_domains)
+
+  org_id = local.org_id
+  name   = each.value
 }

@@ -220,6 +220,16 @@ services:
       ZITADEL_EXTERNALSECURE: "true"
       # TOTP/MFA issuer label shown in authenticator apps (default is "ZITADEL").
       ZITADEL_SYSTEMDEFAULTS_MULTIFACTORS_OTP_ISSUER: "BAUER GROUP"
+      # SMTP — INSTANCE-WIDE (one MTA for all orgs). Dev catches every mail in
+      # Mailpit (web UI http://localhost:${MAILPIT_UI_PORT:-8025}); no real send.
+      # DefaultInstance config (applied on a fresh instance), so notifications
+      # (verify, password reset, OTP-email) actually work.
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST: ${DEV_SMTP_HOST:-mailpit:1025}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_USER: ${DEV_SMTP_USER:-}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_PASSWORD: ${DEV_SMTP_PASSWORD:-}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_TLS: ${DEV_SMTP_TLS:-false}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_FROM: ${SMTP_FROM_EMAIL:-no-reply@bauer-group.com}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_FROMNAME: ${SMTP_FROM_NAME:-BAUER GROUP IAM}
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:?Set ZITADEL_ADMIN_PASSWORD in .env}
       # Dedicated login-client machine user (IAM_LOGIN_CLIENT role) for the
       # Login v2 — the session/MFA APIs require it; an IAM_OWNER admin PAT is
@@ -476,6 +486,24 @@ services:
     depends_on:
       database-server:
         condition: service_healthy
+    networks:
+      - local
+
+  # ── Mailpit — dev mail catcher (captures all outgoing mail, no real send) ───
+  # Modern, maintained MailHog replacement. Zitadel sends notifications (verify,
+  # password reset, OTP-email) to mailpit:1025; read them in the web UI at
+  # http://localhost:${MAILPIT_UI_PORT:-8025}. Prod uses a real MTA via SMTP_*.
+  mailpit:
+    image: ${MAILPIT_IMAGE:-axllent/mailpit}:${MAILPIT_VERSION:-latest}
+    container_name: ${STACK_NAME:-iam}_MAILPIT
+    restart: unless-stopped
+    <<: *logging
+    environment:
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+    expose:
+      - "1025"
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
     networks:
       - local
 
