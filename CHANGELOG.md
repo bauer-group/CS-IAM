@@ -1,3 +1,12 @@
+## [0.12.4](https://github.com/bauer-group/CS-IAM/compare/v0.12.3...v0.12.4) (2026-06-12)
+
+### 🐛 Bug Fixes
+
+* **config:** updated privacy and help links in defaults.yaml ([cc282cb](https://github.com/bauer-group/CS-IAM/commit/cc282cb0031bee04069f62048d0d894a32954d9e))
+* **login:** enabled MFA login via login-client SA + WebAuthn-valid domain ([35ea7fa](https://github.com/bauer-group/CS-IAM/commit/35ea7fa674164b94f07963cf12ece0536d89d29b))
+* **login:** fixed console mixed-content (tlsMode external) + TOTP issuer ([dcbdea4](https://github.com/bauer-group/CS-IAM/commit/dcbdea4bb214e1bcc810387f0a9120956036b752))
+* **login:** fixed Login v2 dev HTTPS origin and prod routing ([46432b2](https://github.com/bauer-group/CS-IAM/commit/46432b2662e18b9b3bd35ab8143ffcfdfb4ceed7))
+
 ## [0.12.3](https://github.com/bauer-group/CS-IAM/compare/v0.12.2...v0.12.3) (2026-06-11)
 
 ### ♻️ Refactoring
