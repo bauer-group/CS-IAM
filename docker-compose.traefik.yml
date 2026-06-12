@@ -119,6 +119,8 @@ services:
       ZITADEL_EXTERNALDOMAIN: ${IAM_HOSTNAME:?Set IAM_HOSTNAME in .env}
       ZITADEL_EXTERNALPORT: 443
       ZITADEL_EXTERNALSECURE: "true"
+      # TOTP/MFA issuer label shown in authenticator apps (default is "ZITADEL").
+      ZITADEL_SYSTEMDEFAULTS_MULTIFACTORS_OTP_ISSUER: "BAUER GROUP"
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:?Set ZITADEL_ADMIN_PASSWORD in .env}
       # Login v2 — route all apps to the hosted login (the `login` service,
       # served under the same domain at /ui/v2/login via Traefik).

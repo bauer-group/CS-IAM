@@ -81,7 +81,13 @@ services:
       login:
         condition: service_healthy
     networks:
-      - local
+      local:
+        # The instance domain resolves to the PROXY inside the network too, so the
+        # automation containers (provisioner/sync/brand) reach the core over the
+        # SAME https origin as the issuer — the JWT-profile audience matches. They
+        # trust the self-signed cert via SSL_CERT_FILE/CURL_CA_BUNDLE.
+        aliases:
+          - ${IAM_DEV_HOSTNAME:-iam.bauer-group.test}
 
   # ── Generate a self-signed dev cert (once) for the HTTPS proxy origin ───────
   # Idempotent: writes /certs/local.{crt,key} for `zitadel` into the `certs`
@@ -186,7 +192,7 @@ services:
       --masterkey "${ZITADEL_MASTERKEY:?Set ZITADEL_MASTERKEY in .env}"
       --config /zitadel/config/defaults.yaml
       --steps /zitadel/config/steps.yaml
-      --tlsMode disabled
+      --tlsMode external
     environment:
       TZ: ${TIME_ZONE:-Etc/UTC}
       # Database connection
@@ -203,7 +209,8 @@ services:
       # ${IAM_DEV_PORT}, served by the `proxy` (TLS termination). ExternalSecure
       # is true so the issuer is https (required: the Login v2 cookie is `Secure`,
       # so the whole flow must run over HTTPS). The core itself stays plain-http
-      # behind the proxy (`--tlsMode disabled`); the automation containers reach
+      # behind the proxy (`--tlsMode external` — TLS terminated by the proxy, so
+      # the core serves plain http but generates https URLs); the automation reach
       # it directly via Docker DNS (`zitadel:8080`) and the issuer/JWT audience
       # still match. (`*.localhost` can't be used: musl/glibc force it to
       # 127.0.0.1 inside every container.) For browser access add
@@ -211,6 +218,8 @@ services:
       ZITADEL_EXTERNALDOMAIN: ${IAM_DEV_HOSTNAME:-iam.bauer-group.test}
       ZITADEL_EXTERNALPORT: ${IAM_DEV_PORT:-8080}
       ZITADEL_EXTERNALSECURE: "true"
+      # TOTP/MFA issuer label shown in authenticator apps (default is "ZITADEL").
+      ZITADEL_SYSTEMDEFAULTS_MULTIFACTORS_OTP_ISSUER: "BAUER GROUP"
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:?Set ZITADEL_ADMIN_PASSWORD in .env}
       # Dedicated login-client machine user (IAM_LOGIN_CLIENT role) for the
       # Login v2 — the session/MFA APIs require it; an IAM_OWNER admin PAT is
@@ -247,13 +256,7 @@ services:
       prepare-machinekey:
         condition: service_completed_successfully
     networks:
-      local:
-        # Network alias = the instance domain, so the automation containers
-        # (provisioner/sync) reach the core at the same host as the issuer and
-        # the JWT audience matches. On the host the same name resolves to the
-        # proxy via the hosts file.
-        aliases:
-          - ${IAM_DEV_HOSTNAME:-iam.bauer-group.test}
+      - local
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${STACK_NAME:-iam}"
@@ -338,12 +341,18 @@ services:
       TZ: ${TIME_ZONE:-Etc/UTC}
       ZITADEL_DOMAIN: ${IAM_DEV_HOSTNAME:-iam.bauer-group.test}
       ZITADEL_PORT: ${IAM_DEV_PORT:-8080}
-      ZITADEL_INSECURE: "true"
+      # Reach the core over HTTPS through the proxy (alias) so the issuer matches.
+      # Trust the dev self-signed cert: SSL_CERT_FILE for the Go provider,
+      # CURL_CA_BUNDLE for the readiness curl. (Prod uses a real cert — neither
+      # var is set there.)
+      ZITADEL_INSECURE: "false"
+      SSL_CERT_FILE: /certs/local.crt
+      CURL_CA_BUNDLE: /certs/local.crt
       ZITADEL_JWT_PROFILE_FILE: /data/machinekey/iam-admin.json
       ZITADEL_WAIT_TIMEOUT: ${PROVISIONER_WAIT_TIMEOUT:-120}
       TF_VAR_zitadel_domain: ${IAM_DEV_HOSTNAME:-iam.bauer-group.test}
       TF_VAR_zitadel_port: ${IAM_DEV_PORT:-8080}
-      TF_VAR_zitadel_insecure: "true"
+      TF_VAR_zitadel_insecure: "false"
       TF_VAR_role_prefix: ${SYNC_ROLE_PREFIX:-entra:}
       TF_VAR_azure_client_id: ${AZURE_CLIENT_ID:-}
       TF_VAR_azure_client_secret: ${AZURE_CLIENT_SECRET:-}
@@ -360,6 +369,7 @@ services:
     volumes:
       - machinekey:/data/machinekey:ro
       - tfstate:/tfstate
+      - certs:/certs:ro
     depends_on:
       zitadel:
         condition: service_started
@@ -385,7 +395,10 @@ services:
       AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET:-}
       ZITADEL_DOMAIN: ${IAM_DEV_HOSTNAME:-iam.bauer-group.test}
       ZITADEL_PORT: ${IAM_DEV_PORT:-8080}
-      ZITADEL_INSECURE: "true"
+      # HTTPS via the proxy (alias) so the issuer matches; trust the dev
+      # self-signed cert (httpx honours SSL_CERT_FILE).
+      ZITADEL_INSECURE: "false"
+      SSL_CERT_FILE: /certs/local.crt
       ZITADEL_JWT_PROFILE_FILE: /data/machinekey/iam-admin.json
       ZITADEL_WAIT_TIMEOUT: ${SYNC_WAIT_TIMEOUT:-180}
       SYNC_ENABLED: ${SYNC_ENABLED:-true}
@@ -398,6 +411,7 @@ services:
     volumes:
       - sync-data:/data
       - machinekey:/data/machinekey:ro
+      - certs:/certs:ro
     depends_on:
       provisioner:
         condition: service_completed_successfully
@@ -418,13 +432,15 @@ services:
       TZ: ${TIME_ZONE:-Etc/UTC}
       ZITADEL_DOMAIN: ${IAM_DEV_HOSTNAME:-iam.bauer-group.test}
       ZITADEL_PORT: ${IAM_DEV_PORT:-8080}
-      ZITADEL_INSECURE: "true"
+      ZITADEL_INSECURE: "false"
+      SSL_CERT_FILE: /certs/local.crt
       ZITADEL_JWT_PROFILE_FILE: /data/machinekey/iam-admin.json
       ZITADEL_WAIT_TIMEOUT: ${SYNC_WAIT_TIMEOUT:-180}
       BRANDING_ENABLED: ${BRANDING_ENABLED:-true}
       SYNC_LOG_FORMAT: ${SYNC_LOG_FORMAT:-console}
     volumes:
       - machinekey:/data/machinekey:ro
+      - certs:/certs:ro
     depends_on:
       provisioner:
         condition: service_completed_successfully
