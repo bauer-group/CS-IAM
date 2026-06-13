@@ -308,17 +308,15 @@ services:
       # PAT, which lacks the session/MFA permissions the Login v2 needs.
       ZITADEL_SERVICE_USER_TOKEN_FILE: /data/machinekey/login-client.pat
       NEXT_PUBLIC_BASE_PATH: /ui/v2/login
-      # Switcher (centred), favicon and the login background are baked into the
-      # EP-Zitadel base image (branches feature/center-switcher +
-      # branding/bauer-group -> production, pinned via LOGIN_BASE_VERSION). They
-      # are served under the basePath, so they work behind the proxy — no public/
-      # overlay (which Next.js serves at root and the proxy 404s). Leaving
-      # NEXT_PUBLIC_THEME_BACKGROUND_IMAGE empty uses the baked default.
+      # Branding is RUNTIME (Zitadel LabelPolicy): the page logo (LabelPolicy
+      # logo) and the browser favicon (LabelPolicy icon, via the base image's
+      # feature/favicon-from-branding). The centred switcher + per-IdP logos are
+      # baked in the base image (EP-Zitadel feature branches -> production,
+      # pinned via LOGIN_BASE_VERSION). No login background image by design.
       NEXT_PUBLIC_THEME_LAYOUT: ${LOGIN_THEME_LAYOUT:-top-to-bottom}
       NEXT_PUBLIC_THEME_ROUNDNESS: ${LOGIN_THEME_ROUNDNESS:-mid}
       NEXT_PUBLIC_THEME_SPACING: ${LOGIN_THEME_SPACING:-regular}
       NEXT_PUBLIC_THEME_APPEARANCE: ${LOGIN_THEME_APPEARANCE:-material}
-      NEXT_PUBLIC_THEME_BACKGROUND_IMAGE: ${LOGIN_BACKGROUND_IMAGE:-}
     volumes:
       - machinekey:/data/machinekey:ro
     # No host port — the `proxy` path-routes /ui/v2/login to this container.
