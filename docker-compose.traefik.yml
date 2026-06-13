@@ -187,15 +187,15 @@ services:
       # issuer https end-to-end).
       CUSTOM_REQUEST_HEADERS: "Host:${IAM_HOSTNAME},X-Forwarded-Proto:https"
       NEXT_PUBLIC_BASE_PATH: /ui/v2/login
-      # Centred layout (upstream default). `side-by-side` needs a background, but
-      # Next.js 16 bakes the public/ manifest at build time so the runtime-
-      # overlaid background/favicon 404 — keep top-to-bottom + no background
-      # until branding moves into the image build (see src/login).
+      # Branding is RUNTIME (Zitadel LabelPolicy): the page logo (LabelPolicy
+      # logo) and the browser favicon (LabelPolicy icon, via the base image's
+      # feature/favicon-from-branding). The centred switcher + per-IdP logos are
+      # baked in the base image (EP-Zitadel feature branches -> production,
+      # pinned via LOGIN_BASE_VERSION). No login background image by design.
       NEXT_PUBLIC_THEME_LAYOUT: ${LOGIN_THEME_LAYOUT:-top-to-bottom}
       NEXT_PUBLIC_THEME_ROUNDNESS: ${LOGIN_THEME_ROUNDNESS:-mid}
       NEXT_PUBLIC_THEME_SPACING: ${LOGIN_THEME_SPACING:-regular}
       NEXT_PUBLIC_THEME_APPEARANCE: ${LOGIN_THEME_APPEARANCE:-material}
-      NEXT_PUBLIC_THEME_BACKGROUND_IMAGE: ${LOGIN_BACKGROUND_IMAGE:-}
     volumes:
       - machinekey:/data/machinekey:ro
     depends_on:
