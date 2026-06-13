@@ -4,13 +4,17 @@
 
 | Org | Who | Password policy | App access |
 |-----|-----|-----------------|------------|
-| **BAUER GROUP** (internal) | company users (federated + local) | strict instance default (12 chars + MFA) | all internal apps via the grant model |
+| **System Admins** (break-glass) | local admins + the `iam-admin` automation user | strict instance default (12 chars + MFA) | console/admin; never federated |
+| **BAUER GROUP** (workforce) | company users (federated + local) | strict instance default (12 chars + MFA) | all internal apps via the grant model |
 | **External Users** (customers) | external/customer accounts | relaxed (`min_length 8`, org-level override) | **only** apps explicitly granted to this org |
 
-Both orgs live in one Zitadel instance. The internal org is created by
-FirstInstance; the **External Users** org, its relaxed password policy, and the
-customer **External Apps** project (granted to it) are managed in Terraform
-(`terraform/orgs.tf`, `projects.tf`).
+All three orgs live in one Zitadel instance. **System Admins** is the
+FirstInstance org (`config/zitadel/steps.yaml`) — the local break-glass home and
+the `iam-admin` automation user. The **BAUER GROUP** workforce org and the
+**External Users** customer org (with its relaxed password policy and the customer
+**External Apps** project granted to it) are created in Terraform
+(`terraform/projects.tf` `zitadel_org.bauer`; `terraform/orgs.tf`
+`zitadel_org.external`). See [architecture.md](architecture.md) for the full map.
 
 **How "externals only reach allowed apps" works:** every project has
 `has_project_check = true`, so a token is only issued to a user who holds a

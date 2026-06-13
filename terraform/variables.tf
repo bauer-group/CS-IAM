@@ -33,7 +33,7 @@ variable "zitadel_jwt_profile_file" {
 variable "org_name" {
   type        = string
   default     = "BAUER GROUP"
-  description = "Name of the org created by FirstInstance (used to look up org_id)."
+  description = "Name of the workforce org created in Terraform (zitadel_org.bauer = local.org_id)."
 }
 
 variable "project_name" {
