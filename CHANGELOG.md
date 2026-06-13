@@ -1,3 +1,22 @@
+## [0.13.0](https://github.com/bauer-group/CS-IAM/compare/v0.12.5...v0.13.0) (2026-06-13)
+
+### 🚀 Features
+
+* **iam:** break-glass admin org + thinned login overlay ([f75c1ea](https://github.com/bauer-group/CS-IAM/commit/f75c1eaa16ef4ed84c6b2ab64c2f5435ed9aa063))
+* **iam:** defaulted workforce Entra auto-redirect to on ([5fa5efb](https://github.com/bauer-group/CS-IAM/commit/5fa5efbcbba6567a1fb17a9ba70a3a9f28f5aebc))
+* **iam:** email-UPN loginnames, system-wide config, demo in external tenant ([31cd7ec](https://github.com/bauer-group/CS-IAM/commit/31cd7ece615710abdd383990be4663d5015d76e2))
+* **iam:** wired gated Entra-only workforce auto-redirect ([f467186](https://github.com/bauer-group/CS-IAM/commit/f467186b9ca9bd0ef11c69e60b5846758878cc19))
+
+### 🐛 Bug Fixes
+
+* **login:** centred the language/theme switcher (was right-shifted) ([a1322a4](https://github.com/bauer-group/CS-IAM/commit/a1322a4f39f2425ed37fcaf08d62ec01875df861))
+* **login:** fixed fresh-boot branding (base pin, ordering, race) ([1a2d942](https://github.com/bauer-group/CS-IAM/commit/1a2d942d2d95ca414efaaabd8e7545ab5a640ea1))
+
+### ♻️ Refactoring
+
+* **compose:** dropped dead background-image env from prod variants ([9622cc7](https://github.com/bauer-group/CS-IAM/commit/9622cc74ce97c2485ed1be3cec2206bf3b5fcb76))
+* **login:** runtime favicon, dropped background + dead overlay ([7793f5f](https://github.com/bauer-group/CS-IAM/commit/7793f5f324ca5f156e1a10e976973cacb346c202))
+
 ## [0.12.5](https://github.com/bauer-group/CS-IAM/compare/v0.12.4...v0.12.5) (2026-06-13)
 
 ## [0.12.4](https://github.com/bauer-group/CS-IAM/compare/v0.12.3...v0.12.4) (2026-06-12)
