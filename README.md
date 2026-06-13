@@ -74,6 +74,7 @@ docs/             setup / management / operation / migration guides
 
 | Guide | Topic |
 |---|---|
+| [architecture.md](docs/architecture.md) | **the big picture**: one instance/host, three orgs + user populations, domain discovery, access model |
 | [installation.md](docs/installation.md) | deploy (dev / Traefik / Coolify), first login |
 | [endpoints-and-portals.md](docs/endpoints-and-portals.md) | every URL/portal: Console, Login v2, OIDC endpoints, APIs, dev vs prod |
 | [configuration.md](docs/configuration.md) | `.env` + `defaults.yaml`/`steps.yaml` reference |
