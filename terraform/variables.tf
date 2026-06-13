@@ -102,8 +102,8 @@ variable "azure_tenant_id" {
 }
 
 variable "enable_workforce_autoredirect" {
-  type    = bool
-  default = true
+  type        = bool
+  default     = true
   description = <<-EOT
     PROD switch (default ON): the BAUER GROUP workforce org is Entra-only — no
     local password, Login v2 auto-redirects straight to Entra. GATED on
