@@ -101,6 +101,19 @@ variable "azure_tenant_id" {
   description = "Entra tenant id (internal, single-tenant)."
 }
 
+variable "enable_workforce_autoredirect" {
+  type    = bool
+  default = false
+  description = <<-EOT
+    PROD switch: lock the BAUER GROUP workforce org to Entra-only login (no local
+    password) so the Login v2 auto-redirects straight to Entra. Requires
+    azure_client_id (the Entra IdP must exist). Leave false until federated login
+    is verified — enabling it without a working IdP would lock the workforce out.
+    The System Admins break-glass org is unaffected (keeps local password login
+    at id-admin.bauer-group.com).
+  EOT
+}
+
 # ── External-org identity providers (all optional; empty client id = skip) ─────
 # Attached to the External Users org only (org_idp_* in idps_external.tf), so
 # they appear on the customer login but never the internal one. The stack
