@@ -103,14 +103,14 @@ variable "azure_tenant_id" {
 
 variable "enable_workforce_autoredirect" {
   type    = bool
-  default = false
+  default = true
   description = <<-EOT
-    PROD switch: lock the BAUER GROUP workforce org to Entra-only login (no local
-    password) so the Login v2 auto-redirects straight to Entra. Requires
-    azure_client_id (the Entra IdP must exist). Leave false until federated login
-    is verified — enabling it without a working IdP would lock the workforce out.
-    The System Admins break-glass org is unaffected (keeps local password login
-    at id-admin.bauer-group.com).
+    PROD switch (default ON): the BAUER GROUP workforce org is Entra-only — no
+    local password, Login v2 auto-redirects straight to Entra. GATED on
+    azure_client_id, so it activates ONLY once Entra is configured: dev (no Entra)
+    is unaffected and never locked out. Set false ONLY to temporarily allow
+    workforce local password login during a migration. The break-glass System
+    Admins org always keeps local login at id-admin.bauer-group.com.
   EOT
 }
 
