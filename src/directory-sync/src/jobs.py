@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -36,6 +37,15 @@ _BRAND_ASSETS = [
     ("icon-dark", "icon/dark"),
     ("font", "font"),
 ]
+# Upload path → the field it must populate on the ACTIVE LabelPolicy. Used to
+# verify an activate promoted every asset (see the projection race in brand()).
+_BRAND_POLICY_FIELD = {
+    "logo": "logoUrl",
+    "logo/dark": "logoUrlDark",
+    "icon": "iconUrl",
+    "icon/dark": "iconUrlDark",
+    "font": "fontUrl",
+}
 _BRAND_CONTENT_TYPES = {
     ".svg": "image/svg+xml",
     ".png": "image/png",
@@ -56,7 +66,7 @@ def brand(settings: Settings, zit: ZitadelClient) -> None:
         logger.info("BRANDING_ENABLED=false — skipping login branding")
         return
     base = Path(settings.branding_dir)
-    uploaded = 0
+    uploaded_paths: list[str] = []
     for stem, path in _BRAND_ASSETS:
         match = next(
             (p for p in sorted(base.glob(f"{stem}.*")) if p.suffix.lower() in _BRAND_CONTENT_TYPES),
@@ -67,12 +77,36 @@ def brand(settings: Settings, zit: ZitadelClient) -> None:
         content_type = _BRAND_CONTENT_TYPES[match.suffix.lower()]
         zit.upload_label_asset(path, match.name, match.read_bytes(), content_type)
         logger.info("branding: uploaded %s -> label/%s (%s)", match.name, path, content_type)
-        uploaded += 1
-    if uploaded == 0:
+        uploaded_paths.append(path)
+    if not uploaded_paths:
         logger.warning("branding: no assets found in %s — nothing to upload", base)
         return
-    zit.activate_label_policy()
-    logger.info("branding: activated instance LabelPolicy with %d asset(s)", uploaded)
+
+    # Activate, then VERIFY every uploaded asset actually landed on the active
+    # policy. Zitadel projects the upload command asynchronously, so an activate
+    # fired immediately after can snapshot the preview before the last asset is
+    # visible — leaving e.g. iconUrl unset. Re-activate until the active policy
+    # is complete. Best-effort (never raises): the login gates its startup on
+    # this job, so a partial branding must not block login — the logo, uploaded
+    # first, is always present by the time the retries settle.
+    expected = {_BRAND_POLICY_FIELD[p] for p in uploaded_paths if p in _BRAND_POLICY_FIELD}
+    missing: set[str] = set()
+    for attempt in range(1, 6):
+        zit.activate_label_policy()
+        missing = {f for f in expected if not zit.get_label_policy().get(f)}
+        if not missing:
+            logger.info(
+                "branding: activated instance LabelPolicy with %d asset(s)", len(uploaded_paths)
+            )
+            return
+        logger.warning(
+            "branding: activate attempt %d left %s unset — retrying", attempt, sorted(missing)
+        )
+        time.sleep(1.5)
+    logger.error(
+        "branding: LabelPolicy still missing %s after retries — continuing best-effort",
+        sorted(missing),
+    )
 
 
 def role_key_for_group(prefix: str, group: dict) -> str:

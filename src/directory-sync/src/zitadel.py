@@ -113,6 +113,21 @@ class ZitadelClient:
                 f"label policy activate failed ({resp.status_code}): {resp.text[:200]}"
             )
 
+    def get_label_policy(self) -> dict:
+        """Read the ACTIVE instance LabelPolicy (logoUrl/iconUrl/... fields).
+
+        Used to verify an activate actually promoted every uploaded asset — the
+        upload command and the activate read race on Zitadel's projection, so a
+        freshly-uploaded asset can be missing from the active policy if activate
+        snapshots the preview a beat too early.
+        """
+        resp = self._client.get("/admin/v1/policies/label", headers=self._headers())
+        if resp.status_code != 200:
+            raise ZitadelError(
+                f"label policy read failed ({resp.status_code}): {resp.text[:200]}"
+            )
+        return (resp.json() or {}).get("policy", {})
+
     # ── users ─────────────────────────────────────────────────────────────
     def find_user_id_by_email(self, email: str) -> Optional[str]:
         resp = self._client.post(
