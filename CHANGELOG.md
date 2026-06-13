@@ -1,3 +1,5 @@
+## [0.12.5](https://github.com/bauer-group/CS-IAM/compare/v0.12.4...v0.12.5) (2026-06-13)
+
 ## [0.12.4](https://github.com/bauer-group/CS-IAM/compare/v0.12.3...v0.12.4) (2026-06-12)
 
 ### 🐛 Bug Fixes
