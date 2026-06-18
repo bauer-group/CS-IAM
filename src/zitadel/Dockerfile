@@ -62,7 +62,7 @@ LABEL org.opencontainers.image.source="https://github.com/bauer-group/CS-IAM"
 LABEL org.opencontainers.image.url="https://github.com/bauer-group/CS-IAM"
 LABEL org.opencontainers.image.documentation="https://github.com/bauer-group/CS-IAM#readme"
 LABEL org.opencontainers.image.base.name="${BASE_ZITADEL_IMAGE}:${BASE_ZITADEL_VERSION}"
-LABEL org.opencontainers.image.version="0.14.2"
+LABEL org.opencontainers.image.version="0.15.0"
 
 # ---------------------------------------------------------------------------
 # Baked-in default configuration (secret-free)
