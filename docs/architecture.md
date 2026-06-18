@@ -51,8 +51,13 @@ The Terraform-created workforce tenant. In production it is **Entra-only**: when
 `enable_workforce_autoredirect = true` (default) **and** Entra credentials are set,
 the per-org login policy drops local password and Login v2 **auto-redirects** to
 Entra (`terraform/login_policy.tf`, `idps.tf`). The corporate email domains
-(`var.internal_org_domains`, e.g. `bauer-group.com`, `de.bauer-group.com`) are
-verified on this org so `@domain` logins discover it and route to Entra. Federated
+(`INTERNAL_ORG_DOMAINS`, e.g. `bauer-group.com`, `de.bauer-group.com`,
+`us.bauer-group.com`) are verified on this org so `@domain` logins discover it and
+route to Entra. **Discovery is exact — no wildcards:** `bauer-group.com` does
+**not** cover `us.bauer-group.com`, so every active domain/subdomain must be
+listed (and be a verified domain in the Entra tenant). A login name like
+`ab@us.bauer-group.com` only routes to Entra when `us.bauer-group.com` is in the
+list. Federated
 users are password-less; profiles, avatars and **Entra groups → namespaced
 `entra:` roles + grants** are kept current by [directory-sync](directory-sync.md).
 Subject is preserved (`sub` = Entra OID) for zero-touch [migration](migration.md).
@@ -61,7 +66,7 @@ Subject is preserved (`sub` = Entra OID) for zero-touch [migration](migration.md
 The Terraform-created customer tenant. IdPs are attached **to this org only**:
 Entra multi-tenant, Google, and a data-driven social catalog (OAuth2/OIDC) — all
 opt-in via env (`terraform/idps_external.tf`) and **linked into this org's login
-policy** (`zitadel_login_policy.external`) so they render as buttons; a *single*
+policy** (`zitadel_login_policy.external`) so they render as buttons; a _single_
 configured IdP auto-redirects, ≥2 show a chooser. Customer apps must request the
 org scope `urn:zitadel:iam:org:id:{externalOrgId}` (`tofu output
 external_login_org_scope`) to reach this login context — otherwise they fall back

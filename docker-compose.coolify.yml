@@ -185,6 +185,7 @@ services:
       TF_VAR_azure_client_id: ${AZURE_CLIENT_ID:-}
       TF_VAR_azure_client_secret: ${AZURE_CLIENT_SECRET:-}
       TF_VAR_azure_tenant_id: ${AZURE_TENANT_ID:-}
+      TF_VAR_internal_org_domains: ${INTERNAL_ORG_DOMAINS:-[]}
       # External-org IdPs (customer login)
       TF_VAR_external_azure_client_id: ${EXTERNAL_AZURE_CLIENT_ID:-}
       TF_VAR_external_azure_client_secret: ${EXTERNAL_AZURE_CLIENT_SECRET:-}

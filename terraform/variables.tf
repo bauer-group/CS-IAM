@@ -68,11 +68,16 @@ variable "external_org_name" {
 # domain routes its @domain logins to the single Entra IdP. One tenant, many
 # domains. NOT used to build loginnames (UserLoginMustBeDomain=false → loginname
 # is the user's real email). Empty in dev (no Entra). In prod set the list AND
-# verify each via DNS (ValidateOrgDomains is on). Set via TF_VAR_internal_org_domains.
+# verify each via DNS (ValidateOrgDomains is on). Set via INTERNAL_ORG_DOMAINS.
+#
+# JSON-array STRING (jsondecode'd in orgs.tf) — same env-passing pattern as
+# external_oauth_idps to dodge TF_VAR complex-type quirks. Matching is EXACT:
+# Zitadel domain discovery has NO wildcards, so `bauer-group.com` does NOT cover
+# `us.bauer-group.com` — every active subdomain must be listed AND DNS-verified.
 variable "internal_org_domains" {
-  type        = list(string)
-  default     = []
-  description = "Verified email domains of the BAUER GROUP org for domain discovery (e.g. [\"bauer-group.com\",\"de.bauer-group.com\",\"us.bauer-group.com\"])."
+  type        = string
+  default     = "[]"
+  description = "JSON array of verified email domains of the BAUER GROUP org for domain discovery, e.g. [\"bauer-group.com\",\"de.bauer-group.com\",\"us.bauer-group.com\"]. Exact match, no wildcards — list every active domain/subdomain. Set via INTERNAL_ORG_DOMAINS."
 }
 
 variable "external_project_name" {
