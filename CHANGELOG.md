@@ -1,3 +1,9 @@
+## [0.14.0](https://github.com/bauer-group/CS-IAM/compare/v0.13.3...v0.14.0) (2026-06-18)
+
+### 🚀 Features
+
+* **login:** linked external IdPs into a customer login policy ([a0d7ca3](https://github.com/bauer-group/CS-IAM/commit/a0d7ca3b025ea599f4160d664a9ed07d6a4f9446))
+
 ## [0.13.3](https://github.com/bauer-group/CS-IAM/compare/v0.13.2...v0.13.3) (2026-06-18)
 
 ## [0.13.2](https://github.com/bauer-group/CS-IAM/compare/v0.13.1...v0.13.2) (2026-06-17)
