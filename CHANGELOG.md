@@ -1,3 +1,9 @@
+## [0.14.2](https://github.com/bauer-group/CS-IAM/compare/v0.14.1...v0.14.2) (2026-06-18)
+
+### 🐛 Bug Fixes
+
+* **zitadel:** dropped org-domain DNS challenge, set stack domains ([dc95659](https://github.com/bauer-group/CS-IAM/commit/dc9565976ace624a67113551e4efb46ea3de16ea))
+
 ## [0.14.1](https://github.com/bauer-group/CS-IAM/compare/v0.14.0...v0.14.1) (2026-06-18)
 
 ### 🐛 Bug Fixes
