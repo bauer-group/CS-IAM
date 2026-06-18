@@ -21,9 +21,13 @@ and branding) only renders when the auth request resolves to the External Users
 org context. Add the scope `urn:zitadel:iam:org:id:{externalOrgId}` to the app's
 authorize request — copy the exact value from `tofu output
 external_login_org_scope`. Without it the app falls back to the instance-default
-login (password form, **no** external IdP buttons). Internal apps need no org
-scope — domain discovery routes `@bauer-group.com` users to Entra. See
-[identity-providers.md](identity-providers.md).
+login (password form, **no** external IdP buttons).
+
+**Internal apps** need no org scope to function — domain discovery routes
+`@<verified-domain>` users to Entra after they enter their email. For a
+*promptless* redirect (straight to Entra, no username step) an internal app MAY
+additionally request `urn:zitadel:iam:org:id:{internalOrgId}` (`tofu output
+internal_login_org_scope`). See [identity-providers.md](identity-providers.md).
 
 > **Live example shipped — fully loginable & isolated.** Out of the box you get a
 > complete, self-contained demo in its OWN project (`terraform/demo.tf`): project

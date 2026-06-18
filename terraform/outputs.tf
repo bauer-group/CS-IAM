@@ -16,6 +16,11 @@ output "org_id" {
   description = "BAUER GROUP (internal) organisation id."
 }
 
+output "internal_login_org_scope" {
+  value       = "urn:zitadel:iam:org:id:${local.org_id}"
+  description = "OIDC scope an INTERNAL app MAY request to pin the BAUER GROUP org context — with workforce auto-redirect on, users go straight to Entra with no username prompt. Optional: without it, domain discovery still routes @<verified-domain> logins to Entra after the user enters their email."
+}
+
 output "external_org_id" {
   value       = zitadel_org.external.id
   description = "External Users (customer) organisation id."
