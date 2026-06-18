@@ -1,3 +1,9 @@
+## [0.15.0](https://github.com/bauer-group/CS-IAM/compare/v0.14.2...v0.15.0) (2026-06-18)
+
+### 🚀 Features
+
+* **login:** added internal_login_org_scope for promptless Entra ([eabca6a](https://github.com/bauer-group/CS-IAM/commit/eabca6af3d4e4ccd6f4e378e8531b03a9f2b3cc4))
+
 ## [0.14.2](https://github.com/bauer-group/CS-IAM/compare/v0.14.1...v0.14.2) (2026-06-18)
 
 ### 🐛 Bug Fixes
