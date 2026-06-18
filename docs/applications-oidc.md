@@ -16,10 +16,19 @@ user who holds a grant with a role in that project. The internal project is neve
 granted to the external org, so the tiers can't cross. Full gating model:
 [users-roles-groups.md](users-roles-groups.md).
 
+**External apps must request the org scope.** The customer login (its IdP buttons
+and branding) only renders when the auth request resolves to the External Users
+org context. Add the scope `urn:zitadel:iam:org:id:{externalOrgId}` to the app's
+authorize request — copy the exact value from `tofu output
+external_login_org_scope`. Without it the app falls back to the instance-default
+login (password form, **no** external IdP buttons). Internal apps need no org
+scope — domain discovery routes `@bauer-group.com` users to Entra. See
+[identity-providers.md](identity-providers.md).
+
 > **Live example shipped — fully loginable & isolated.** Out of the box you get a
 > complete, self-contained demo in its OWN project (`terraform/demo.tf`): project
 > **`pDemo`** with roles **`rUser` / `rManager` / `rAdministrator`**, the OIDC app
-> **`Demo`** (`demo.app.bauer-group.com`), and a demo user **`demo@bauer-group.com`**
+> **`Demo`** (`demo.app.bauer-group.com`), and a demo user **`demo@external.bauer-group.com`**
 > granted **`rUser` + `rManager` in `pDemo` only** — so it can use the `Demo` app
 > and nothing else (cleanly isolated from the BAUER GROUP / External Apps
 > projects; production-safe). Enabled by `DEMO_USER_PASSWORD`; MFA is set up on
@@ -144,7 +153,7 @@ Quick run against the shipped **Demo** app:
 3. In the tester set **Discovery** = `https://<IAM_HOSTNAME>/.well-known/openid-configuration`,
    the **client_id/secret**, **scopes** `openid profile email offline_access urn:zitadel:iam:user:metadata`,
    flow **Authorization Code (+ PKCE)**.
-4. Run it → sign in as **`demo@bauer-group.com` / `DEMO_USER_PASSWORD`** (set up
+4. Run it → sign in as **`demo@external.bauer-group.com` / `DEMO_USER_PASSWORD`** (set up
    MFA on first login) → the tester returns the **ID + access token**.
 5. **Verify:** decode the token (the tester does, or paste into jwt.io) → check
    `sub`, `email`, and the roles claim **`urn:zitadel:iam:org:project:roles`**
@@ -175,7 +184,7 @@ cd ..                                      # set both in .env
 # 3. Start the test client (opt-in profile):
 docker compose -f docker-compose.development.yml --profile test up oidc-test-client
 # 4. Open http://localhost:8888 → "Login & validate" → sign in as
-#    demo@bauer-group.com / DEMO_USER_PASSWORD (set up MFA on first login).
+#    demo@external.bauer-group.com / DEMO_USER_PASSWORD (set up MFA on first login).
 ```
 
 The report verifies signature, issuer, audience, nonce, `sub`, `email`, and that

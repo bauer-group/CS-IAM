@@ -60,9 +60,16 @@ Subject is preserved (`sub` = Entra OID) for zero-touch [migration](migration.md
 ### External Users (customers)
 The Terraform-created customer tenant. IdPs are attached **to this org only**:
 Entra multi-tenant, Google, and a data-driven social catalog (OAuth2/OIDC) — all
-opt-in via env (`terraform/idps_external.tf`). **No self-registration**
-(`AllowRegister: false`); accounts are admin-created or provisioned. See the demo:
-`demo@external.bauer-group.com` in project `pDemo` (`terraform/demo.tf`).
+opt-in via env (`terraform/idps_external.tf`) and **linked into this org's login
+policy** (`zitadel_login_policy.external`) so they render as buttons; a *single*
+configured IdP auto-redirects, ≥2 show a chooser. Customer apps must request the
+org scope `urn:zitadel:iam:org:id:{externalOrgId}` (`tofu output
+external_login_org_scope`) to reach this login context — otherwise they fall back
+to the instance-default password form. **No _local_ self-registration**
+(`AllowRegister: false`), but social logins **JIT-create** an external account
+(`is_auto_creation`); either way the account lands here with no internal grant.
+See the demo: `demo@external.bauer-group.com` in project `pDemo`
+(`terraform/demo.tf`) and [identity-providers.md](identity-providers.md).
 
 ## Access model (how isolation is enforced)
 

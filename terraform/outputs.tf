@@ -26,6 +26,11 @@ output "external_project_id" {
   description = "Customer-facing project id (granted to the external org)."
 }
 
+output "external_login_org_scope" {
+  value       = "urn:zitadel:iam:org:id:${zitadel_org.external.id}"
+  description = "OIDC scope a customer app MUST request so the login resolves to the External Users org context (its IdPs + branding). Without it the app falls back to the instance-default login (password only, no external IdP buttons)."
+}
+
 output "entra_idp_id" {
   value       = try(zitadel_org_idp_azure_ad.entra[0].id, null)
   description = "Internal-org Entra IdP id (null when federation is disabled)."

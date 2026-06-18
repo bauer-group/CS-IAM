@@ -57,6 +57,57 @@ Zitadel also has **native templates** for GitHub, GitLab and Apple — these can
 be wired as first-class resources exactly like Google (`org_idp_github` etc.)
 when needed; ask and they're a two-line add.
 
+### How the customer login is actually shown (two things must line up)
+
+An org-level IdP is only a **provider template** — Zitadel renders it on the
+login **only** when two conditions hold together:
+
+1. **The IdP is linked into the External org's login policy.** Done by
+   `zitadel_login_policy.external` (`terraform/login_policy.tf`), which lists all
+   configured external IdPs in its `idps`. Without this link the providers exist
+   but never appear as buttons.
+2. **The auth request resolves to the External org context.** The login derives
+   its IdP set + branding from the login policy of the **org context**. A
+   customer app must therefore request the org scope
+   `urn:zitadel:iam:org:id:{externalOrgId}` (read the ready-made value from
+   `tofu output external_login_org_scope`). Without it the request falls back to
+   the **instance-default** policy — password form only, **no** external IdP
+   buttons. Domain discovery only helps for *verified* domains, so it does **not**
+   cover consumer emails (gmail.com, outlook.com, …) — the scope is required for
+   B2C. See [applications-oidc.md](applications-oidc.md).
+
+### Auto-redirect vs chooser (driven by IdP count)
+
+The External policy adapts to how many external IdPs are configured:
+
+| Configured external IdPs | `user_login` | Customer sees |
+|--------------------------|--------------|----------------|
+| **0** | *(no policy created)* | instance-default password login (local + demo accounts) |
+| **1** | `false` | **auto-redirect** straight to that IdP (no form) |
+| **≥2** | `true` | chooser: local password **+** all IdP buttons |
+
+Auto-redirect for a single IdP is exactly Zitadel's rule (one linked IdP **and**
+local password off). Trade-off to know: while a **single** external IdP is
+active, local external password accounts (including the demo user) cannot log in
+— that is the deliberate B2C behaviour. Add a second IdP, or run with none, to
+keep local external logins.
+
+### Self-registration nuance
+
+`AllowRegister: false` disables only the **local** username/password registration
+*form*. The external IdPs set `is_auto_creation = true`, so a first-time social
+login **JIT-creates** an external account (B2C self-onboarding) and `auto_linking`
+by email attaches further providers to the same account. This never affects
+internal access: a JIT-created identity lands in the **External Users** org with
+no grant on the internal project (`has_project_check`), so it can never reach
+internal apps regardless of how it authenticated.
+
+> **Security acceptance test (run once with a real IdP before go-live):** sign in
+> with a Google/Microsoft account whose email is `…@bauer-group.com` via the
+> **customer** login. It MUST create a **new External Users** account with no
+> internal access — it must NOT link to or authenticate as the workforce user in
+> the BAUER GROUP org. (`auto_linking` is expected to be org-scoped; prove it.)
+
 ### Any number of OAuth2 / OIDC providers (data-driven)
 
 Everything else is added **without new Terraform** through two JSON-map env
