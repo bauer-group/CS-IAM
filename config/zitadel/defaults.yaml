@@ -75,7 +75,17 @@ DefaultInstance:
   # drive routing. Tenant isolation is at the ORG level, independent of this flag.
   DomainPolicy:
     UserLoginMustBeDomain: false
-    ValidateOrgDomains: true
+    # No DNS/HTTP ownership challenge for org domains. We have NO process to place
+    # verification DNS records, and we don't need one: every org + domain in this
+    # instance is created by us via Terraform / FirstInstance — there is no
+    # self-service org registration (AllowRegister=false), so no untrusted party
+    # could ever claim a domain. With false, the domains in INTERNAL_ORG_DOMAINS
+    # are treated as verified the moment Terraform adds them and are immediately
+    # usable for domain discovery. (They must still be verified domains on the
+    # Entra side — that is Microsoft's tenant config, not ours to prove here.)
+    # Zitadel docs explicitly sanction false for self-hosted instances that don't
+    # require strict validation.
+    ValidateOrgDomains: false
     SMTPSenderAddressMatchesInstanceDomain: false
 
   # ── Privacy / support links (shown in the login UI) ────────────────────────

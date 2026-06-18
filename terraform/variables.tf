@@ -67,13 +67,15 @@ variable "external_org_name" {
 # Internal (BAUER GROUP) org email domains for DOMAIN DISCOVERY: each verified
 # domain routes its @domain logins to the single Entra IdP. One tenant, many
 # domains. NOT used to build loginnames (UserLoginMustBeDomain=false → loginname
-# is the user's real email). Empty in dev (no Entra). In prod set the list AND
-# verify each via DNS (ValidateOrgDomains is on). Set via INTERNAL_ORG_DOMAINS.
+# is the user's real email). Empty in dev (no Entra). In prod set the list via
+# INTERNAL_ORG_DOMAINS. No DNS ownership challenge on our side
+# (ValidateOrgDomains=false in defaults.yaml) — Terraform adds them as verified.
 #
 # JSON-array STRING (jsondecode'd in orgs.tf) — same env-passing pattern as
 # external_oauth_idps to dodge TF_VAR complex-type quirks. Matching is EXACT:
 # Zitadel domain discovery has NO wildcards, so `bauer-group.com` does NOT cover
-# `us.bauer-group.com` — every active subdomain must be listed AND DNS-verified.
+# `us.bauer-group.com` — every active subdomain must be listed (and be a verified
+# domain in the Entra tenant).
 variable "internal_org_domains" {
   type        = string
   default     = "[]"

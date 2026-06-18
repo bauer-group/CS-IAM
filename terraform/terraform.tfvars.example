@@ -16,23 +16,28 @@ org_name     = "BAUER GROUP"
 project_name = "BAUER GROUP"
 role_prefix  = "entra:"
 
-# External (customer) org — relaxed password policy, access only to apps with
-# audience = "external" (see app_redirect_uris below).
-external_org_name            = "External Users"
-external_password_min_length = 8
-external_project_name        = "External Apps"
+# External (customer) org — access only to apps with audience = "external" (see
+# app_redirect_uris below). Password/lockout/session policy is instance-wide
+# (config/zitadel/defaults.yaml); there is no per-org override knob.
+external_org_name     = "External Users"
+external_project_name = "External Apps"
 
 # Microsoft Entra ID — INTERNAL org, single-tenant (leave id "" to skip)
 azure_client_id     = ""
 azure_client_secret = ""
 azure_tenant_id     = ""
 
+# Verified workforce email domains for DOMAIN DISCOVERY (JSON-array string).
+# EXACT match, no wildcards — list every active domain AND subdomain; each must
+# also be a verified domain in the Entra tenant. The BAUER GROUP stack's live set:
+internal_org_domains = "[\"bauer-group.com\",\"de.bauer-group.com\",\"us.bauer-group.com\",\"sg.bauer-group.com\",\"th.bauer-group.com\",\"vn.bauer-group.com\",\"cn.bauer-group.com\",\"ge.bauer-group.com\"]"
+
 # ── External-org identity providers (customer login) ─────────────────────────
 # First-class (native templates):
-external_azure_client_id     = "" # Entra multi-tenant (any MS account)
-external_azure_client_secret = ""
-google_client_id             = ""
-google_client_secret         = ""
+external_azure_client_id      = "" # Entra multi-tenant (any MS account)
+external_azure_client_secret  = ""
+external_google_client_id     = ""
+external_google_client_secret = ""
 
 # Any number of OAuth2 / OIDC providers via JSON maps — Facebook, WeChat, Naver,
 # QQ, Weibo (OAuth2); LINE, KakaoTalk (OIDC). Endpoint catalog +

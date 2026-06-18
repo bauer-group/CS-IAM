@@ -37,7 +37,8 @@ resource "zitadel_org" "external" {
 # ── Internal org (BAUER GROUP) verified domains — for domain discovery ───────
 # One tenant, many email domains: each verified domain routes its @domain logins
 # to the single Entra IdP (AllowDomainDiscovery). Empty in dev; in prod set
-# INTERNAL_ORG_DOMAINS and verify each via DNS. Matching is EXACT (no wildcards),
+# INTERNAL_ORG_DOMAINS. No DNS ownership challenge here (ValidateOrgDomains=false
+# in defaults.yaml) — these are added as verified. Matching is EXACT (no wildcards),
 # so list every active domain AND subdomain (bauer-group.com, us.bauer-group.com,
 # de.bauer-group.com, …) — each must also be a verified domain in the Entra tenant.
 resource "zitadel_domain" "internal" {
