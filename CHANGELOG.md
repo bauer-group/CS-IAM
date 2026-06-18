@@ -1,3 +1,9 @@
+## [0.14.1](https://github.com/bauer-group/CS-IAM/compare/v0.14.0...v0.14.1) (2026-06-18)
+
+### 🐛 Bug Fixes
+
+* **provisioning:** wired internal_org_domains for domain discovery ([42b91ec](https://github.com/bauer-group/CS-IAM/commit/42b91ec75b84f5aeba857045d5e52ff83e548302))
+
 ## [0.14.0](https://github.com/bauer-group/CS-IAM/compare/v0.13.3...v0.14.0) (2026-06-18)
 
 ### 🚀 Features
