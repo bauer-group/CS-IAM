@@ -99,6 +99,10 @@ who holds a **grant** in that project.
 3. **directory-sync** (Python) — Entra → Zitadel: profile/avatar/metadata delta +
    groups → roles/grants. Login-time JIT refresh is native to Zitadel.
 
+> These are _where_ config lives. For _when_ a value takes effect — first-init-only
+> (bootstrap) vs reconciled-every-run (Terraform) vs operational-every-start — see
+> [configuration.md](configuration.md#when-configuration-takes-effect-three-classes).
+
 ## Images & deployment
 
 | Image | Build |

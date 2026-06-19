@@ -14,6 +14,38 @@ Configuration lives in three places:
 > config bind-mounts in the compose `zitadel.volumes:` block and edit the host
 > files. Either way the source of truth stays `config/zitadel/`.
 
+## When configuration takes effect (three classes)
+
+`.env` is read by `docker compose` on **every** `up`/`restart` and interpolated
+into the containers. What a value then *does* depends on which class it falls
+into — the key thing to know before changing config on a running stack:
+
+| Class | What (examples) | When it takes effect | Change later? |
+|---|---|---|---|
+| **A · Operational** | `IAM_HOSTNAME`, `ZITADEL_MASTERKEY`, DB creds, `SMTP_*`, `SYNC_*`, `BACKUP_*` | every affected **container start** | restart the service |
+| **B · Terraform (reconciled)** | `AZURE_*`, `EXTERNAL_*`, `INTERNAL_ORG_DOMAINS`, `APP_REDIRECT_URIS`, `DEMO_USER_PASSWORD` → IdPs, login policies, projects, OIDC apps, org domains | every **provisioner run** | edit `.env` + `up` → reconciles |
+| **C · Instance bootstrap** | `config/zitadel/defaults.yaml` (incl. **`ValidateOrgDomains`**), `steps.yaml`, the first-admin password | **first init only** (empty DB) | fresh instance, or out-of-band (Console / Admin API) |
+
+**Class B is safe to change on a live stack.** The `provisioner` is a one-shot
+init container, but Compose recreates and re-runs it whenever its env changes, so
+editing `.env` and `docker compose up` reconciles the running instance to the new
+desired state. It is **non-destructive**: if the plan would delete or replace a
+managed resource it aborts and prints the plan instead of applying
+([provisioning-terraform.md](provisioning-terraform.md)). So you can switch Entra
+or external IdPs on **later** without wiping anything.
+
+**Class C is immutable after the first boot — by design.** These seed the
+instance identity (policies, the break-glass admin, the domain-verification mode)
+once while the database is empty; later starts skip the completed setup steps.
+Editing the files afterwards does **not** retro-apply. Change them either by
+re-initialising a fresh instance (greenfield) or out-of-band on the live instance
+(Console → Default Settings, or the Admin API). `ValidateOrgDomains=false` lives
+here — that is why it must be in place **before** the first boot.
+
+> **Rule of thumb:** lives in `terraform/` → Class B (re-applied, changeable
+> later). Lives in `config/zitadel/*.yaml` or is a `FIRSTINSTANCE_*` value →
+> Class C (first boot only). Plain operational `ZITADEL_*` / sidecar env → Class A.
+
 ## `.env` reference (key entries)
 
 | Variable | Purpose |
@@ -26,8 +58,10 @@ Configuration lives in three places:
 | `ZITADEL_ADMIN_PASSWORD` | first admin console password (generated) |
 | `ZITADEL_DB_*` | Postgres name/user/password |
 | `PG_*` | Postgres tuning |
-| `AZURE_TENANT_ID/CLIENT_ID/CLIENT_SECRET` | Entra app registration |
-| `APP_REDIRECT_URIS` | JSON list of OIDC apps for Terraform |
+| `AZURE_TENANT_ID/CLIENT_ID/CLIENT_SECRET` | internal Entra app registration (Class B) |
+| `INTERNAL_ORG_DOMAINS` | JSON array of verified workforce domains for discovery (Class B) |
+| `EXTERNAL_*` | customer-org IdP creds: Entra multi-tenant, Google, OAuth2/OIDC maps (Class B) |
+| `APP_REDIRECT_URIS` | JSON list of OIDC apps for Terraform (Class B) |
 | `SYNC_*` | directory-sync intervals, role prefix, project name |
 | `BACKUP_*` / `SMTP_*` | backup schedule, retention, off-site S3, alerts |
 
@@ -48,10 +82,12 @@ override it in the compose `environment:` (e.g.
 
 ## FirstInstance (`steps.yaml`)
 
-Creates the `BAUER GROUP` org, the Human admin (`admin@bauer-group.com`,
-password via `ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD`), and the **machine
-automation user** `iam-admin` whose JSON key is written to the `machinekey`
-volume — the credential Terraform and `directory-sync` use.
+Creates the local break-glass **`System Admins`** org, its Human admin
+(`admin@id-admin.bauer-group.com`, password via `ZITADEL_ADMIN_PASSWORD` →
+`ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD`), and the **machine automation user**
+`iam-admin` whose JSON key is written to the `machinekey` volume — the credential
+Terraform and `directory-sync` use. (The `BAUER GROUP` workforce org is created in
+Terraform — `terraform/projects.tf` — not here.)
 
 ## What is NOT here
 
