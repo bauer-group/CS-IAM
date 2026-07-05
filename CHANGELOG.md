@@ -1,3 +1,9 @@
+## [0.15.3](https://github.com/bauer-group/CS-IAM/compare/v0.15.2...v0.15.3) (2026-07-05)
+
+### 🐛 Bug Fixes
+
+* **login:** corrected OCI image license label to AGPL-3.0-only ([2c963fc](https://github.com/bauer-group/CS-IAM/commit/2c963fc54ade0da8f041004ffe7f0b2152ecbcce))
+
 ## [0.15.2](https://github.com/bauer-group/CS-IAM/compare/v0.15.1...v0.15.2) (2026-06-23)
 
 ## [0.15.1](https://github.com/bauer-group/CS-IAM/compare/v0.15.0...v0.15.1) (2026-06-22)
