@@ -6,7 +6,7 @@ def _settings(**over):
         azure_tenant_id="t",
         azure_client_id="c",
         azure_client_secret="s",
-        zitadel_domain="id.bauer-group.com",
+        zitadel_domain="id.example.com",
         zitadel_port=443,
         zitadel_insecure=False,
     )
@@ -15,8 +15,8 @@ def _settings(**over):
 
 
 def test_issuer_omits_default_https_port():
-    s = _settings(zitadel_domain="id.bauer-group.com", zitadel_port=443, zitadel_insecure=False)
-    assert s.issuer() == "https://id.bauer-group.com"
+    s = _settings(zitadel_domain="id.example.com", zitadel_port=443, zitadel_insecure=False)
+    assert s.issuer() == "https://id.example.com"
 
 
 def test_issuer_includes_dev_port():

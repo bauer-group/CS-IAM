@@ -32,7 +32,7 @@ internal_login_org_scope`). See [identity-providers.md](identity-providers.md).
 > **Live example shipped — fully loginable & isolated.** Out of the box you get a
 > complete, self-contained demo in its OWN project (`terraform/demo.tf`): project
 > **`pDemo`** with roles **`rUser` / `rManager` / `rAdministrator`**, the OIDC app
-> **`Demo`** (`demo.app.bauer-group.com`), and a demo user **`demo@external.bauer-group.com`**
+> **`Demo`** (`demo.app.example.com`), and a demo user **`demo@external.example.com`**
 > granted **`rUser` + `rManager` in `pDemo` only** — so it can use the `Demo` app
 > and nothing else (cleanly isolated from the BAUER GROUP / External Apps
 > projects; production-safe). Enabled by `DEMO_USER_PASSWORD`; MFA is set up on
@@ -53,7 +53,7 @@ optional `post_logout_redirect_uris[]`, and `audience` (`"internal"` default, or
 
 ```json
 APP_REDIRECT_URIS=[
-  {"name":"intranet","redirect_uris":["https://intranet.bauer-group.com/auth/callback"]},
+  {"name":"intranet","redirect_uris":["https://intranet.example.com/auth/callback"]},
   {"name":"partner-portal","audience":"external",
    "redirect_uris":["https://partners.example.com/auth/oidc.callback"],
    "post_logout_redirect_uris":["https://partners.example.com/"]}
@@ -122,7 +122,7 @@ are captured by the Postgres backup.
 
 | Setting | Value |
 |---|---|
-| **Issuer** | `https://<IAM_HOSTNAME>` (dev: `https://iam.bauer-group.test:8080` — needs the `127.0.0.1 iam.bauer-group.test` hosts entry + accepting the self-signed cert) |
+| **Issuer** | `https://<IAM_HOSTNAME>` (dev: `https://iam.example.test:8080` — needs the `127.0.0.1 iam.example.test` hosts entry + accepting the self-signed cert) |
 | **Discovery** | `<issuer>/.well-known/openid-configuration` — point your OIDC library here; it auto-configures every endpoint |
 | **client_id / client_secret** | from step 3 |
 | **Redirect URI** | must exactly match one you declared |
@@ -157,7 +157,7 @@ Quick run against the shipped **Demo** app:
 3. In the tester set **Discovery** = `https://<IAM_HOSTNAME>/.well-known/openid-configuration`,
    the **client_id/secret**, **scopes** `openid profile email offline_access urn:zitadel:iam:user:metadata`,
    flow **Authorization Code (+ PKCE)**.
-4. Run it → sign in as **`demo@external.bauer-group.com` / `DEMO_USER_PASSWORD`** (set up
+4. Run it → sign in as **`demo@external.example.com` / `DEMO_USER_PASSWORD`** (set up
    MFA on first login) → the tester returns the **ID + access token**.
 5. **Verify:** decode the token (the tester does, or paste into jwt.io) → check
    `sub`, `email`, and the roles claim **`urn:zitadel:iam:org:project:roles`**
@@ -188,7 +188,7 @@ cd ..                                      # set both in .env
 # 3. Start the test client (opt-in profile):
 docker compose -f docker-compose.development.yml --profile test up oidc-test-client
 # 4. Open http://localhost:8888 → "Login & validate" → sign in as
-#    demo@external.bauer-group.com / DEMO_USER_PASSWORD (set up MFA on first login).
+#    demo@external.example.com / DEMO_USER_PASSWORD (set up MFA on first login).
 ```
 
 The report verifies signature, issuer, audience, nonce, `sub`, `email`, and that
@@ -196,7 +196,7 @@ the roles are exactly **`rUser` + `rManager`** (and **not** `rAdministrator`).
 `GET http://localhost:8888/validate` returns the same as JSON (HTTP 200 pass /
 422 fail) — the basis for an automated test.
 
-> Needs `127.0.0.1 iam.bauer-group.test` in your hosts file (the dev browser-access
+> Needs `127.0.0.1 iam.example.test` in your hosts file (the dev browser-access
 > entry) so the issuer resolves in the browser; the client reaches the core over
 > internal http. Against a deployed stack, set `OIDC_ISSUER=https://<IAM_HOSTNAME>`,
 > `OIDC_BACKEND_URL=http://zitadel:8080` and `OIDC_BACKEND_HOST=<IAM_HOSTNAME>`.

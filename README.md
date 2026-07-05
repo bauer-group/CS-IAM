@@ -42,7 +42,7 @@
 python scripts/generate-env.py          # generate secrets into .env
 # edit .env: set AZURE_* (optional for standalone) — IAM_DEV_HOSTNAME defaults to zitadel.localhost
 docker compose -f docker-compose.development.yml up -d --build
-# console: http://zitadel.localhost:8080   (login admin@bauer-group.com)
+# console: http://zitadel.localhost:8080   (login admin@example.com)
 curl http://zitadel.localhost:8080/.well-known/openid-configuration
 ```
 
@@ -104,5 +104,24 @@ docs/             setup / management / operation / migration guides
 
 ## License
 
-MIT (this stack). Zitadel itself is **AGPL-3.0** — internal self-hosting without
-SaaS redistribution is unproblematic.
+This stack (config, compose, Terraform, sidecars) is **MIT** — see [LICENSE](LICENSE).
+It is **not** a fork of Zitadel: Zitadel is consumed only as a pre-built container
+image, so its copyleft does not attach to this repository.
+
+**Zitadel is AGPL-3.0.** The images this stack pulls (`ghcr.io/zitadel/zitadel`
+and the EP-Zitadel login base) are AGPL-3.0. Running them self-hosted is fine;
+if you **modify** Zitadel or the login and offer it over a network, AGPL §13
+requires you to make your modified source available. This repository ships no
+Zitadel source — the modified login lives in the separate `ep-zitadel` repository,
+which carries that obligation for its image.
+
+**Trademarks.** "Zitadel" is a trademark of its respective owner. This project is
+an independent deployment stack and is **not** affiliated with, endorsed by, or
+sponsored by Zitadel; the name is used only nominatively to identify the upstream
+software it deploys.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for how to report a vulnerability, and
+[docs/security-hardening.md](docs/security-hardening.md) for the stack's security
+posture.

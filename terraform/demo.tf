@@ -9,7 +9,7 @@
 # BAUER GROUP tenant or its apps.
 #
 # Everything here is gated on DEMO_USER_PASSWORD (empty = nothing created).
-# Login: demo@external.bauer-group.com / DEMO_USER_PASSWORD (MFA on first login).
+# Login: demo@external.example.com / DEMO_USER_PASSWORD (MFA on first login).
 # App creds: `tofu output demo_app_client_id` / `-raw demo_app_client_secret`.
 # Remove for a clean prod: clear DEMO_USER_PASSWORD, then `tofu state rm` the demo
 # resources (the non-destructive provisioner won't auto-destroy them).
@@ -52,10 +52,10 @@ resource "zitadel_application_oidc" "demo" {
   project_id = zitadel_project.demo[0].id
   name       = "Demo"
 
-  # demo.app.bauer-group.com = a real app you'd put behind it; localhost:8888 =
+  # demo.app.example.com = a real app you'd put behind it; localhost:8888 =
   # the in-stack OIDC test client (tests/oidc-test-client, dev `test` profile).
-  redirect_uris             = ["https://demo.app.bauer-group.com/auth/callback", "http://localhost:8888/callback"]
-  post_logout_redirect_uris = ["https://demo.app.bauer-group.com/", "http://localhost:8888/"]
+  redirect_uris             = ["https://demo.app.example.com/auth/callback", "http://localhost:8888/callback"]
+  post_logout_redirect_uris = ["https://demo.app.example.com/", "http://localhost:8888/"]
 
   response_types   = ["OIDC_RESPONSE_TYPE_CODE"]
   grant_types      = ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE", "OIDC_GRANT_TYPE_REFRESH_TOKEN"]
@@ -76,10 +76,10 @@ resource "zitadel_human_user" "demo" {
   count = local.demo_enabled ? 1 : 0
 
   org_id            = zitadel_org.external.id
-  user_name         = "demo@external.bauer-group.com" # = loginname (UserLoginMustBeDomain=false)
+  user_name         = "demo@external.example.com" # = loginname (UserLoginMustBeDomain=false)
   first_name        = "Demo"
   last_name         = "User"
-  email             = "demo@external.bauer-group.com"
+  email             = "demo@external.example.com"
   is_email_verified = true
 
   initial_password             = var.demo_user_password

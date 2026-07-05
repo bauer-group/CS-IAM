@@ -126,7 +126,7 @@ def main() -> int:
             check("Demo: redirect localhost:8888", any("localhost:8888" in u for u in oc.get("redirectUris", [])), oc.get("redirectUris"))
 
     # ── 6. Demo user + grant + roles (the heart of it) ────────────────────────
-    ur = post("/v2/users", {"queries": [{"emailQuery": {"emailAddress": "demo@bauer-group.com", "method": "TEXT_QUERY_METHOD_EQUALS"}}]})
+    ur = post("/v2/users", {"queries": [{"emailQuery": {"emailAddress": "demo@example.com", "method": "TEXT_QUERY_METHOD_EQUALS"}}]})
     result = ur.json().get("result") or []
     uid = result[0].get("userId") if result else None
     check("demo user exists", bool(uid), uid)

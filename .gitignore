@@ -61,3 +61,18 @@ crash.*.log
 # Zitadel machine key / generated credentials (never commit)
 *.machinekey.json
 admin.pat
+
+# Key material / certificates — defense-in-depth (none are tracked today; this
+# guards against an accidental future copy of a cert/key into the repo).
+*.pem
+*.key
+*.crt
+*.cer
+*.pfx
+*.p12
+
+# Deployment-private overrides & real-value snapshots (BAUER GROUP live config).
+# The public templates ship generic example.com values; the real domains/hosts
+# live here and are NEVER pushed. See .local/README.md.
+.local/
+docker-compose.*.local.yml

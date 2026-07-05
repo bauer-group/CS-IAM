@@ -24,7 +24,7 @@
 # (Entra), so the Login v2 auto-redirects straight to Entra instead of showing a
 # login form. The break-glass "System Admins" org keeps local password login
 # (the instance-default policy), so an admin can always get in at
-# id-admin.bauer-group.com even when the workforce is Entra-only.
+# id-admin.example.com even when the workforce is Entra-only.
 #
 # GATED: created only when enable_workforce_autoredirect = true AND Entra is
 # configured (azure_client_id set, so zitadel_org_idp_azure_ad.entra exists). In

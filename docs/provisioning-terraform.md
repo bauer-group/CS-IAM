@@ -45,7 +45,7 @@ Wire each app's `client_id` / `client_secret` into that app's `.env`.
 Set `APP_REDIRECT_URIS` (env, JSON) or edit `terraform/applications.tf`:
 
 ```json
-[{"name":"outline","redirect_uris":["https://wiki.bauer-group.com/auth/oidc.callback"]}]
+[{"name":"outline","redirect_uris":["https://wiki.example.com/auth/oidc.callback"]}]
 ```
 
 `tofu apply` (or restart the stack) creates the OIDC client. Read its secret via

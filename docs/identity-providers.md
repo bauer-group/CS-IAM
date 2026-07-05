@@ -10,7 +10,7 @@ providers:
 
 All IdPs are **opt-in**: nothing is created until its credentials are set. The
 redirect/callback URI to register at every provider is
-`https://id.bauer-group.com/idps/callback`.
+`https://id.example.com/idps/callback`.
 
 ## Microsoft Entra ID (internal, single-tenant)
 
@@ -19,7 +19,7 @@ redirect/callback URI to register at every provider is
 - **App registrations → New registration**
   - Name: `Zitadel SSO`
   - Accounts: this organizational directory only
-  - Redirect URI (Web): `https://id.bauer-group.com/idps/callback`
+  - Redirect URI (Web): `https://id.example.com/idps/callback`
 - **Certificates & secrets → New client secret** → copy the value into
   `AZURE_CLIENT_SECRET`.
 - **API permissions → Application permissions** (then *Grant admin consent*):
@@ -103,7 +103,7 @@ no grant on the internal project (`has_project_check`), so it can never reach
 internal apps regardless of how it authenticated.
 
 > **Security acceptance test (run once with a real IdP before go-live):** sign in
-> with a Google/Microsoft account whose email is `…@bauer-group.com` via the
+> with a Google/Microsoft account whose email is `…@example.com` via the
 > **customer** login. It MUST create a **new External Users** account with no
 > internal access — it must NOT link to or authenticate as the workforce user in
 > the BAUER GROUP org. (`auto_linking` is expected to be org-scoped; prove it.)

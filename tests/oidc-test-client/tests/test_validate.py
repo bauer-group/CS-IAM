@@ -9,7 +9,7 @@ def _claims(**over):
         "aud": [appmod.CLIENT_ID],
         "nonce": "N",
         "sub": "user-1",
-        "email": "demo@bauer-group.com",
+        "email": "demo@example.com",
         appmod.ROLES_CLAIM: {"rUser": {}, "rManager": {}},
     }
     base.update(over)

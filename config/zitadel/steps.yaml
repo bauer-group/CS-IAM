@@ -32,22 +32,22 @@ FirstInstance:
   # tenant with NO external IdP. The system administrator lives here so they can
   # always sign in with a password — even when the workforce org (BAUER GROUP,
   # created in terraform/) is set to Entra-only auto-redirect. The admin's
-  # loginname uses the non-federated domain `id-admin.bauer-group.com`, so
+  # loginname uses the non-federated domain `id-admin.example.com`, so
   # domain discovery routes it here (never to the federated workforce org).
   Org:
     Name: "System Admins"
 
     # ── Human break-glass admin (local password login) ─────────────────────
     # UserLoginMustBeDomain=false → the username IS the verbatim loginname. Use
-    # the non-federated id-admin.bauer-group.com domain so it can never be routed
+    # the non-federated id-admin.example.com domain so it can never be routed
     # to the Entra-federated workforce org. Reachable in prod at
-    # id-admin.bauer-group.com; in dev via the loginname on the single host.
+    # id-admin.example.com; in dev via the loginname on the single host.
     Human:
-      UserName: admin@id-admin.bauer-group.com
+      UserName: admin@id-admin.example.com
       FirstName: IAM
       LastName: Administrator
       Email:
-        Address: admin@id-admin.bauer-group.com
+        Address: admin@id-admin.example.com
         Verified: true
       PasswordChangeRequired: false
       # Password: injected via ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD

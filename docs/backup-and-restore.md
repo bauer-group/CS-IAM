@@ -17,7 +17,7 @@ Set in `.env` to also push each snapshot to an S3-compatible bucket
 (AWS / Cloudflare R2 / Backblaze B2 / a second MinIO):
 
 ```env
-BACKUP_S3_ENDPOINT=https://s3.bauer-group.com
+BACKUP_S3_ENDPOINT=https://s3.example.com
 BACKUP_S3_BUCKET=iam-backups
 BACKUP_S3_ACCESS_KEY=...
 BACKUP_S3_SECRET_KEY=...

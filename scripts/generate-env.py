@@ -49,6 +49,9 @@ SECRETS: dict[str, tuple[str, int, str]] = {
     "ZITADEL_DB_PASSWORD":    ("hex", 48, "PostgreSQL zitadel-user password"),
     # First admin console password — needs complexity (upper/lower/digit/symbol).
     "ZITADEL_ADMIN_PASSWORD": ("password", 24, "Zitadel first-admin console password"),
+    # Optional self-contained demo user (opt-in; blank in .env to disable). Filled
+    # so the shipped template never carries a known credential.
+    "DEMO_USER_PASSWORD":     ("password", 20, "Demo user login password (optional demo)"),
 }
 
 PLACEHOLDER_RE = re.compile(r"CHANGE_ME_[A-Z0-9_]*")

@@ -39,7 +39,7 @@ kept fresh by `directory-sync`.
    Creates password-less users with `userId = OID`, plus metadata + avatar.
 5. **Switch each app's OIDC config** from Entra-direct to Zitadel:
    ```env
-   OIDC_ISSUER=https://id.bauer-group.com
+   OIDC_ISSUER=https://id.example.com
    OIDC_CLIENT_ID=<from tofu output>
    OIDC_CLIENT_SECRET=<from tofu output>
    OIDC_SCOPES=openid profile email urn:zitadel:iam:user:metadata

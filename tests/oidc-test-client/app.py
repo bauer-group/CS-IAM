@@ -4,7 +4,7 @@ OIDC test client — exercises and validates the IAM login end-to-end.
 A tiny confidential OIDC client (dev/test only) that runs the real
 authorization-code + PKCE flow against the IAM, then validates the issued ID
 token: signature, issuer, audience, nonce, subject, email and — the point — the
-project roles. Built to test the shipped demo user (demo@bauer-group.com) against
+project roles. Built to test the shipped demo user (demo@example.com) against
 its expected roles in pDemo (rUser + rManager, NOT rAdministrator).
 
 Two surfaces:

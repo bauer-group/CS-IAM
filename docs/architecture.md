@@ -12,8 +12,8 @@ admin/console/api/login hosts.
 
 | Host | Where |
 |------|-------|
-| `id.bauer-group.com` | production issuer (`ZITADEL_EXTERNALDOMAIN`) |
-| `iam.bauer-group.test` | development issuer (self-signed) |
+| `id.example.com` | production issuer (`ZITADEL_EXTERNALDOMAIN`) |
+| `iam.example.test` | development issuer (self-signed) |
 
 | Path | Routed to |
 |------|-----------|
@@ -39,8 +39,8 @@ and its IdP.
 
 ### System Admins (break-glass)
 The instance's first org. The human admin logs in as
-`admin@id-admin.bauer-group.com` and the headless `iam-admin` machine user runs
-Terraform + directory-sync. **`id-admin.bauer-group.com` is a verified _domain_,
+`admin@id-admin.example.com` and the headless `iam-admin` machine user runs
+Terraform + directory-sync. **`id-admin.example.com` is a verified _domain_,
 not a separate host** — because it is **not** one of the workforce domains, domain
 discovery routes it to this local org and it can never be swept into the workforce
 Entra auto-redirect. That is the password fallback that keeps admins in even when
@@ -51,12 +51,12 @@ The Terraform-created workforce tenant. In production it is **Entra-only**: when
 `enable_workforce_autoredirect = true` (default) **and** Entra credentials are set,
 the per-org login policy drops local password and Login v2 **auto-redirects** to
 Entra (`terraform/login_policy.tf`, `idps.tf`). The corporate email domains
-(`INTERNAL_ORG_DOMAINS`, e.g. `bauer-group.com`, `de.bauer-group.com`,
-`us.bauer-group.com`) are verified on this org so `@domain` logins discover it and
-route to Entra. **Discovery is exact — no wildcards:** `bauer-group.com` does
-**not** cover `us.bauer-group.com`, so every active domain/subdomain must be
+(`INTERNAL_ORG_DOMAINS`, e.g. `example.com`, `de.example.com`,
+`us.example.com`) are verified on this org so `@domain` logins discover it and
+route to Entra. **Discovery is exact — no wildcards:** `example.com` does
+**not** cover `us.example.com`, so every active domain/subdomain must be
 listed (and be a verified domain in the Entra tenant). A login name like
-`ab@us.bauer-group.com` only routes to Entra when `us.bauer-group.com` is in the
+`ab@us.example.com` only routes to Entra when `us.example.com` is in the
 list. Federated
 users are password-less; profiles, avatars and **Entra groups → namespaced
 `entra:` roles + grants** are kept current by [directory-sync](directory-sync.md).
@@ -73,7 +73,7 @@ external_login_org_scope`) to reach this login context — otherwise they fall b
 to the instance-default password form. **No _local_ self-registration**
 (`AllowRegister: false`), but social logins **JIT-create** an external account
 (`is_auto_creation`); either way the account lands here with no internal grant.
-See the demo: `demo@external.bauer-group.com` in project `pDemo`
+See the demo: `demo@external.example.com` in project `pDemo`
 (`terraform/demo.tf`) and [identity-providers.md](identity-providers.md).
 
 ## Access model (how isolation is enforced)

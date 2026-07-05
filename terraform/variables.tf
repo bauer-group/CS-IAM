@@ -73,13 +73,13 @@ variable "external_org_name" {
 #
 # JSON-array STRING (jsondecode'd in orgs.tf) — same env-passing pattern as
 # external_oauth_idps to dodge TF_VAR complex-type quirks. Matching is EXACT:
-# Zitadel domain discovery has NO wildcards, so `bauer-group.com` does NOT cover
-# `us.bauer-group.com` — every active subdomain must be listed (and be a verified
+# Zitadel domain discovery has NO wildcards, so `example.com` does NOT cover
+# `us.example.com` — every active subdomain must be listed (and be a verified
 # domain in the Entra tenant).
 variable "internal_org_domains" {
   type        = string
   default     = "[]"
-  description = "JSON array of verified email domains of the BAUER GROUP org for domain discovery, e.g. [\"bauer-group.com\",\"de.bauer-group.com\",\"us.bauer-group.com\"]. Exact match, no wildcards — list every active domain/subdomain. Set via INTERNAL_ORG_DOMAINS."
+  description = "JSON array of verified email domains of the BAUER GROUP org for domain discovery, e.g. [\"example.com\",\"de.example.com\",\"us.example.com\"]. Exact match, no wildcards — list every active domain/subdomain. Set via INTERNAL_ORG_DOMAINS."
 }
 
 variable "external_project_name" {
@@ -117,7 +117,7 @@ variable "enable_workforce_autoredirect" {
     azure_client_id, so it activates ONLY once Entra is configured: dev (no Entra)
     is unaffected and never locked out. Set false ONLY to temporarily allow
     workforce local password login during a migration. The break-glass System
-    Admins org always keeps local login at id-admin.bauer-group.com.
+    Admins org always keeps local login at id-admin.example.com.
   EOT
 }
 

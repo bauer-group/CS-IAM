@@ -8,7 +8,7 @@
 # terraform.tfvars is git-ignored (carries the Entra client secret).
 # =============================================================================
 
-zitadel_domain   = "id.bauer-group.com"
+zitadel_domain   = "id.example.com"
 zitadel_port     = "443"
 zitadel_insecure = false
 
@@ -30,7 +30,7 @@ azure_tenant_id     = ""
 # Verified workforce email domains for DOMAIN DISCOVERY (JSON-array string).
 # EXACT match, no wildcards — list every active domain AND subdomain; each must
 # also be a verified domain in the Entra tenant. The BAUER GROUP stack's live set:
-internal_org_domains = "[\"bauer-group.com\",\"de.bauer-group.com\",\"us.bauer-group.com\",\"sg.bauer-group.com\",\"th.bauer-group.com\",\"vn.bauer-group.com\",\"cn.bauer-group.com\",\"ge.bauer-group.com\"]"
+internal_org_domains = "[\"example.com\",\"de.example.com\",\"us.example.com\",\"sg.example.com\",\"th.example.com\",\"vn.example.com\",\"cn.example.com\",\"ge.example.com\"]"
 
 # ── External-org identity providers (customer login) ─────────────────────────
 # First-class (native templates):
@@ -51,4 +51,4 @@ external_oidc_idps = "{}"
 # OIDC applications (JSON string). Optional per-app "audience":
 #   omitted / "internal" → internal-only app (BAUER GROUP project)
 #   "external"           → customer app (External Apps project, granted to externals)
-app_redirect_uris = "[{\"name\":\"outline\",\"redirect_uris\":[\"https://wiki.bauer-group.com/auth/oidc.callback\"]},{\"name\":\"customer-portal\",\"audience\":\"external\",\"redirect_uris\":[\"https://portal.example.com/auth/callback\"]}]"
+app_redirect_uris = "[{\"name\":\"outline\",\"redirect_uris\":[\"https://wiki.example.com/auth/oidc.callback\"]},{\"name\":\"customer-portal\",\"audience\":\"external\",\"redirect_uris\":[\"https://portal.example.com/auth/callback\"]}]"

@@ -52,7 +52,7 @@ here — that is why it must be in place **before** the first boot.
 |---|---|
 | `STACK_NAME` | container/volume/network prefix (default `iam`) |
 | `IAM_HOSTNAME` | production OIDC issuer host |
-| `IAM_DEV_HOSTNAME` / `IAM_DEV_PORT` | dev domain + port (`iam.bauer-group.test:8080`) — a network alias on the core and the HTTPS proxy origin; a valid WebAuthn rp.id |
+| `IAM_DEV_HOSTNAME` / `IAM_DEV_PORT` | dev domain + port (`iam.example.test:8080`) — a network alias on the core and the HTTPS proxy origin; a valid WebAuthn rp.id |
 | `PROXY_NETWORK` | external Traefik network |
 | `ZITADEL_MASTERKEY` | 32-char secrets-at-rest key (generated) |
 | `ZITADEL_ADMIN_PASSWORD` | first admin console password (generated) |
@@ -83,7 +83,7 @@ override it in the compose `environment:` (e.g.
 ## FirstInstance (`steps.yaml`)
 
 Creates the local break-glass **`System Admins`** org, its Human admin
-(`admin@id-admin.bauer-group.com`, password via `ZITADEL_ADMIN_PASSWORD` →
+(`admin@id-admin.example.com`, password via `ZITADEL_ADMIN_PASSWORD` →
 `ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD`), and the **machine automation user**
 `iam-admin` whose JSON key is written to the `machinekey` volume — the credential
 Terraform and `directory-sync` use. (The `BAUER GROUP` workforce org is created in

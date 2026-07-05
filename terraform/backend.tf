@@ -11,7 +11,7 @@
 #
 #   terraform {
 #     backend "s3" {
-#       endpoints                   = { s3 = "https://s3.bauer-group.com" }
+#       endpoints                   = { s3 = "https://s3.example.com" }
 #       bucket                      = "iam-tfstate"
 #       key                         = "cs-iam/terraform.tfstate"
 #       region                      = "eu-central-1"

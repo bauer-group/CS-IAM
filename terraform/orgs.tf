@@ -39,8 +39,8 @@ resource "zitadel_org" "external" {
 # to the single Entra IdP (AllowDomainDiscovery). Empty in dev; in prod set
 # INTERNAL_ORG_DOMAINS. No DNS ownership challenge here (ValidateOrgDomains=false
 # in defaults.yaml) — these are added as verified. Matching is EXACT (no wildcards),
-# so list every active domain AND subdomain (bauer-group.com, us.bauer-group.com,
-# de.bauer-group.com, …) — each must also be a verified domain in the Entra tenant.
+# so list every active domain AND subdomain (example.com, us.example.com,
+# de.example.com, …) — each must also be a verified domain in the Entra tenant.
 resource "zitadel_domain" "internal" {
   # Tolerate an empty env var (compose passes "" when unset) → treat as no domains.
   for_each = toset(jsondecode(var.internal_org_domains != "" ? var.internal_org_domains : "[]"))

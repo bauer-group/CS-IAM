@@ -67,9 +67,9 @@ DefaultInstance:
 
   # ── Domain handling ────────────────────────────────────────────────────────
   # Loginname = the user's verbatim username, i.e. their real email
-  # (admin@bauer-group.com, jdoe@de.bauer-group.com) — the Microsoft UPN model.
-  # The org owns MULTIPLE verified domains (bauer-group.com, de.bauer-group.com,
-  # us.bauer-group.com, …) used for **domain discovery**: any @*.bauer-group.com
+  # (admin@example.com, jdoe@de.example.com) — the Microsoft UPN model.
+  # The org owns MULTIPLE verified domains (example.com, de.example.com,
+  # us.example.com, …) used for **domain discovery**: any @*.example.com
   # login is routed to the single Entra IdP. These domains are NOT used to build
   # the loginname (that is why UserLoginMustBeDomain stays false) — they only
   # drive routing. Tenant isolation is at the ORG level, independent of this flag.
@@ -91,9 +91,9 @@ DefaultInstance:
   # ── Privacy / support links (shown in the login UI) ────────────────────────
   PrivacyPolicy:
     TOSLink: ""
-    PrivacyLink: "https://go.bauer-group.com/privacypolicy"
-    HelpLink: "https://go.bauer-group.com/iam-help"
-    SupportEmail: "support@bauer-group.com"
+    PrivacyLink: "https://go.example.com/privacypolicy"
+    HelpLink: "https://go.example.com/iam-help"
+    SupportEmail: "support@example.com"
 
   # ── Branding ───────────────────────────────────────────────────────────────
   # Minimal brand tokens; full logos are uploaded via the console/Terraform.
