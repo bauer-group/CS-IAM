@@ -8,8 +8,8 @@
 # authorization-on-auth so only users with a role grant may sign into its apps.
 # =============================================================================
 
-# NOTE: resource attribute names target the zitadel/zitadel v2 provider.
-# `tofu validate` (CI) will flag any drift on a provider bump.
+# NOTE: resource attribute names are compatible with the zitadel/zitadel v3.x
+# provider (confirmed by `tofu validate` in CI on the v2 -> v3.3 bump).
 resource "zitadel_org" "bauer" {
   name = var.org_name
 
