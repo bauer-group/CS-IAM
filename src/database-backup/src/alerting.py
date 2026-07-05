@@ -91,7 +91,7 @@ class AlertManager:
             }
         ).encode("utf-8")
         headers = {"Content-Type": "application/json"}
-        secret = getattr(self.s, "webhook_secret", None)
+        secret = self.s.webhook_secret_str()
         if secret:
             sig = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
             headers["X-Signature-256"] = f"sha256={sig}"

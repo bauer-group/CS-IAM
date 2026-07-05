@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     smtp_from: Optional[str] = Field(default=None)
     smtp_to: str = Field(default="")
     webhook_url: Optional[str] = Field(default=None)
+    webhook_secret: Optional[SecretStr] = Field(default=None)
     teams_webhook_url: Optional[str] = Field(default=None)
 
     # ── Logging ───────────────────────────────────────────────────────────
@@ -101,6 +102,9 @@ class Settings(BaseSettings):
 
     def smtp_password_str(self) -> Optional[str]:
         return self.smtp_password.get_secret_value() if self.smtp_password else None
+
+    def webhook_secret_str(self) -> Optional[str]:
+        return self.webhook_secret.get_secret_value() if self.webhook_secret else None
 
     def target_configured(self) -> bool:
         return bool(self.backup_s3_bucket and self.backup_s3_access_key and self.backup_secret())
