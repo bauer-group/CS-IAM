@@ -1,3 +1,9 @@
+## [0.16.0](https://github.com/bauer-group/CS-IAM/compare/v0.15.3...v0.16.0) (2026-07-05)
+
+### 🚀 Features
+
+* **backup:** enabled webhook HMAC signing for alert notifications ([817b050](https://github.com/bauer-group/CS-IAM/commit/817b050199ff9a5a151463811e52b7dfd3278c65))
+
 ## [0.15.3](https://github.com/bauer-group/CS-IAM/compare/v0.15.2...v0.15.3) (2026-07-05)
 
 ### 🐛 Bug Fixes
