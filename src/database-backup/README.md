@@ -1,34 +1,18 @@
 # database-backup
 
-PostgreSQL snapshot sidecar for the Zitadel stack. Dumps the `zitadel` database
-with `pg_dump`, bundles it into a deterministic `tar.gz` + `manifest.json`
-(with sha256), applies retention, and optionally uploads off-site to any
-S3-compatible target. Cron- or interval-scheduled; alerts via email / webhook /
-Microsoft Teams.
+Thin meta-image `FROM ghcr.io/bauer-group/cs-backuphelper/backuphelper` — the
+central BackupHelper engine. All backup logic (pg_dump, retention, manifest,
+S3 off-site, notifications, restore CLI) lives there; this image only pins the
+version and adds the IAM/Zitadel OCI labels.
 
-> There is **no S3 source** in this stack (unlike `outline-backup`) — Zitadel
-> keeps everything in Postgres, so a DB dump is a complete snapshot.
+It backs up the Zitadel **PostgreSQL** database. There is no separate source —
+Zitadel keeps all state in Postgres, so a DB dump is a complete snapshot.
 
-## Run
+## Configuration
 
-```bash
-# enable the sidecar (scheduler):
-docker compose -f docker-compose.traefik.yml --profile backup up -d database-backup
+Everything is driven by the `database-backup` service in the compose files via
+`BACKUP_CONFIG_JSON` (plus the `DB_PASSWORD` / `BACKUP_S3_SECRET_KEY` /
+`SMTP_PASSWORD` / `WEBHOOK_SECRET` secrets, resolved inside the container).
 
-# one-off + management:
-docker compose --profile backup run --rm database-backup --now
-docker compose --profile backup run --rm database-backup cli list
-docker compose --profile backup run --rm database-backup cli verify <id>
-docker compose --profile backup run --rm database-backup cli restore <id>   # stop Zitadel first
-docker compose --profile backup run --rm database-backup cli prune
-```
-
-## Off-site target (optional)
-
-Set `BACKUP_S3_*` to mirror snapshots to AWS S3 / Cloudflare R2 / Backblaze B2 /
-a second MinIO. Leave blank for local-only backups on the `backup` volume.
-
-## Restore
-
-`cli restore <id>` extracts the archive and runs `pg_restore`/`psql`. **Stop the
-Zitadel container first** — the sidecar does not stop services.
+See the BackupHelper docs:
+https://github.com/bauer-group/CS-BackupHelper

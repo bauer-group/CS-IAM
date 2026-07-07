@@ -265,17 +265,41 @@ services:
     <<: *logging
     environment:
       TZ: ${TIME_ZONE:-Etc/UTC}
-      INSTANCE_NAME: ${STACK_NAME:-iam}
-      DB_HOST: database-server
-      DB_PORT: 5432
-      DB_NAME: ${ZITADEL_DB_NAME:-zitadel}
-      DB_USER: ${ZITADEL_DB_USER:-zitadel}
-      DB_PASSWORD: ${ZITADEL_DB_PASSWORD}
-      DB_SSL_MODE: disable
-      BACKUP_RETENTION_COUNT: ${BACKUP_RETENTION_COUNT:-14}
-      BACKUP_SCHEDULE_ENABLED: ${BACKUP_SCHEDULE_ENABLED:-true}
-      BACKUP_SCHEDULE_CRON: ${BACKUP_SCHEDULE_CRON:-15 3 * * *}
       BACKUP_LOG_LEVEL: ${BACKUP_LOG_LEVEL:-INFO}
+      # Secrets resolved by the container (kept out of the rendered config)
+      DB_PASSWORD: ${ZITADEL_DB_PASSWORD}
+      BACKUP_S3_SECRET_KEY: ${BACKUP_S3_SECRET_KEY:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      WEBHOOK_SECRET: ${BACKUP_WEBHOOK_SECRET:-}
+      BACKUP_CONFIG_JSON: |
+        {
+          "instance_name": "${STACK_NAME:-iam}",
+          "jobs": [{
+            "name": "main",
+            "sources": [
+              {"type": "postgres", "host": "database-server", "port": 5432,
+               "database": "${ZITADEL_DB_NAME:-zitadel}", "user": "${ZITADEL_DB_USER:-zitadel}",
+               "password": "$${DB_PASSWORD}", "ssl_mode": "disable", "dump_format": "custom"}
+            ],
+            "destinations": [
+              {"type": "local"},
+              {"type": "s3", "endpoint": "${BACKUP_S3_ENDPOINT:-}", "bucket": "${BACKUP_S3_BUCKET:-}",
+               "access_key": "${BACKUP_S3_ACCESS_KEY:-}", "secret_key": "$${BACKUP_S3_SECRET_KEY}",
+               "region": "${BACKUP_S3_REGION:-eu-central-1}", "prefix": "${BACKUP_S3_PREFIX:-iam/}"}
+            ],
+            "schedule": {"mode": "${BACKUP_SCHEDULE_MODE:-cron}", "cron": "${BACKUP_SCHEDULE_CRON:-15 3 * * *}"},
+            "retention": {"count": ${BACKUP_RETENTION_COUNT:-14}},
+            "notifications": {
+              "channels": "${BACKUP_ALERT_CHANNELS:-}",
+              "level": "${BACKUP_ALERT_LEVEL:-warnings}",
+              "email": {"host": "${SMTP_HOST:-}", "port": ${SMTP_PORT:-587}, "tls": true,
+                        "username": "${SMTP_USERNAME:-}", "password": "$${SMTP_PASSWORD}",
+                        "sender": "${SMTP_FROM_EMAIL:-}", "recipients": ["${BACKUP_ALERT_EMAIL:-}"]},
+              "webhook": {"url": "${BACKUP_WEBHOOK_URL:-}", "secret": "$${WEBHOOK_SECRET}"},
+              "teams": {"url": "${BACKUP_TEAMS_WEBHOOK:-}"}
+            }
+          }]
+        }
     volumes:
       - backup-data:/data
     depends_on:
