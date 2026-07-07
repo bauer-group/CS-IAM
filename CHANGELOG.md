@@ -1,3 +1,9 @@
+## [0.17.0](https://github.com/bauer-group/CS-IAM/compare/v0.16.0...v0.17.0) (2026-07-07)
+
+### 🚀 Features
+
+* **backup:** migrated database-backup to the central BackupHelper engine ([9415b7d](https://github.com/bauer-group/CS-IAM/commit/9415b7db4b396871d3825af5ce91f9f7a2ecd888))
+
 ## [0.16.0](https://github.com/bauer-group/CS-IAM/compare/v0.15.3...v0.16.0) (2026-07-05)
 
 ### 🚀 Features
