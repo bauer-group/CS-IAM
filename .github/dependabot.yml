@@ -102,22 +102,6 @@ updates:
     commit-message:
       prefix: "chore(deps)"
 
-  - package-ecosystem: "pip"
-    directory: "/src/database-backup"
-    # Only open a PR when the requirement actually blocks the new version.
-    versioning-strategy: increase-if-necessary
-    schedule:
-      interval: "weekly"
-      day: "sunday"
-      time: "06:30"
-      timezone: "Etc/UTC"
-    labels:
-      - "dependencies"
-      - "python"
-      - "dependabot"
-    commit-message:
-      prefix: "chore(deps)"
-
   # ── Terraform / OpenTofu provider ─────────────────────────────────────────
   - package-ecosystem: "terraform"
     directory: "/terraform"
