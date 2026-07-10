@@ -1,3 +1,5 @@
+## [0.17.3](https://github.com/bauer-group/CS-IAM/compare/v0.17.2...v0.17.3) (2026-07-10)
+
 ## [0.17.2](https://github.com/bauer-group/CS-IAM/compare/v0.17.1...v0.17.2) (2026-07-09)
 
 ## [0.17.1](https://github.com/bauer-group/CS-IAM/compare/v0.17.0...v0.17.1) (2026-07-08)
