@@ -8,6 +8,7 @@ permissions:
   issues: write
   contents: read
   models: read
+  pull-requests: write
 
 jobs:
   summarize-new-issue:
