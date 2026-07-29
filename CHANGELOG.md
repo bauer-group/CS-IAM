@@ -1,3 +1,10 @@
+## [0.17.6](https://github.com/bauer-group/CS-IAM/compare/v0.17.5...v0.17.6) (2026-07-29)
+
+### 🐛 Bug Fixes
+
+* **ci:** added the missing permissions block ([5b31db4](https://github.com/bauer-group/CS-IAM/commit/5b31db48c9706a6f432da48d54cdc45ba6ab8b01))
+* **ci:** granted the scope the summary module needs ([b5f0a78](https://github.com/bauer-group/CS-IAM/commit/b5f0a7864e4aeaa00f7777573e73bb603dbbc185))
+
 ## [0.17.5](https://github.com/bauer-group/CS-IAM/compare/v0.17.4...v0.17.5) (2026-07-18)
 
 ## [0.17.4](https://github.com/bauer-group/CS-IAM/compare/v0.17.3...v0.17.4) (2026-07-17)
