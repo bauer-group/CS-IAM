@@ -4,6 +4,8 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.17.14](https://github.com/bauer-group/CS-IAM/compare/v0.17.13...v0.17.14) (2026-09-01)
+
 ## [0.17.13](https://github.com/bauer-group/CS-IAM/compare/v0.17.12...v0.17.13) (2026-08-31)
 
 ## [0.17.12](https://github.com/bauer-group/CS-IAM/compare/v0.17.11...v0.17.12) (2026-08-14)
