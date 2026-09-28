@@ -4,6 +4,16 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.17.22](https://github.com/bauer-group/CS-IAM/compare/v0.17.21...v0.17.22) (2026-09-28)
+
+### 🔧 Maintenance
+
+* **ci:** removed issue AI summary workflow ([4e53c48](https://github.com/bauer-group/CS-IAM/commit/4e53c48831d36502b569115b9acfe93c9980c851)), references [bauer-group/automation-templates#105](https://github.com/bauer-group/automation-templates/issues/105)
+* **deps:** update base image zitadel, ep-zitadel-login ([8d8aafa](https://github.com/bauer-group/CS-IAM/commit/8d8aafaa1a25a6a6f8fafda0d575176d6563252f))
+* update Dockerfile version to 0.17.21 ([251ea01](https://github.com/bauer-group/CS-IAM/commit/251ea01842d07d572eff9b6bd8250f9f7e3687a5))
+* update Dockerfile version to 0.17.21 ([16fd32e](https://github.com/bauer-group/CS-IAM/commit/16fd32e815655d1cf79532d4d0a47543727485e8))
+* update Dockerfile version to 0.17.21 ([8388ee1](https://github.com/bauer-group/CS-IAM/commit/8388ee1978e029af72fdd8012b853c6a59665f32))
+
 ## [0.17.21](https://github.com/bauer-group/CS-IAM/compare/v0.17.20...v0.17.21) (2026-09-24)
 
 ### 🔧 Maintenance
