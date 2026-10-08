@@ -89,7 +89,7 @@ docs/             setup / management / operation / migration guides
 | [operations.md](docs/operations.md) | health, upgrades, HA path, decoupling |
 | [decoupling-from-entra.md](docs/decoupling-from-entra.md) | step-by-step runbook to go MS-free (credential migration, clean IdP removal) |
 | [sizing-and-tuning.md](docs/sizing-and-tuning.md) | PG18 presets (SSD/HDD + RAM size) |
-| [backup-and-restore.md](docs/backup-and-restore.md) | pg_dump snapshots, off-site, restore |
+| [backup-and-restore.md](docs/backup-and-restore.md) | pg_dump snapshots, off-site, restore, CI release gate |
 | [security-hardening.md](docs/security-hardening.md) | security posture |
 | [troubleshooting.md](docs/troubleshooting.md) | h2c/502, PG18, duplicate users, … |
 
