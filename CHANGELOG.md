@@ -4,6 +4,16 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.17.30](https://github.com/bauer-group/CS-IAM/compare/v0.17.29...v0.17.30) (2026-10-08)
+
+### 🔧 Maintenance
+
+* **deps:** update base image backuphelper [skip ci] ([126f2df](https://github.com/bauer-group/CS-IAM/commit/126f2df6e2eac0da62c17c1d5f4faf8a76aba5eb))
+* update Dockerfile version to 0.17.29 ([4cb3ba6](https://github.com/bauer-group/CS-IAM/commit/4cb3ba6c63a8a3adbcebf1684bd0767547f05946))
+* update Dockerfile version to 0.17.29 ([6bd5792](https://github.com/bauer-group/CS-IAM/commit/6bd57927023d310f8ca04fec0133ef8ccb80b98c))
+* update Dockerfile version to 0.17.29 ([d95db49](https://github.com/bauer-group/CS-IAM/commit/d95db49e885575a9f5a8265da0f350b217b009fb))
+* update Dockerfile version to 0.17.29 ([739dd00](https://github.com/bauer-group/CS-IAM/commit/739dd0048bb6a8678fd53c16f93542dd7d04466f))
+
 ## [0.17.29](https://github.com/bauer-group/CS-IAM/compare/v0.17.28...v0.17.29) (2026-10-08)
 
 ### 🐛 Bug Fixes
