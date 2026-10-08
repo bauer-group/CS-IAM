@@ -10,9 +10,12 @@ curl https://id.example.com/debug/healthz
 curl https://id.example.com/.well-known/openid-configuration
 ```
 
-`database-server` has a `pg_isready` healthcheck; the sidecars have process
-healthchecks. `zitadel` itself has no in-container healthcheck (distroless) —
-readiness is verified via the discovery endpoint and polled by dependents.
+`database-server` has a `pg_isready` healthcheck and `directory-sync` a process
+healthcheck. `database-backup` has the BackupHelper engine's functional one: it
+turns unhealthy when the last backup failed or no backup ran for 26 hours (see
+[Backup & Restore](backup-and-restore.md#health)). `zitadel` itself has no
+in-container healthcheck (distroless) — readiness is verified via the discovery
+endpoint and polled by dependents.
 
 ## Validate the deployment
 
