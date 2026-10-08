@@ -72,6 +72,37 @@ the matching SMTP / `BACKUP_ALERT_EMAIL` / `BACKUP_TEAMS_WEBHOOK` /
 `BACKUP_WEBHOOK_URL` values. `BACKUP_ALERT_ENABLED` in `.env.example` is not
 read by any compose file — the channel list alone decides.
 
+## Health
+
+The `database-backup` container's healthcheck (`backuphelper healthcheck`, from
+the BackupHelper engine) reports whether backups work. Since BackupHelper 1.7.7
+the container is unhealthy when
+
+- the backup volume (`/data`) is not writable by the sidecar,
+- the most recent backup ended in `error` (e.g. `pg_dump` failed) or its snapshot
+  has a failed component, until a newer backup ends in `success` or `warning`,
+- the most recent backup started more than 26 hours ago, or
+- no backup has run yet and the sidecar started more than 26 hours ago.
+
+The check prints the reason:
+
+```bash
+docker compose -f docker-compose.traefik.yml --profile backup exec database-backup backuphelper healthcheck
+# healthy: the last backup is fresh: snapshot 2026-07-05_03-15-00 (job main) ran 7.2 h ago
+```
+
+A run with a failed component ends `--now` with exit 1 and alerts at every
+`BACKUP_ALERT_LEVEL`. Up to 1.7.6 the healthcheck only looked at the age of the
+newest snapshot, so a deployment whose newest snapshot already has a failed
+component turns unhealthy right after the upgrade, until a complete snapshot
+exists.
+
+The 26 hours are the image default of `BACKUP_HEALTHCHECK_MAX_AGE_HOURS`, which
+the compose files do not pass through. With a `BACKUP_SCHEDULE_CRON` that runs
+less often than daily, the container is unhealthy from 26 hours after each run
+until the next one. The full rules are in the BackupHelper
+[deployment guide](https://github.com/bauer-group/CS-BackupHelper/blob/main/docs/deployment.md#the-functional-healthcheck).
+
 ## Release gate: backup round trip in CI
 
 Every release is gated on a real backup and restore of this stack. The job
