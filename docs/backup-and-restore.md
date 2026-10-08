@@ -45,10 +45,16 @@ docker compose --profile backup run --rm database-backup cli restore <id>
 docker compose -f docker-compose.traefik.yml up -d zitadel
 ```
 
-The archive is `pg_dump --format=custom` → restored with `pg_restore
---clean --if-exists --single-transaction`. The Zitadel **masterkey must be
-unchanged** (it decrypts secrets at rest) — keep `ZITADEL_MASTERKEY` backed up
-separately from the DB dump.
+The archive is `pg_dump --format=custom`. The source type `zitadel-postgres`
+(an engine plugin in `src/database-backup`) restores it in **one** transaction:
+it drops the live partitioned tables the dump recreates (Zitadel keeps its
+caches in such tables), then runs the dump's `pg_restore --clean --if-exists`
+script. The engine's plain `pg_restore --clean` cannot restore over partitioned
+tables — see
+[src/database-backup/README.md](../src/database-backup/README.md). Any error
+rolls the whole restore back. The Zitadel **masterkey must be unchanged** (it
+decrypts secrets at rest) — keep `ZITADEL_MASTERKEY` backed up separately from
+the DB dump.
 
 ## Alerts
 
