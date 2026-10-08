@@ -4,6 +4,7 @@ The end-to-end proof against a real Zitadel database is the backup round trip in
 .github/workflows/docker-release.yml; these tests pin the command sequence.
 """
 
+import secrets
 import subprocess
 from pathlib import Path
 
@@ -35,9 +36,14 @@ TOC = """\
 """
 
 
+# The dummy password is generated per run: credential-looking literals trip
+# secret scanners (GitGuardian) although nothing here is real.
+PASSWORD = secrets.token_hex(12)
+
+
 def _spec(**over):
     spec = {"type": "zitadel-postgres", "host": "database-server", "port": 5432,
-            "database": "zitadel", "user": "zitadel", "password": "pw-from-env"}
+            "database": "zitadel", "user": "zitadel", "password": PASSWORD}
     spec.update(over)
     return spec
 
@@ -133,8 +139,8 @@ def test_live_partitioned_tables_in_the_dump_are_dropped_in_the_same_transaction
 def test_password_never_on_a_command_line(tmp_path):
     run = FakeRun(live=LIVE_CACHE)
     ZitadelPostgresSource(_spec(), run=run).restore(_staged(tmp_path))
-    assert all("pw-from-env" not in " ".join(argv) for argv in run.calls)
-    assert all(env.get("PGPASSWORD") == "pw-from-env" for env in run.envs)
+    assert all(PASSWORD not in " ".join(argv) for argv in run.calls)
+    assert all(env.get("PGPASSWORD") == PASSWORD for env in run.envs)
 
 
 def test_notices_are_silenced_for_the_apply_only(tmp_path):
