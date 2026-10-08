@@ -4,6 +4,20 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.17.29](https://github.com/bauer-group/CS-IAM/compare/v0.17.28...v0.17.29) (2026-10-08)
+
+### 🐛 Bug Fixes
+
+* **backup:** restored Zitadel databases that hold partitioned tables ([62d04ae](https://github.com/bauer-group/CS-IAM/commit/62d04ae2851fa1f59bb6b615553822c84d0dea3e))
+* **compose:** added a zitadel healthcheck so dev up --wait works ([c4dc107](https://github.com/bauer-group/CS-IAM/commit/c4dc1070573df423575cec0ab7f16a1e89604c47))
+
+### 🔧 Maintenance
+
+* update Dockerfile version to 0.17.28 ([524477c](https://github.com/bauer-group/CS-IAM/commit/524477c8d2b363c1e6b8b7e90634bfe643c727b9))
+* update Dockerfile version to 0.17.28 ([1ad9b9c](https://github.com/bauer-group/CS-IAM/commit/1ad9b9c846ebbc2d65ef3dc703514483eac17ff4))
+* update Dockerfile version to 0.17.28 ([613fede](https://github.com/bauer-group/CS-IAM/commit/613fede29fe024dbca39bb39735957657aaa33d2))
+* update Dockerfile version to 0.17.28 ([1ec363a](https://github.com/bauer-group/CS-IAM/commit/1ec363ab5a3f551ad0492460a881beb2af4d9403))
+
 ## [0.17.28](https://github.com/bauer-group/CS-IAM/compare/v0.17.27...v0.17.28) (2026-10-08)
 
 ### 🔧 Maintenance
