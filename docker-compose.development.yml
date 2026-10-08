@@ -20,8 +20,9 @@
 # Bootstrap order:
 #   database-server (healthy) -> zitadel (writes the machine key) ->
 #   provisioner (tofu apply) -> directory-sync.
-# zitadel has no in-container healthcheck (distroless image, no shell), so the
-# dependent containers poll readiness + the machine-key file themselves.
+# zitadel reports health through its own `zitadel ready` probe (the image is
+# distroless, so there is no shell); the dependent containers still poll
+# readiness + the machine-key file themselves.
 # =============================================================================
 
 
@@ -221,6 +222,10 @@ services:
       ZITADEL_EXTERNALDOMAIN: ${IAM_DEV_HOSTNAME:-iam.example.test}
       ZITADEL_EXTERNALPORT: ${IAM_DEV_PORT:-8080}
       ZITADEL_EXTERNALSECURE: "true"
+      # The core serves plain http (`--tlsMode external` above). Said again here
+      # for the healthcheck: `zitadel ready` does not see the start flags and
+      # would otherwise probe https (TLS.Enabled defaults to true).
+      ZITADEL_TLS_ENABLED: "false"
       # TOTP/MFA issuer label shown in authenticator apps (default is "ZITADEL").
       ZITADEL_SYSTEMDEFAULTS_MULTIFACTORS_OTP_ISSUER: "BAUER GROUP"
       # SMTP — INSTANCE-WIDE (one MTA for all orgs). Dev catches every mail in
@@ -259,6 +264,17 @@ services:
       - ./config/zitadel/defaults.yaml:/zitadel/config/defaults.yaml:ro
       - ./config/zitadel/steps.yaml:/zitadel/config/steps.yaml:ro
       - machinekey:/data/machinekey
+    # The image declares HEALTHCHECK NONE, which `docker compose up --wait`
+    # rejects ("has no healthcheck configured"). `zitadel ready` is the probe
+    # Zitadel ships for this (exec form, no shell needed): it asks the core's
+    # /debug/ready endpoint. The first start runs init + setup, hence the start
+    # period; a passing probe ends it early.
+    healthcheck:
+      test: ["CMD", "/app/zitadel", "ready"]
+      interval: 10s
+      timeout: 30s
+      retries: 12
+      start_period: 120s
     # No host port — the `proxy` publishes :${IAM_DEV_PORT} and path-routes to
     # the core (everything except /ui/v2/login) and the login.
     expose:
