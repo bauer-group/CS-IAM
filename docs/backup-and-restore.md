@@ -28,11 +28,16 @@ Remote retention mirrors `BACKUP_RETENTION_COUNT`.
 
 ## Manage
 
+The sidecar's entrypoint is the engine CLI `backuphelper`, so the subcommand
+follows the service name directly. Use the compose file of your deployment
+(`docker-compose.traefik.yml`, `docker-compose.coolify.yml`, or
+`docker-compose.development.yml`):
+
 ```bash
-docker compose --profile backup run --rm database-backup --now          # snapshot now
-docker compose --profile backup run --rm database-backup cli list
-docker compose --profile backup run --rm database-backup cli verify <id>  # sha256 vs manifest
-docker compose --profile backup run --rm database-backup cli prune
+docker compose -f docker-compose.traefik.yml --profile backup run --rm database-backup --now        # snapshot now
+docker compose -f docker-compose.traefik.yml --profile backup run --rm database-backup list
+docker compose -f docker-compose.traefik.yml --profile backup run --rm database-backup verify <id>  # sha256 vs manifest
+docker compose -f docker-compose.traefik.yml --profile backup run --rm database-backup prune
 ```
 
 ## Restore (disaster recovery)
@@ -41,9 +46,12 @@ docker compose --profile backup run --rm database-backup cli prune
 
 ```bash
 docker compose -f docker-compose.traefik.yml stop zitadel
-docker compose --profile backup run --rm database-backup cli restore <id>
+docker compose -f docker-compose.traefik.yml --profile backup run --rm database-backup restore <id>
 docker compose -f docker-compose.traefik.yml up -d zitadel
 ```
+
+`restore` asks for confirmation; add `--force` where no terminal is attached
+(scripts, CI).
 
 The archive is `pg_dump --format=custom`. The source type `zitadel-postgres`
 (an engine plugin in `src/database-backup`) restores it in **one** transaction:
@@ -58,8 +66,11 @@ the DB dump.
 
 ## Alerts
 
-Set `BACKUP_ALERT_ENABLED=true`, `BACKUP_ALERT_CHANNELS=email,teams` and the
-corresponding SMTP / `BACKUP_TEAMS_WEBHOOK` values.
+Alerts go to the channels listed in `BACKUP_ALERT_CHANNELS` (comma-separated,
+e.g. `email,teams`; empty = no alerts), filtered by `BACKUP_ALERT_LEVEL`. Fill in
+the matching SMTP / `BACKUP_ALERT_EMAIL` / `BACKUP_TEAMS_WEBHOOK` /
+`BACKUP_WEBHOOK_URL` values. `BACKUP_ALERT_ENABLED` in `.env.example` is not
+read by any compose file — the channel list alone decides.
 
 ## Release gate: backup round trip in CI
 
