@@ -4,6 +4,23 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.17.31](https://github.com/bauer-group/CS-IAM/compare/v0.17.30...v0.17.31) (2026-10-09)
+
+### 🐛 Bug Fixes
+
+* **backup:** backed up the machine key and OpenTofu state volumes ([81aca71](https://github.com/bauer-group/CS-IAM/commit/81aca712009cf9c5b9592a9ccc00b466ac0c93f2))
+* **compose:** added Zitadel's healthcheck to Traefik and Coolify ([da79028](https://github.com/bauer-group/CS-IAM/commit/da79028df45c9e068b8df635c917f673be3a45bb))
+* **scripts:** defaulted validate-stack.py to the stack's own issuer ([0d07244](https://github.com/bauer-group/CS-IAM/commit/0d07244512564e0aab48c2e63453c7ef46558d94))
+* **scripts:** scoped the validate-stack.py checks to the Terraform orgs ([d074525](https://github.com/bauer-group/CS-IAM/commit/d07452523a6046c708d598a87db7fea00a8243b6))
+
+### 🔧 Maintenance
+
+* **env:** removed unused keys from .env.example ([b6d2093](https://github.com/bauer-group/CS-IAM/commit/b6d2093bfb3aa32a4f155c3fb6d7b0bdf5a29f52))
+* update Dockerfile version to 0.17.30 ([1756352](https://github.com/bauer-group/CS-IAM/commit/17563529a1f857ae6a9faa31574cf5d22170e065))
+* update Dockerfile version to 0.17.30 ([d097890](https://github.com/bauer-group/CS-IAM/commit/d0978901b76ad30bed34ab4303fe475d462ea962))
+* update Dockerfile version to 0.17.30 ([a2314ca](https://github.com/bauer-group/CS-IAM/commit/a2314ca0b73c9e54fc32c1d0d6a5e832541caf71))
+* update Dockerfile version to 0.17.30 ([b3af9c1](https://github.com/bauer-group/CS-IAM/commit/b3af9c197d2348df8c6873b0714c8668f9c4ce59))
+
 ## [0.17.30](https://github.com/bauer-group/CS-IAM/compare/v0.17.29...v0.17.30) (2026-10-08)
 
 ### 🔧 Maintenance
