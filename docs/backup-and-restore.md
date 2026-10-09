@@ -132,7 +132,9 @@ Before the engine could restore over partitioned tables, CS-IAM 0.17.29 to
 `database-backup` image with the same restore. Their snapshots record the
 database component's kind as `zitadel-postgres` (`show <id>`), newer ones as
 `postgres`. Both restore with the current compose files: the engine picks the
-source for a component by its name (`zitadel`), not by its kind.
+source for a component by its name (`zitadel`), not by its kind. Every release
+proves it with a snapshot of 0.17.29 (see
+[the release gate](#release-gate-backup-round-trip-in-ci)).
 
 `zitadel-postgres` remains a valid source type of the image, as an alias of the
 engine's `postgres` source, so a compose file that still names it keeps backing
@@ -207,18 +209,35 @@ The check runs three times — before the backup (data present), after the delet
 (data absent) and after the restore (data present) — so a restore that writes
 nothing cannot pass.
 
+A second job, `🧪 Backup Round Trip (legacy snapshot)`, gates the release as
+well and restores a snapshot of the old `zitadel-postgres` source with the
+current image and configuration. It runs the same phases with two differences:
+
+- **Build / Back up:** `database-backup` is not built. It starts as the image
+  of 0.17.29 - the first release with the plugin, on BackupHelper 1.7.6 - with
+  the source type `zitadel-postgres`
+  ([`legacy-snapshot.yml`](../tests/backup-roundtrip/legacy-snapshot.yml)), so
+  `create` writes a snapshot of that release.
+- **Delete:** first [`upgrade.sh`](../tests/backup-roundtrip/upgrade.sh)
+  upgrades the sidecar the way an operator does: the image built from the
+  commit and the source type of the compose files go into the `.env`, then
+  `up -d`. It fails unless the snapshot's database component is of kind
+  `zitadel-postgres` and the recreated sidecar runs the new image with the
+  compose files' source type. The restore runs in the upgraded sidecar.
+
 A run takes about two minutes on a GitHub-hosted runner: building the five
 images, the first start with Zitadel's setup and the provisioning, the backup,
 the restore with a second provisioning run, and the checks through the Zitadel
-API.
+API. The two jobs run in parallel.
 
 The round trip starts on pushes to `main` (except pushes that only change
 documentation or `.github/`), on every `workflow_dispatch`, and on pull requests
 that touch `src/`, `terraform/`, `config/`, a compose file, `.env.example`,
 `scripts/generate-env.py`, the round-trip scripts or the release workflow. When
 it fails, the run's summary names the failed phase, and the
-`backup-roundtrip-diagnostics` artifact holds every service's log,
-`docker compose ps`, the snapshot list and the manifest.
+`backup-roundtrip-diagnostics` artifact (`backup-roundtrip-legacy-diagnostics`
+for the second job) holds every service's log, `docker compose ps`, the
+snapshot list and the manifest.
 
 Not covered by the gate:
 
@@ -229,3 +248,6 @@ Not covered by the gate:
 - **A restore onto a new host** — the test restores into the volumes of the
   running stack. A new host starts from empty volumes and an empty database,
   following the procedure above.
+- **Snapshots of 0.17.30 and 0.17.31** — the legacy job restores one of 0.17.29.
+  0.17.30 has the same plugin on the same engine, 0.17.31 the same plugin on
+  BackupHelper 1.10.0, the engine that restores.

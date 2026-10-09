@@ -1,0 +1,24 @@
+# =============================================================================
+# CS-IAM backup round trip - a snapshot of the zitadel-postgres source
+# =============================================================================
+# Merged over docker-compose.development.yml by the job
+# "Backup Round Trip (legacy snapshot)" in .github/workflows/docker-release.yml.
+#
+# CS-IAM 0.17.29 to 0.17.31 backed up the Zitadel database with the source type
+# zitadel-postgres, a plugin of their database-backup image. With this file the
+# sidecar is such a release - the image DATABASE_BACKUP_VERSION names, pulled
+# from GHCR - with ROUNDTRIP_SOURCE_TYPE as its database source, so the round
+# trip's snapshot is one of theirs. upgrade.sh, the round trip's mutate script,
+# then switches the sidecar to the image built from this commit and to the
+# source type of the compose files, and the restore runs there.
+# =============================================================================
+services:
+  database-backup:
+    # The image DATABASE_BACKUP_IMAGE / DATABASE_BACKUP_VERSION name, as in a
+    # deployment: pulled, never built from src/database-backup by Compose.
+    build: !reset null
+    environment:
+      # The engine's discrete override of jobs[0].sources[0].type, the Zitadel
+      # database source in BACKUP_CONFIG_JSON. Everything else is the
+      # development compose file's configuration.
+      BACKUP_JOBS__0__SOURCES__0__TYPE: ${ROUNDTRIP_SOURCE_TYPE:?set by the legacy snapshot round trip}
