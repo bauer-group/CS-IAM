@@ -54,12 +54,11 @@ and accept the self-signed cert once). Common symptoms when this isn't set up:
 The automation containers must reach Zitadel at the **same host as its issuer**
 (the SDK takes the JWT audience from the discovered issuer, so the *host* must
 match — the scheme may differ).
-- dev: the issuer is `https://iam.example.test:8080` (via the proxy); the
-  containers reach the core directly over internal **http** at
-  `http://iam.example.test:8080` (a Docker network alias on the core) with
-  `ZITADEL_INSECURE=true`. Same host → audience matches even though the connection
-  is plain http. The browser uses the `127.0.0.1 iam.example.test` hosts entry
-  over HTTPS.
+- dev: the issuer is `https://iam.example.test:8080`. `iam.example.test` is a
+  Docker network alias of the dev `proxy`, so the containers reach the core
+  through the same HTTPS origin as the browser (`ZITADEL_INSECURE=false`) and
+  trust its self-signed certificate through `SSL_CERT_FILE` / `CURL_CA_BUNDLE`.
+  The browser uses the `127.0.0.1 iam.example.test` hosts entry.
 - prod: provision/sync are on the `proxy` network and use `https://IAM_HOSTNAME`.
 A real mismatch — pointing at a **different host** than the issuer — fails JWT
 audience validation.

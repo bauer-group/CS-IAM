@@ -34,11 +34,17 @@ the machine key):
 docker compose -f docker-compose.development.yml cp \
   scripts/validate-stack.py directory-sync:/tmp/validate-stack.py
 docker compose -f docker-compose.development.yml exec directory-sync \
-  python /tmp/validate-stack.py --issuer http://iam.example.test:8080 --insecure
-# In dev the containers reach the core directly over http (the browser-facing
-# issuer is https via the proxy). prod: --issuer https://<IAM_HOSTNAME> (drop
-# --insecure).
+  python /tmp/validate-stack.py
 ```
+
+It reaches Zitadel exactly like the stack's automation, with directory-sync's
+own issuer: in development `https://iam.example.test:8080` through the dev
+proxy, whose self-signed certificate the container trusts (`SSL_CERT_FILE`), in
+production `https://<IAM_HOSTNAME>` — run the same two commands with
+`docker-compose.traefik.yml` or `docker-compose.coolify.yml`. `--issuer` names
+another URL; it must use the instance domain, because Zitadel picks the
+instance by host (`http://zitadel:8080` is rejected). `--insecure` skips TLS
+verification.
 
 ## Upgrades
 
