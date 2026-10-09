@@ -12,6 +12,9 @@
 # copes with Zitadel's partitioned cache tables, which the engine's
 # `pg_restore --clean` cannot restore over. See iam_backup/zitadel_postgres.py.
 #
+# The machinekey and tfstate volumes are backed up with the engine's own
+# `filesystem` source; the compose files configure all three sources.
+#
 # Multi-stage with a pytest gate: if the plugin tests fail against this engine
 # version, the image cannot be assembled (the test stage is a hard dependency).
 # =============================================================================
@@ -41,7 +44,7 @@ LABEL vendor="BAUER GROUP"
 LABEL maintainer="Karl Bauer <karl.bauer@bauer-group.com>"
 
 LABEL org.opencontainers.image.title="IAM Database-Backup"
-LABEL org.opencontainers.image.description="PostgreSQL snapshot sidecar for the Zitadel stack - BAUER GROUP Edition"
+LABEL org.opencontainers.image.description="Backup sidecar for the Zitadel stack: database, machine key and OpenTofu state - BAUER GROUP Edition"
 LABEL org.opencontainers.image.vendor="BAUER GROUP"
 LABEL org.opencontainers.image.authors="Karl Bauer <karl.bauer@bauer-group.com>"
 LABEL org.opencontainers.image.licenses="MIT"

@@ -63,6 +63,12 @@ Local backend on the `tfstate` volume by default. For teams switch to an
 S3/MinIO backend (`terraform/backend.tf`) and `tofu init -migrate-state`. State
 carries OIDC client secrets — keep it private; `*.tfstate` is git-ignored.
 
+The `database-backup` sidecar backs up the local state (component `tfstate`)
+with the database, so a restore brings back a state that matches it. The
+provisioner hands the state files to the sidecar's user (uid 1000) when it
+exits, so the restore can write them back. With a remote backend the `tfstate`
+volume stays empty and the backend's own versioning covers the state.
+
 ## Ownership boundary vs. sync
 
 Terraform owns the **native role catalog** + break-glass grants. `directory-sync`

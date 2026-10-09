@@ -63,7 +63,7 @@ here — that is why it must be in place **before** the first boot.
 | `EXTERNAL_*` | customer-org IdP creds: Entra multi-tenant, Google, OAuth2/OIDC maps (Class B) |
 | `APP_REDIRECT_URIS` | JSON list of OIDC apps for Terraform (Class B) |
 | `SYNC_*` | directory-sync intervals, role prefix, project name |
-| `BACKUP_*` / `SMTP_*` | backup schedule, retention, off-site S3, alerts |
+| `BACKUP_*` / `SMTP_*` | backup schedule, retention, included volumes, off-site S3, alerts |
 
 ## Native Zitadel config (`defaults.yaml`)
 

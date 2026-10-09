@@ -1,7 +1,24 @@
 # Backup & Restore
 
-Zitadel keeps all state in PostgreSQL, so a DB dump is a **complete** snapshot
-(there is no S3 source in this stack). The `database-backup` sidecar handles it.
+The `database-backup` sidecar writes one snapshot per run. It holds three
+components, restored together as one point in time:
+
+| Component | What | Why it is needed |
+|-----------|------|------------------|
+| `zitadel` | the Zitadel PostgreSQL database (`pg_dump`) | all of Zitadel's own state |
+| `machinekey` | the `machinekey` volume: the FirstInstance machine key `iam-admin.json`, the PAT `iam-admin.pat` and, in development, `login-client.pat` | Zitadel writes these files only once, when it sets up a new instance. A restored database never writes them again, and without them the provisioner, `directory-sync`, the branding job and the login cannot authenticate. |
+| `tfstate` | the `tfstate` volume: the provisioner's OpenTofu state | without it the provisioner treats every resource as new, although the restored database already holds them. It is also the only copy of the generated OIDC client secrets (`tofu output app_client_secrets`). |
+
+There is no S3 source in this stack. Not backed up: `sync-data` (the delta
+tokens of `directory-sync`, which starts with a full sync without them) and, in
+development, `certs` (the self-signed certificate, generated again).
+
+> **The snapshot holds credentials in plain text**: the machine key of the
+> `IAM_OWNER` automation user, its PAT, and the OpenTofu state with the OIDC
+> and identity-provider client secrets. Keep the backup volume and the off-site
+> bucket as private as the host. `BACKUP_INCLUDE_MACHINEKEY=false` or
+> `BACKUP_INCLUDE_TFSTATE=false` leaves a component out of new snapshots - a
+> restore onto a new host then needs those files from somewhere else.
 
 ## Enable
 
@@ -40,18 +57,61 @@ docker compose -f docker-compose.traefik.yml --profile backup run --rm database-
 docker compose -f docker-compose.traefik.yml --profile backup run --rm database-backup prune
 ```
 
-## Restore (disaster recovery)
+## Restore on the same host
 
 > **Stop Zitadel first** — the sidecar does not stop services.
 
 ```bash
 docker compose -f docker-compose.traefik.yml stop zitadel
 docker compose -f docker-compose.traefik.yml --profile backup run --rm database-backup restore <id>
-docker compose -f docker-compose.traefik.yml up -d zitadel
+docker compose -f docker-compose.traefik.yml up -d
 ```
 
 `restore` asks for confirmation; add `--force` where no terminal is attached
-(scripts, CI).
+(scripts, CI). It writes back all components of the snapshot: the database, the
+machine key files and the OpenTofu state, so state and database match again.
+`up -d` starts Zitadel and runs the provisioner and the branding job once more
+against them. `--only zitadel` restores the database alone; the OpenTofu state
+then stays newer than the database, so restore all components unless you have
+a reason not to.
+
+Snapshots taken before the `machinekey` and `tfstate` components existed hold
+only `zitadel`; restoring one leaves both volumes as they are.
+
+## Restore onto a new host (disaster recovery)
+
+What the new host needs before it starts anything:
+
+- this repository's compose file and the **same `.env`** — above all
+  `ZITADEL_MASTERKEY` (it decrypts the secrets in the database) and
+  `IAM_HOSTNAME`, which the restored instance answers to; DNS for
+  `IAM_HOSTNAME` points to the new host,
+- the snapshot: with the `BACKUP_S3_*` settings of the old host, `list` shows
+  the off-site snapshots and `restore` downloads the one you name. Without an
+  off-site copy, put `<id>.tar.gz` and `<id>.manifest.json` into the sidecar's
+  `/data` first (`docker compose ... --profile backup up -d database-backup`,
+  then `docker compose ... cp <dir>/. database-backup:/data/`).
+
+```bash
+docker compose -f docker-compose.traefik.yml --profile backup run --rm database-backup list
+docker compose -f docker-compose.traefik.yml --profile backup run --rm database-backup restore <id>
+docker compose -f docker-compose.traefik.yml up -d
+docker compose -f docker-compose.traefik.yml --profile backup up -d database-backup
+```
+
+The `database-backup` commands start only PostgreSQL and the one-shot
+`prepare-machinekey`, which hands the `machinekey` and `tfstate` volumes to the
+sidecar's user (uid 1000) - **not Zitadel**. Do not start the stack before the
+restore: on an empty database Zitadel sets up a new instance with new keys. If
+that already happened, restore as on the same host (stop `zitadel` first); the
+restore replaces the new instance's database, keys and state.
+
+After `up -d`, the provisioner log ends with `no changes` or an additive apply
+(`docker compose -f docker-compose.traefik.yml logs provisioner`), and
+`scripts/validate-stack.py` (see [Operations](operations.md#validate-the-deployment))
+checks the restored instance.
+
+## How the database is restored
 
 The archive is `pg_dump --format=custom`. The source type `zitadel-postgres`
 (an engine plugin in `src/database-backup`) restores it in **one** transaction:
@@ -118,14 +178,15 @@ data.
 |-------|--------------|
 | Build | `zitadel`, `login`, `provisioner`, `directory-sync` and `database-backup` are built from the commit, with fresh base images |
 | Start | `docker-compose.development.yml` with the `backup` profile, a `.env` from `scripts/generate-env.py`, CI-sized PostgreSQL memory |
-| Seed | A human user created through the Zitadel API (id and username = the run's marker) and a row in the dedicated schema `backup_roundtrip` |
-| Back up | `create`, then `show` must list `zitadel` without errors or warnings, `verify` must report `OK` |
-| Delete | The user through the API, and the marker row |
-| Restore | `zitadel` is stopped, `restore <id> --force` runs, the stack is started again — the provisioner and the branding job run again against the restored database |
-| Check | The marker row is back, and Zitadel returns the user with its seeded email through the API |
+| Seed | A human user created through the Zitadel API (id and username = the run's marker), a row in the dedicated schema `backup_roundtrip`, and a marker file in the `machinekey` and `tfstate` volumes |
+| Back up | `create`, then `show` must list `zitadel`, `machinekey` and `tfstate` without errors or warnings, `verify` must report `OK` |
+| Delete | The user through the API, the marker row, both marker files and `iam-admin.pat`; `terraform.tfstate` is overwritten in place |
+| Restore | `zitadel` is stopped, `restore <id> --force` runs, the stack is started again — the provisioner and the branding job run again against the restored database and state |
+| Check | The marker row is back, Zitadel returns the user with its seeded email through the API, the marker files are back, `iam-admin.pat` has its old checksum and `terraform.tfstate` its old lineage |
 
-The scripts live in [`tests/backup-roundtrip/`](../tests/backup-roundtrip/). The
-check runs three times — before the backup (data present), after the deletion
+The scripts live in [`tests/backup-roundtrip/`](../tests/backup-roundtrip/); the
+volume checks run as the sidecar's own user, the one that writes the files back.
+The check runs three times — before the backup (data present), after the deletion
 (data absent) and after the restore (data present) — so a restore that writes
 nothing cannot pass.
 
@@ -148,5 +209,6 @@ Not covered by the gate:
 - **`docker-compose.traefik.yml` / `docker-compose.coolify.yml`** — their
   `database-backup` service is identical to the development one; the rest of
   those stacks is not started.
-- **A restore onto a new host** — the `machinekey` and `tfstate` volumes stay in
-  place during the test; the sidecar does not back them up.
+- **A restore onto a new host** — the test restores into the volumes of the
+  running stack. A new host starts from empty volumes and an empty database,
+  following the procedure above.

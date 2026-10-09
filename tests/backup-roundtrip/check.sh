@@ -3,12 +3,14 @@
 # CS-IAM backup round trip - check
 # =============================================================================
 # Exits 0 when the seeded data is in the state ROUNDTRIP_EXPECT names:
-#   present  the marker row in backup_roundtrip.marker, and Zitadel returns the
-#            marker user with its seeded email through the API
-#   absent   no marker row, and Zitadel answers NOT_FOUND for the user
-# Each item is checked on its own, so "absent" proves the mutation removed both
-# and "present" proves the restore brought both back - the API answer also
-# proves that Zitadel runs on the restored database.
+#   present  the marker row in backup_roundtrip.marker, Zitadel returns the
+#            marker user with its seeded email through the API, and the
+#            machinekey and tfstate volumes hold their seeded files
+#   absent   no marker row, Zitadel answers NOT_FOUND for the user, and the
+#            seeded files are gone from both volumes
+# Each item is checked on its own, so "absent" proves the mutation removed all
+# of them and "present" proves the restore brought all of them back - the API
+# answer also proves that Zitadel runs on the restored database.
 # =============================================================================
 set -euo pipefail
 # shellcheck source=tests/backup-roundtrip/common.sh
@@ -36,5 +38,8 @@ fi
 
 # -- Zitadel user, through the API -----------------------------------------
 zitadel_user "$ROUNDTRIP_EXPECT" || FAILED=1
+
+# -- machinekey and tfstate volumes ------------------------------------------
+backup_volumes "$ROUNDTRIP_EXPECT" || FAILED=1
 
 exit "$FAILED"

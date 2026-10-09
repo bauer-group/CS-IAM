@@ -11,6 +11,7 @@
 # 4. If the plan contains ANY destroy/replace → ABORT + alert (never run an
 #    unattended destroy; this protects resources made in the Zitadel UI that
 #    are not in the Terraform config). Otherwise apply the additive plan.
+# On exit, the local state on /tfstate is handed to uid 1000 (the backup user).
 # =============================================================================
 set -euo pipefail
 
@@ -21,6 +22,20 @@ WAIT_TIMEOUT="${ZITADEL_WAIT_TIMEOUT:-180}"
 
 log() { printf '%s [provision] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 fail() { log "ERROR: $*"; exit 1; }
+
+# ── Hand the local state to the backup user, however this run ends ──────────
+# The database-backup sidecar (BackupHelper, uid 1000) backs up the `tfstate`
+# volume and writes it back in place on a restore. tofu creates its files as
+# root, so they are handed to uid 1000 on every exit. No /tfstate (a remote
+# backend in terraform/backend.tf) is not an error.
+STATE_DIR="/tfstate"
+BACKUP_UID="1000"
+hand_state_to_backup_user() {
+  [ -d "${STATE_DIR}" ] || return 0
+  chown -R "${BACKUP_UID}:${BACKUP_UID}" "${STATE_DIR}" \
+    || log "WARNING: could not hand ${STATE_DIR} to uid ${BACKUP_UID} - a backup restore cannot write the state back"
+}
+trap hand_state_to_backup_user EXIT
 
 # ── Resolve the readiness URL (same host as the issuer) ──────────────────────
 scheme="https"

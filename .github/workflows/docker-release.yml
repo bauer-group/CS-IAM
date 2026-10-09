@@ -79,11 +79,13 @@ jobs:
   # Backup round trip (gates every release)
   # ============================================
   # Builds every image from this commit, starts the development stack with the
-  # backup profile, writes a marker user through the Zitadel API and a marker
-  # row, backs up the database, deletes both, restores the snapshot and checks
-  # that Zitadel has them back. Every release rebuilds the images FROM the
-  # newest Zitadel, login and BackupHelper bases - also the one the base image
-  # monitor dispatches - so this runs on every push, dispatch and relevant PR.
+  # backup profile, writes a marker user through the Zitadel API, a marker row
+  # and a marker file into the machinekey and tfstate volumes, backs them up,
+  # deletes them (plus the FirstInstance PAT, and damages the OpenTofu state),
+  # restores the snapshot and checks that all of it is back. Every release
+  # rebuilds the images FROM the newest Zitadel, login and BackupHelper bases -
+  # also the one the base image monitor dispatches - so this runs on every
+  # push, dispatch and relevant PR.
   # Docs-only pushes never reach it (paths-ignore).
   backup-roundtrip:
     name: 🧪 Backup Round Trip
@@ -115,8 +117,9 @@ jobs:
           {"service": "database-backup", "context": "src/database-backup"}
         ]
       backup-service: 'database-backup'
-      # The only source: the Zitadel database (component named after it).
-      require-components: 'zitadel'
+      # The Zitadel database (component named after it), the machine key and
+      # PATs, and the OpenTofu state - a restore onto a new host needs all three.
+      require-components: 'zitadel machinekey tfstate'
       # zitadel is the only client of the database.
       services-to-stop-before-restore: 'zitadel'
       seed-script: 'tests/backup-roundtrip/seed.sh'
