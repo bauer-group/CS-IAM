@@ -41,3 +41,7 @@ Local backend on the `tfstate` volume by default (`/tfstate/terraform.tfstate`).
 For teams, switch to an S3/MinIO backend — see `terraform/backend.tf`.
 State carries OIDC client secrets; the volume is private and `*.tfstate` is
 git-ignored.
+
+The entrypoint runs as root but hands `/tfstate` to uid 1000 whenever it exits:
+the `database-backup` sidecar (uid 1000) backs the state up and writes it back
+on a restore.

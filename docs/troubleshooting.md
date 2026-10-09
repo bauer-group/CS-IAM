@@ -14,8 +14,13 @@ PostgreSQL 18 needs **Zitadel ≥ v4.11.0**. Bump `ZITADEL_VERSION`.
 
 The FirstInstance key is written by `zitadel` during initial setup. Check
 `docker compose logs zitadel` for setup completion; ensure the `machinekey`
-volume is shared (rw on zitadel, ro on provision/sync). Increase
-`PROVISION_WAIT_TIMEOUT` on a slow first boot.
+volume is shared (rw on zitadel and database-backup, ro on provision/sync).
+Increase `PROVISIONER_WAIT_TIMEOUT` on a slow first boot.
+
+On a host restored from a backup, Zitadel does not write the key again: it
+comes from the snapshot's `machinekey` component. Snapshots taken before that
+component existed do not have it — see
+[Restore onto a new host](backup-and-restore.md#restore-onto-a-new-host-disaster-recovery).
 
 ## `provisioner` aborts on a destructive plan
 

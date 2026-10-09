@@ -30,3 +30,12 @@ zitadel_user() {
   docker compose exec -T -e ROUNDTRIP_MARKER="$ROUNDTRIP_MARKER" directory-sync \
     python - "$1" < "$ROUNDTRIP_SCRIPTS/zitadel-user.py"
 }
+
+# Runs volumes.py inside the backup sidecar, which mounts the machinekey and
+# tfstate volumes as the user that backs them up and restores them (uid 1000).
+# $1 = seed | mutate | present | absent
+backup_volumes() {
+  docker compose exec -T -e ROUNDTRIP_MARKER="$ROUNDTRIP_MARKER" \
+    "${ROUNDTRIP_BACKUP_SERVICE:-database-backup}" \
+    python - "$1" < "$ROUNDTRIP_SCRIPTS/volumes.py"
+}

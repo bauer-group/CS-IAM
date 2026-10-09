@@ -22,18 +22,22 @@ x-logging: &logging
 
 services:
 
-  # ── Prepare the shared machine-key volume ───────────────────────────────────
+  # ── Prepare the shared machine-key and state volumes ────────────────────────
   # Fresh named volumes are root:root; Zitadel runs as the non-root `zitadel`
   # user (uid 1000) and must write the FirstInstance machine key into
   # /data/machinekey. Own it to Zitadel, group-private (0750 — not
   # world-accessible); the root `provisioner` reads it, `directory-sync` runs
   # with gid 1000 (user: "1001:1000") to read it.
+  # The OpenTofu state volume goes to uid 1000 too, private (0700): the
+  # `database-backup` sidecar (BackupHelper, uid 1000) backs up both volumes and
+  # writes them back on a restore. The root `provisioner` is not affected.
   prepare-machinekey:
     image: ${ALPINE_IMAGE:-alpine}:${ALPINE_VERSION:-3.23}
     restart: "no"
-    command: ["sh", "-c", "chown 1000:1000 /data/machinekey && chmod 0750 /data/machinekey"]
+    command: ["sh", "-c", "chown 1000:1000 /data/machinekey && chmod 0750 /data/machinekey && chown -R 1000:1000 /tfstate && chmod 0700 /tfstate"]
     volumes:
       - machinekey:/data/machinekey
+      - tfstate:/tfstate
 
   # ── PostgreSQL 18 ───────────────────────────────────────────────────────────
   database-server:
@@ -279,7 +283,12 @@ services:
             "sources": [
               {"type": "zitadel-postgres", "host": "database-server", "port": 5432,
                "database": "${ZITADEL_DB_NAME:-zitadel}", "user": "${ZITADEL_DB_USER:-zitadel}",
-               "password": "$${DB_PASSWORD}", "ssl_mode": "disable", "dump_format": "custom"}
+               "password": "$${DB_PASSWORD}", "ssl_mode": "disable", "dump_format": "custom"},
+              {"type": "filesystem", "name": "machinekey", "path": "/machinekey",
+               "enabled": ${BACKUP_INCLUDE_MACHINEKEY:-true}},
+              {"type": "filesystem", "name": "tfstate", "path": "/tfstate",
+               "exclude": [".terraform.tfstate.lock.info"],
+               "enabled": ${BACKUP_INCLUDE_TFSTATE:-true}}
             ],
             "destinations": [
               {"type": "local"},
@@ -302,9 +311,18 @@ services:
         }
     volumes:
       - backup-data:/data
+      # A restore onto a new host needs more than the database: the machine key
+      # and PATs that Zitadel writes only once, at the first start, and the
+      # OpenTofu state. rw (not :ro) so `restore` can write them back.
+      - machinekey:/machinekey
+      - tfstate:/tfstate
     depends_on:
       database-server:
         condition: service_healthy
+      # Hands both volumes to uid 1000 first - also on a new host, where the
+      # restore runs before Zitadel or the provisioner ever started.
+      prepare-machinekey:
+        condition: service_completed_successfully
 
 
 ### Volumes ###
