@@ -515,7 +515,7 @@ services:
           "jobs": [{
             "name": "main",
             "sources": [
-              {"type": "zitadel-postgres", "host": "database-server", "port": 5432,
+              {"type": "postgres", "host": "database-server", "port": 5432,
                "database": "${ZITADEL_DB_NAME:-zitadel}", "user": "${ZITADEL_DB_USER:-zitadel}",
                "password": "$${DB_PASSWORD}", "ssl_mode": "disable", "dump_format": "custom"},
               {"type": "filesystem", "name": "machinekey", "path": "/machinekey",

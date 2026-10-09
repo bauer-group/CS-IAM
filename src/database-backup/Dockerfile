@@ -7,27 +7,28 @@
 # the postgres 18 client (matching the Zitadel server), a non-root user, tini
 # and a functional healthcheck. See docs/migration.md in that repo.
 #
-# One plugin on top (iam_backup/, an engine Source plugin): the
-# `zitadel-postgres` source — the engine's postgres source with a restore that
-# copes with Zitadel's partitioned cache tables, which the engine's
-# `pg_restore --clean` cannot restore over. See iam_backup/zitadel_postgres.py.
+# The compose files back up the Zitadel database with the engine's `postgres`
+# source, whose restore copes with Zitadel's partitioned cache tables since
+# BackupHelper 1.9.0. Up to 0.17.31 a CS-IAM plugin, `zitadel-postgres`, did
+# that; its name stays registered as an alias of the engine's postgres source
+# (pyproject.toml, no code of its own) for compose files that still use it.
 #
 # The machinekey and tfstate volumes are backed up with the engine's own
 # `filesystem` source; the compose files configure all three sources.
 #
-# Multi-stage with a pytest gate: if the plugin tests fail against this engine
-# version, the image cannot be assembled (the test stage is a hard dependency).
+# Multi-stage with a pytest gate: if the tests fail against this engine version
+# (no partitioned-table restore, alias missing), the image cannot be assembled
+# (the test stage is a hard dependency).
 # =============================================================================
 FROM ghcr.io/bauer-group/cs-backuphelper/backuphelper:latest AS engine
 
 # ---------------------------------------------------------------------------
-# Test stage — plugin tests against the engine this image is built on
+# Test stage — the engine this image is built on, with the alias installed
 # ---------------------------------------------------------------------------
 FROM engine AS test
 USER root
 WORKDIR /plugin
 COPY pyproject.toml ./
-COPY iam_backup/ ./iam_backup/
 COPY tests/ ./tests/
 RUN pip install --no-cache-dir ".[test]" \
     && pytest -q -p no:cacheprovider tests/
@@ -54,11 +55,10 @@ LABEL org.opencontainers.image.documentation="https://github.com/bauer-group/CS-
 LABEL org.opencontainers.image.version="0.17.31"
 
 # ---------------------------------------------------------------------------
-# Plugin (registered through its entry point, so it must be pip-installed)
+# Alias zitadel-postgres (an entry point, so it must be pip-installed)
 # ---------------------------------------------------------------------------
 USER root
 COPY pyproject.toml /opt/cs-iam-backup/
-COPY iam_backup/ /opt/cs-iam-backup/iam_backup/
 RUN pip install --no-cache-dir /opt/cs-iam-backup \
     && rm -rf /opt/cs-iam-backup
 # Hard dependency on the test stage passing (the gate).
