@@ -13,9 +13,12 @@ curl https://id.example.com/.well-known/openid-configuration
 `database-server` has a `pg_isready` healthcheck and `directory-sync` a process
 healthcheck. `database-backup` has the BackupHelper engine's functional one: it
 turns unhealthy when the last backup failed or no backup ran for 26 hours (see
-[Backup & Restore](backup-and-restore.md#health)). `zitadel` itself has no
-in-container healthcheck (distroless) — readiness is verified via the discovery
-endpoint and polled by dependents.
+[Backup & Restore](backup-and-restore.md#health)). `zitadel` runs the probe
+Zitadel ships, `/app/zitadel ready` (it asks `/debug/ready`; the image is
+distroless, so there is no shell). Traefik routes to Zitadel only while it is
+healthy: during the first start (init + setup) and while it is unhealthy,
+`IAM_HOSTNAME` answers 404. The provisioner and the sync/branding jobs still
+poll readiness + the machine-key file themselves.
 
 ## Validate the deployment
 
