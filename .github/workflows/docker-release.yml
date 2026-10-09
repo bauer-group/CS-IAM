@@ -129,12 +129,14 @@ jobs:
     secrets: inherit
 
   # The same round trip with a snapshot of the zitadel-postgres source, which
-  # 0.17.29 to 0.17.31 used for the database. The snapshot comes from the
+  # 0.17.29 to 0.17.31 used for the database. The sidecar starts as the
   # database-backup image of 0.17.29 - the first release with that plugin, on
-  # BackupHelper 1.7.6 - with the old source type (legacy-snapshot.yml). Then
-  # upgrade.sh switches the sidecar to the image built from this commit and the
-  # compose files' source type, as an operator's upgrade does, and the restore
-  # runs there: snapshots taken before the upgrade must stay restorable.
+  # BackupHelper 1.7.6 - with the old source type (legacy-snapshot.yml) and
+  # takes the snapshot; upgrade.sh checks that it is of the old kind. Then the
+  # module upgrades the sidecar to the image built from this commit and the
+  # stack to the compose file's source type, as an operator's upgrade does,
+  # and the restore runs there: snapshots taken before the upgrade must stay
+  # restorable. The other images are this commit's from the start.
   backup-roundtrip-legacy:
     name: 🧪 Backup Round Trip (legacy snapshot)
     needs: [validate-compose, validate-scripts, validate-terraform]
@@ -143,31 +145,34 @@ jobs:
       packages: read
     uses: bauer-group/automation-templates/.github/workflows/modules-backup-roundtrip-test.yml@main
     with:
-      compose-files: '["docker-compose.development.yml", "tests/backup-roundtrip/legacy-snapshot.yml"]'
+      compose-file: 'docker-compose.development.yml'
       profiles: 'backup'
       prepare-script: 'tests/backup-roundtrip/prepare.sh'
-      # Pinned on purpose: the release whose snapshots have to stay restorable.
+      # ROUNDTRIP_SOURCE_TYPE is read by legacy-snapshot.yml only, so only by
+      # the 0.17.29 sidecar.
       env-overrides: |
         STACK_NAME=iam_roundtrip
         PG_SHARED_BUFFERS=256MB
         PG_EFFECTIVE_CACHE_SIZE=1GB
         PG_MAINTENANCE_WORK_MEM=64MB
-        DATABASE_BACKUP_VERSION=0.17.29
         ROUNDTRIP_SOURCE_TYPE=zitadel-postgres
-      # Not database-backup: it starts as the release above, and upgrade.sh
-      # builds this commit's image.
       build-images: |
         [
           {"service": "zitadel", "context": ".", "dockerfile": "src/zitadel/Dockerfile"},
           {"service": "login", "context": "src/login"},
           {"service": "provisioner", "context": ".", "dockerfile": "src/provisioner/Dockerfile"},
-          {"service": "directory-sync", "context": "src/directory-sync"}
+          {"service": "directory-sync", "context": "src/directory-sync"},
+          {"service": "database-backup", "context": "src/database-backup"}
         ]
+      # Pinned on purpose: the release whose snapshots have to stay restorable.
+      upgrade-from: '{"database-backup": "0.17.29"}'
+      upgrade-from-compose-files: '["docker-compose.development.yml", "tests/backup-roundtrip/legacy-snapshot.yml"]'
+      upgrade-script: 'tests/backup-roundtrip/upgrade.sh'
       backup-service: 'database-backup'
       require-components: 'zitadel machinekey tfstate'
       services-to-stop-before-restore: 'zitadel'
       seed-script: 'tests/backup-roundtrip/seed.sh'
-      mutate-script: 'tests/backup-roundtrip/upgrade.sh'
+      mutate-script: 'tests/backup-roundtrip/mutate.sh'
       check-script: 'tests/backup-roundtrip/check.sh'
       artifact-name: 'backup-roundtrip-legacy-diagnostics'
       timeout-minutes: 30
