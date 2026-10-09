@@ -112,30 +112,41 @@ def main() -> int:
     check("org: BAUER GROUP", "BAUER GROUP" in orgs, list(orgs))
     check("org: External Users", "External Users" in orgs, list(orgs))
 
-    # ── 3. Projects (internal org context) ────────────────────────────────────
-    r = post("/management/v1/projects/_search")
-    projs = {p["name"]: p["id"] for p in r.json().get("result", [])} if r.status_code == 200 else {}
-    for pn in ["BAUER GROUP", "External Apps", "pDemo"]:
-        check(f"project: {pn}", pn in projs, list(projs))
+    # ── 3. Projects, each in the org Terraform creates it in ──────────────────
+    # The machine user belongs to the FirstInstance org (System Admins); the
+    # Management API answers for the org named in x-zitadel-orgid.
+    project_orgs = {"BAUER GROUP": "BAUER GROUP", "External Apps": "BAUER GROUP",
+                    "pDemo": "External Users"}
+    projs: dict[str, tuple[str, str]] = {}  # project name -> (project id, org id)
+    for org_name in sorted(set(project_orgs.values())):
+        if org_name not in orgs:
+            continue
+        r = post("/management/v1/projects/_search", org=orgs[org_name])
+        for p in (r.json().get("result", []) if r.status_code == 200 else []):
+            projs[p["name"]] = (p["id"], orgs[org_name])
+    for pn, on in project_orgs.items():
+        check(f"project: {pn} (org {on})", projs.get(pn, ("", ""))[1] == orgs.get(on, "-"), sorted(projs))
 
     # ── 4. Role catalogs ──────────────────────────────────────────────────────
-    def roles_of(pid):
-        rr = post(f"/management/v1/projects/{pid}/roles/_search")
+    def roles_of(name):
+        pid, oid = projs[name]
+        rr = post(f"/management/v1/projects/{pid}/roles/_search", org=oid)
         return {x["key"] for x in rr.json().get("result", [])} if rr.status_code == 200 else set()
 
     if "BAUER GROUP" in projs:
-        check("roles[BAUER GROUP] = user,admin", {"user", "admin"} <= roles_of(projs["BAUER GROUP"]))
+        check("roles[BAUER GROUP] = user,admin", {"user", "admin"} <= roles_of("BAUER GROUP"))
     if "pDemo" in projs:
-        rk = roles_of(projs["pDemo"])
+        rk = roles_of("pDemo")
         check("roles[pDemo] = rUser,rManager,rAdministrator", {"rUser", "rManager", "rAdministrator"} <= rk, sorted(rk))
 
     # ── 5. pDemo project settings + the Demo app ──────────────────────────────
     if "pDemo" in projs:
-        pj = get(f"/management/v1/projects/{projs['pDemo']}").json().get("project", {})
+        pid, oid = projs["pDemo"]
+        pj = get(f"/management/v1/projects/{pid}", org=oid).json().get("project", {})
         check("pDemo: hasProjectCheck", pj.get("hasProjectCheck"), pj.get("hasProjectCheck"))
         check("pDemo: projectRoleCheck", pj.get("projectRoleCheck"))
         check("pDemo: projectRoleAssertion", pj.get("projectRoleAssertion"))
-        apps = post(f"/management/v1/projects/{projs['pDemo']}/apps/_search").json().get("result", [])
+        apps = post(f"/management/v1/projects/{pid}/apps/_search", org=oid).json().get("result", [])
         demo = next((a for a in apps if a.get("name") == "Demo"), None)
         check("pDemo: app 'Demo' exists", demo is not None, [a.get("name") for a in apps])
         if demo:
@@ -145,12 +156,16 @@ def main() -> int:
             check("Demo: redirect localhost:8888", any("localhost:8888" in u for u in oc.get("redirectUris", [])), oc.get("redirectUris"))
 
     # ── 6. Demo user + grant + roles (the heart of it) ────────────────────────
-    ur = post("/v2/users", {"queries": [{"emailQuery": {"emailAddress": "demo@example.com", "method": "TEXT_QUERY_METHOD_EQUALS"}}]})
+    ur = post("/v2/users", {"queries": [{"emailQuery": {"emailAddress": "demo@external.example.com", "method": "TEXT_QUERY_METHOD_EQUALS"}}]})
     result = ur.json().get("result") or []
     uid = result[0].get("userId") if result else None
     check("demo user exists", bool(uid), uid)
     if uid:
-        gr = post("/management/v1/users/grants/_search", {"queries": [{"userIdQuery": {"userId": uid}}]}).json().get("result", [])
+        # Grants live in the org of the granted project: search every org.
+        gr = []
+        for oid in orgs.values():
+            gr += post("/management/v1/users/grants/_search", {"queries": [{"userIdQuery": {"userId": uid}}]},
+                       org=oid).json().get("result", [])
         pdemo = [g for g in gr if g.get("projectName") == "pDemo"]
         other = [g for g in gr if g.get("projectName") != "pDemo"]
         roles = set()
