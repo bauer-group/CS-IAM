@@ -1,0 +1,116 @@
+# =============================================================================
+# CS-IAM backup round trip - a stand-in for the host's proxy
+# =============================================================================
+# Merged over docker-compose.traefik.yml or docker-compose.coolify.yml by the
+# job "Backup Round Trip (upgrade, S3, ...)" in .github/workflows/docker-release.yml.
+#
+# Those files expect a Traefik that the host runs: the provisioner,
+# directory-sync and zitadel-brand reach Zitadel at its public issuer
+# https://${IAM_HOSTNAME}, through that proxy, so the JWT-profile audience
+# matches. A runner has no such proxy, so this file adds one:
+#   roundtrip-cert   a self-signed certificate for ${IAM_HOSTNAME}
+#   roundtrip-proxy  Traefik with that certificate as its default, on :443
+#                    under the entrypoint name the variant's labels use
+#                    (ROUNDTRIP_PROXY_ENTRYPOINT: web-secure for Traefik,
+#                    https for Coolify). It routes by the variant's own labels
+#                    and answers to ${IAM_HOSTNAME} on the networks the
+#                    automation containers use.
+# The three automation containers trust the certificate the way the
+# development file's do (SSL_CERT_FILE, CURL_CA_BUNDLE) and start once the
+# stand-in serves. Nothing else of the variant changes. Let's Encrypt (the
+# Traefik file's certresolver) is not exercised: the routers fall back to the
+# default certificate.
+# =============================================================================
+services:
+  roundtrip-cert:
+    image: ${ALPINE_IMAGE:-alpine}:${ALPINE_VERSION:-3.23}
+    restart: "no"
+    environment:
+      IAM_HOSTNAME: ${IAM_HOSTNAME:?set by the round trip}
+    command:
+      - sh
+      - -c
+      - |
+        test -f /certs/local.crt && exit 0
+        apk add --no-cache openssl > /dev/null
+        openssl req -x509 -newkey rsa:2048 -nodes -days 2 \
+          -keyout /certs/local.key -out /certs/local.crt \
+          -subj "/CN=$$IAM_HOSTNAME" -addext "subjectAltName=DNS:$$IAM_HOSTNAME"
+        chmod 0644 /certs/local.crt /certs/local.key
+    volumes:
+      - roundtrip-certs:/certs
+
+  roundtrip-proxy:
+    image: ${TRAEFIK_IMAGE:-traefik}:${TRAEFIK_VERSION:-v3.6.8}
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.filename=/etc/traefik/dynamic/tls.yml
+      - --entrypoints.${ROUNDTRIP_PROXY_ENTRYPOINT:?set by the round trip}.address=:443
+      - --entrypoints.ping.address=:8081
+      - --ping=true
+      - --ping.entrypoint=ping
+      - --log.level=WARN
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - roundtrip-certs:/certs:ro
+      # The development proxy's dynamic config: /certs/local.{crt,key} as the
+      # default certificate.
+      - ./config/traefik/tls.yml:/etc/traefik/dynamic/tls.yml:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    depends_on:
+      roundtrip-cert:
+        condition: service_completed_successfully
+    networks:
+      # Coolify's services are on the project's default network, the Traefik
+      # file's automation containers and Zitadel on the proxy network.
+      default:
+        aliases:
+          - ${IAM_HOSTNAME:?set by the round trip}
+      proxy:
+        aliases:
+          - ${IAM_HOSTNAME:?set by the round trip}
+
+  provisioner:
+    environment:
+      SSL_CERT_FILE: /certs/local.crt
+      CURL_CA_BUNDLE: /certs/local.crt
+    volumes:
+      - roundtrip-certs:/certs:ro
+    depends_on:
+      roundtrip-proxy:
+        condition: service_healthy
+
+  directory-sync:
+    environment:
+      SSL_CERT_FILE: /certs/local.crt
+    volumes:
+      - roundtrip-certs:/certs:ro
+    depends_on:
+      roundtrip-proxy:
+        condition: service_healthy
+
+  zitadel-brand:
+    environment:
+      SSL_CERT_FILE: /certs/local.crt
+    volumes:
+      - roundtrip-certs:/certs:ro
+    depends_on:
+      roundtrip-proxy:
+        condition: service_healthy
+
+volumes:
+  roundtrip-certs:
+
+networks:
+  # The Traefik file declares it already; for Coolify it only carries the
+  # stand-in. external-networks: 'auto' creates it on the runner.
+  proxy:
+    name: ${PROXY_NETWORK:-EDGEPROXY}
+    external: true

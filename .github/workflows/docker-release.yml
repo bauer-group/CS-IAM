@@ -178,19 +178,97 @@ jobs:
       timeout-minutes: 30
     secrets: inherit
 
+  # The way production gets there, once per compose variant: the latest
+  # release (all five images) starts, seeds and backs up - also to an S3
+  # bucket (a throwaway MinIO). Then the stack is upgraded to the images built
+  # from this commit like an operator does (images switched, compose up -d);
+  # the data must survive it and the new sidecar must be healthy with the old
+  # snapshot. The data is deleted, the sidecar's data volume is wiped like on
+  # a new host, and the new sidecar restores the old snapshot from S3.
+  # The Traefik and Coolify files reach Zitadel through the host's proxy at
+  # https://IAM_HOSTNAME; proxy-standin.yml adds a Traefik with a self-signed
+  # certificate for that, under the entrypoint name the variant's labels use.
+  backup-roundtrip-upgrade:
+    name: 🧪 Backup Round Trip (upgrade, S3, ${{ matrix.variant }})
+    needs: [validate-compose, validate-scripts, validate-terraform]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: development
+            compose-files: '["docker-compose.development.yml"]'
+            proxy-entrypoint: ''
+          - variant: traefik
+            compose-files: '["docker-compose.traefik.yml", "tests/backup-roundtrip/proxy-standin.yml"]'
+            proxy-entrypoint: 'web-secure'
+          - variant: coolify
+            compose-files: '["docker-compose.coolify.yml", "tests/backup-roundtrip/proxy-standin.yml"]'
+            proxy-entrypoint: 'https'
+    permissions:
+      contents: read
+      packages: read
+    uses: bauer-group/automation-templates/.github/workflows/modules-backup-roundtrip-test.yml@main
+    with:
+      compose-files: ${{ matrix.compose-files }}
+      profiles: 'backup'
+      prepare-script: 'tests/backup-roundtrip/prepare.sh'
+      # IAM_HOSTNAME and ROUNDTRIP_PROXY_ENTRYPOINT are read by the Traefik
+      # and Coolify files and proxy-standin.yml; the development file uses
+      # IAM_DEV_HOSTNAME and its own proxy.
+      env-overrides: |
+        STACK_NAME=iam_roundtrip
+        PG_SHARED_BUFFERS=256MB
+        PG_EFFECTIVE_CACHE_SIZE=1GB
+        PG_MAINTENANCE_WORK_MEM=64MB
+        IAM_HOSTNAME=iam.example.test
+        ROUNDTRIP_PROXY_ENTRYPOINT=${{ matrix.proxy-entrypoint }}
+      build-images: |
+        [
+          {"service": "zitadel", "context": ".", "dockerfile": "src/zitadel/Dockerfile"},
+          {"service": "login", "context": "src/login"},
+          {"service": "provisioner", "context": ".", "dockerfile": "src/provisioner/Dockerfile"},
+          {"service": "directory-sync", "context": "src/directory-sync"},
+          {"service": "database-backup", "context": "src/database-backup"}
+        ]
+      backup-service: 'database-backup'
+      require-components: 'zitadel machinekey tfstate'
+      services-to-stop-before-restore: 'zitadel'
+      seed-script: 'tests/backup-roundtrip/seed.sh'
+      mutate-script: 'tests/backup-roundtrip/mutate.sh'
+      check-script: 'tests/backup-roundtrip/check.sh'
+      # All five images start as the latest release (vX.Y.Z -> image tag
+      # X.Y.Z) and are upgraded to this commit's builds.
+      upgrade-from: 'latest-release'
+      # setting VARIABLE: the .env variables the compose files build the S3
+      # destination from.
+      s3-destination: true
+      s3-env: |
+        endpoint   BACKUP_S3_ENDPOINT
+        bucket     BACKUP_S3_BUCKET
+        access-key BACKUP_S3_ACCESS_KEY
+        secret-key BACKUP_S3_SECRET_KEY
+      # PROXY_NETWORK of the Traefik file and proxy-standin.yml; the
+      # development file declares none.
+      external-networks: 'auto'
+      # Two boots of the stack (previous release, then the upgrade).
+      timeout-minutes: 45
+      artifact-name: 'backup-roundtrip-upgrade-${{ matrix.variant }}-diagnostics'
+    secrets: inherit
+
   # ============================================
   # Release (only on main push / dispatch)
   # ============================================
   release:
     name: 📦 Create Semantic Release
-    needs: [validate-compose, validate-scripts, validate-terraform, backup-roundtrip, backup-roundtrip-legacy]
+    needs: [validate-compose, validate-scripts, validate-terraform, backup-roundtrip, backup-roundtrip-legacy, backup-roundtrip-upgrade]
     if: |
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       needs.validate-compose.result == 'success' &&
       needs.validate-scripts.result == 'success' &&
       needs.validate-terraform.result == 'success' &&
       needs.backup-roundtrip.result == 'success' &&
-      needs.backup-roundtrip-legacy.result == 'success'
+      needs.backup-roundtrip-legacy.result == 'success' &&
+      needs.backup-roundtrip-upgrade.result == 'success'
     uses: bauer-group/automation-templates/.github/workflows/modules-semantic-release.yml@main
     with:
       target-branch: 'main'
