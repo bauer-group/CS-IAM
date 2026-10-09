@@ -113,16 +113,33 @@ checks the restored instance.
 
 ## How the database is restored
 
-The archive is `pg_dump --format=custom`. The source type `zitadel-postgres`
-(an engine plugin in `src/database-backup`) restores it in **one** transaction:
-it drops the live partitioned tables the dump recreates (Zitadel keeps its
-caches in such tables), then runs the dump's `pg_restore --clean --if-exists`
-script. The engine's plain `pg_restore --clean` cannot restore over partitioned
-tables — see
-[src/database-backup/README.md](../src/database-backup/README.md). Any error
-rolls the whole restore back. The Zitadel **masterkey must be unchanged** (it
-decrypts secrets at rest) — keep `ZITADEL_MASTERKEY` backed up separately from
-the DB dump.
+The archive is `pg_dump --format=custom`, written by the BackupHelper engine's
+`postgres` source. Zitadel keeps its caches in partitioned tables, and a plain
+`pg_restore --clean` cannot restore over them. Since BackupHelper 1.9.0 the
+source therefore restores in **one** transaction: it drops the live partitioned
+tables the dump recreates, then runs the dump's `pg_restore --clean --if-exists`
+script. Any error rolls the whole restore back. On this path the sidecar first
+writes the database as uncompressed SQL to its `/tmp`, which needs room for the
+extracted snapshot plus the uncompressed database - see the engine's
+[sources documentation](https://github.com/bauer-group/CS-BackupHelper/blob/main/docs/sources.md#postgres).
+The Zitadel **masterkey must be unchanged** (it decrypts secrets at rest) — keep
+`ZITADEL_MASTERKEY` backed up separately from the DB dump.
+
+### Snapshots of the `zitadel-postgres` source (0.17.29 to 0.17.31)
+
+Before the engine could restore over partitioned tables, CS-IAM 0.17.29 to
+0.17.31 backed up the database with `zitadel-postgres`, a source plugin of the
+`database-backup` image with the same restore. Their snapshots record the
+database component's kind as `zitadel-postgres` (`show <id>`), newer ones as
+`postgres`. Both restore with the current compose files: the engine picks the
+source for a component by its name (`zitadel`), not by its kind.
+
+`zitadel-postgres` remains a valid source type of the image, as an alias of the
+engine's `postgres` source, so a compose file that still names it keeps backing
+up and restoring. Update the compose file and the image together all the same:
+a compose file with `postgres` and a `database-backup` image older than 0.17.31
+(BackupHelper 1.7) backs up, but its restore rolls back
+(`cannot drop inherited constraint`).
 
 ## Alerts
 
