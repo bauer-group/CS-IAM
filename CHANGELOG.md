@@ -4,6 +4,19 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.17.32](https://github.com/bauer-group/CS-IAM/compare/v0.17.31...v0.17.32) (2026-10-09)
+
+### 🐛 Bug Fixes
+
+* **backup:** switched the Zitadel database back to the postgres source ([5ac2533](https://github.com/bauer-group/CS-IAM/commit/5ac25337330d086028277f57f4a27600ee1da570))
+
+### 🔧 Maintenance
+
+* update Dockerfile version to 0.17.31 ([a159b37](https://github.com/bauer-group/CS-IAM/commit/a159b37329d079b72751fcca94bdfcafee21221d))
+* update Dockerfile version to 0.17.31 ([e0ec289](https://github.com/bauer-group/CS-IAM/commit/e0ec289d242ac9bd98835902b0a7dcb16ab17f5e))
+* update Dockerfile version to 0.17.31 ([42e9ef6](https://github.com/bauer-group/CS-IAM/commit/42e9ef6a042a526eeeab0ad87f1c6be0f7057f75))
+* update Dockerfile version to 0.17.31 ([542efd7](https://github.com/bauer-group/CS-IAM/commit/542efd7832a9fdb3c19f6ebc6b8856dff710e316))
+
 ## [0.17.31](https://github.com/bauer-group/CS-IAM/compare/v0.17.30...v0.17.31) (2026-10-09)
 
 ### 🐛 Bug Fixes
