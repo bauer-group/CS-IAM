@@ -184,14 +184,16 @@ until the next one. The full rules are in the BackupHelper
 
 ## Release gate: backup round trip in CI
 
-Every release is gated on a real backup and restore of this stack. The job
-`🧪 Backup Round Trip` in [docker-release.yml](../.github/workflows/docker-release.yml)
-calls the reusable
+Every release is gated on real backups and restores of this stack. Three jobs
+in [docker-release.yml](../.github/workflows/docker-release.yml) call the
+reusable
 [`modules-backup-roundtrip-test.yml`](https://github.com/bauer-group/automation-templates/blob/main/docs/workflows/modules-backup-roundtrip-test.md)
-and runs before the release job, which needs it to pass. It also runs when the
-base-image monitor dispatches a release after a new Zitadel, login, PostgreSQL or
-BackupHelper image, so a base-image update ships only after it restored Zitadel
-data.
+and run before the release job, which needs all of them to pass. They also run
+when the base-image monitor dispatches a release after a new Zitadel, login,
+PostgreSQL or BackupHelper image, so a base-image update ships only after it
+restored Zitadel data.
+
+The first job, `🧪 Backup Round Trip`, is a fresh installation:
 
 | Phase | What happens |
 |-------|--------------|
@@ -209,45 +211,82 @@ The check runs three times — before the backup (data present), after the delet
 (data absent) and after the restore (data present) — so a restore that writes
 nothing cannot pass.
 
-A second job, `🧪 Backup Round Trip (legacy snapshot)`, gates the release as
-well and restores a snapshot of the old `zitadel-postgres` source with the
-current image and configuration. It runs the same phases with two differences:
+The second job, `🧪 Backup Round Trip (legacy snapshot)`, restores a snapshot
+of the old `zitadel-postgres` source with the current image and configuration.
+It runs the same phases with an upgrade between the backup and the deletion:
 
-- **Build / Back up:** `database-backup` is not built. It starts as the image
-  of 0.17.29 - the first release with the plugin, on BackupHelper 1.7.6 - with
-  the source type `zitadel-postgres`
+- **Back up:** `database-backup` starts as the image of 0.17.29 - the first
+  release with the plugin, on BackupHelper 1.7.6 - with the source type
+  `zitadel-postgres`
   ([`legacy-snapshot.yml`](../tests/backup-roundtrip/legacy-snapshot.yml)), so
-  `create` writes a snapshot of that release.
-- **Delete:** first [`upgrade.sh`](../tests/backup-roundtrip/upgrade.sh)
-  upgrades the sidecar the way an operator does: the image built from the
-  commit and the source type of the compose files go into the `.env`, then
-  `up -d`. It fails unless the snapshot's database component is of kind
-  `zitadel-postgres` and the recreated sidecar runs the new image with the
-  compose files' source type. The restore runs in the upgraded sidecar.
+  `create` writes a snapshot of that release. The other four images are the
+  commit's builds from the start.
+- **Upgrade:** [`upgrade.sh`](../tests/backup-roundtrip/upgrade.sh) fails unless
+  the snapshot's database component is of kind `zitadel-postgres`. Then the
+  module upgrades the sidecar the way an operator does: the image built from the
+  commit, `docker-compose.development.yml` without `legacy-snapshot.yml` (the
+  source type the compose files ship), `up -d`. It fails unless the recreated
+  sidecar runs the build of the commit. The data must still be there and the
+  new sidecar's healthcheck must pass.
+- **Restore:** the upgraded sidecar restores the old snapshot.
 
-A run takes about two minutes on a GitHub-hosted runner: building the five
-images, the first start with Zitadel's setup and the provisioning, the backup,
-the restore with a second provisioning run, and the checks through the Zitadel
-API. The two jobs run in parallel.
+The third job, `🧪 Backup Round Trip (upgrade, S3, <variant>)`, is the way
+production gets to a release, once per compose file operators run:
+`development`, `traefik` and `coolify`.
+
+- **Start:** all five images start as the latest release (`vX.Y.Z` → image tag
+  `X.Y.Z`). The snapshot also goes to an S3 bucket, a throwaway MinIO the module
+  starts, through the `BACKUP_S3_*` settings; the archive must arrive there with
+  its local size.
+- **Upgrade:** the stack switches to the images built from the commit,
+  `up -d` recreates every container whose image changed — the provisioner and
+  the branding job run again. The data must still be there, and the new
+  sidecar must be healthy with the previous release's snapshot and run records.
+- **New host:** after the deletion the sidecar's container is removed and its
+  data volume emptied; the new sidecar must list the snapshot as off-site only.
+- **Restore:** the new sidecar downloads the old snapshot from S3 and restores
+  it; afterwards it is local again and passes `verify`.
+
+The Traefik and Coolify files reach Zitadel through the host's proxy at
+`https://${IAM_HOSTNAME}`, which a runner does not have.
+[`proxy-standin.yml`](../tests/backup-roundtrip/proxy-standin.yml) adds a
+Traefik with a self-signed certificate for `IAM_HOSTNAME` that routes by the
+variant's own labels; the provisioner, `directory-sync` and the branding job
+trust that certificate, as in development. The proxy network the variant
+declares external is created for the run.
+
+A run takes a few minutes on a GitHub-hosted runner: building the five images,
+the first start with Zitadel's setup and the provisioning (twice in the
+upgrade jobs), the backup, the restore with another provisioning run, and the
+checks through the Zitadel API. All jobs and legs run in parallel.
 
 The round trip starts on pushes to `main` (except pushes that only change
 documentation or `.github/`), on every `workflow_dispatch`, and on pull requests
 that touch `src/`, `terraform/`, `config/`, a compose file, `.env.example`,
 `scripts/generate-env.py`, the round-trip scripts or the release workflow. When
-it fails, the run's summary names the failed phase, and the
-`backup-roundtrip-diagnostics` artifact (`backup-roundtrip-legacy-diagnostics`
-for the second job) holds every service's log, `docker compose ps`, the
-snapshot list and the manifest.
+it fails, the run's summary names the failed phase, and the diagnostics
+artifact of the job - `backup-roundtrip-diagnostics`,
+`backup-roundtrip-legacy-diagnostics` or
+`backup-roundtrip-upgrade-<variant>-diagnostics` - holds every service's log,
+`docker compose ps`, the snapshot list and the manifest.
+
+Right after a release, its image jobs push the version tags a minute or two
+after the GitHub release exists. An upgrade job that starts in that window, or
+after an image job of the latest release failed, fails at *Pull previous
+release*: re-run it once the images are published.
 
 Not covered by the gate:
 
-- **Off-site S3** — the bucket is empty in CI, so the `s3` destination is skipped.
-- **`docker-compose.traefik.yml` / `docker-compose.coolify.yml`** — their
-  `database-backup` service is identical to the development one; the rest of
-  those stacks is not started.
-- **A restore onto a new host** — the test restores into the volumes of the
-  running stack. A new host starts from empty volumes and an empty database,
-  following the procedure above.
+- **Real S3 providers** — the off-site copy is tested against MinIO over plain
+  HTTP; AWS addressing, R2 or B2 specifics and TLS are not.
+- **The real proxy** — the stand-in Traefik routes by the variants' labels, but
+  Let's Encrypt (the Traefik file's `certresolver`), Coolify's own proxy
+  configuration and the HTTP to HTTPS redirect are not exercised.
+- **A completely new host** — the upgrade jobs restore with an emptied backup
+  volume, but into the running stack's database and volumes. A new host starts
+  from empty volumes and an empty database, following the procedure above.
+- **Upgrades across several releases** — the upgrade jobs start from the latest
+  release only.
 - **Snapshots of 0.17.30 and 0.17.31** — the legacy job restores one of 0.17.29.
   0.17.30 has the same plugin on the same engine, 0.17.31 the same plugin on
   BackupHelper 1.10.0, the engine that restores.
