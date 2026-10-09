@@ -72,7 +72,9 @@ bind the domain to the `zitadel` service (target port 8080, HTTP2/h2c enabled).
 `database-server` (healthy) → `zitadel` (writes the machine key, runs FirstInstance)
 → `provisioner` (OpenTofu applies IdPs/projects/apps) → `directory-sync`.
 The provision + sync containers poll Zitadel readiness + the machine-key file
-themselves (Zitadel has no in-container healthcheck — distroless image).
+themselves. `zitadel` reports health through its own `zitadel ready` probe, and
+Traefik routes to it only once it is healthy — `IAM_HOSTNAME` answers 404 until
+the first start (init + setup) is done.
 
 ## 4. First checks
 
