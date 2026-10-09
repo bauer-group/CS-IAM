@@ -51,7 +51,7 @@ LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.source="https://github.com/bauer-group/CS-IAM"
 LABEL org.opencontainers.image.url="https://github.com/bauer-group/CS-IAM"
 LABEL org.opencontainers.image.documentation="https://github.com/bauer-group/CS-IAM#readme"
-LABEL org.opencontainers.image.version="0.17.30"
+LABEL org.opencontainers.image.version="0.17.31"
 
 # ---------------------------------------------------------------------------
 # Plugin (registered through its entry point, so it must be pip-installed)
