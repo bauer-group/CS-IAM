@@ -33,9 +33,10 @@ docker compose -f docker-compose.development.yml up -d --build
 
 - The dev instance domain is **`iam.example.test`** — a real multi-label name
   so it is a valid WebAuthn rp.id (passkeys/U2F reject single-label names). It is
-  a Docker network alias on the core (so the in-container `provisioner`/
-  `directory-sync` resolve it *and* it matches the issuer) and resolves to the
-  proxy on the host. A Traefik `proxy` terminates TLS (self-signed) and serves
+  a Docker network alias of the `proxy` (so the in-container `provisioner`/
+  `directory-sync` reach the core through the same HTTPS origin, matching the
+  issuer) and, through the hosts entry, the proxy's address on the host. A
+  Traefik `proxy` terminates TLS (self-signed) and serves
   **one HTTPS origin**, path-routing `/ui/v2/login` to the login and everything
   else to the core. For browser access, add `127.0.0.1 iam.example.test` to
   your hosts file, then open **`https://iam.example.test:8080/ui/console`**

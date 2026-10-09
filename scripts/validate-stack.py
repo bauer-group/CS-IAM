@@ -11,8 +11,15 @@ branding LabelPolicy, the LoginPolicy and the OIDC discovery document.
 Prints a PASS/FAIL matrix and exits non-zero if any check fails — so it doubles
 as an automated full-stack smoke test.
 
-  # inside the directory-sync container (has httpx + pyjwt + the machine key):
-  python /tmp/validate-stack.py --issuer http://zitadel:8080 --insecure
+  # inside the directory-sync container (has httpx + pyjwt + the machine key,
+  # and the issuer settings the stack's own automation uses):
+  python /tmp/validate-stack.py
+
+Without --issuer it uses directory-sync's ZITADEL_DOMAIN / ZITADEL_PORT /
+ZITADEL_INSECURE, so it reaches Zitadel exactly like the stack does: in
+development https://iam.example.test:8080 through the dev proxy (its
+self-signed certificate is trusted through SSL_CERT_FILE), in production
+https://<IAM_HOSTNAME>. --insecure skips TLS verification.
 """
 
 from __future__ import annotations
@@ -26,10 +33,20 @@ import httpx
 import jwt
 
 
+def stack_issuer() -> str | None:
+    """The issuer directory-sync uses (its src/ is on PYTHONPATH in that
+    container), or None anywhere else."""
+    try:
+        from config import Settings
+    except ImportError:
+        return None
+    return Settings().issuer()
+
+
 def get_token(issuer: str, key_file: str, verify: bool) -> str:
     # JWT-profile: `aud` must equal the URL the core is actually reached at (it
-    # validates against the request scheme/host, not the public issuer) — so in
-    # dev, reach + audience the core directly over http at http://zitadel:8080.
+    # validates against the request scheme/host, not the public issuer). The
+    # host must also be the instance domain - Zitadel picks the instance by it.
     key = json.loads(open(key_file, encoding="utf-8").read())
     now = int(time.time())
     assertion = jwt.encode(
@@ -51,14 +68,16 @@ def get_token(issuer: str, key_file: str, verify: bool) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    # The URL the core is reached at — also the JWT-profile audience. In dev the
-    # containers reach the core directly over http (the public issuer is https
-    # via the proxy, but the audience follows the reached scheme); in prod it is
-    # the public https origin. See get_token().
-    ap.add_argument("--issuer", default="http://zitadel:8080")
+    # The URL the core is reached at — also the JWT-profile audience (see
+    # get_token()). Defaults to the issuer of the stack's own automation.
+    ap.add_argument("--issuer", default=stack_issuer(),
+                    help="Zitadel URL, e.g. https://id.example.com "
+                         "(default inside directory-sync: its own issuer)")
     ap.add_argument("--key-file", default="/data/machinekey/iam-admin.json")
-    ap.add_argument("--insecure", action="store_true")
+    ap.add_argument("--insecure", action="store_true", help="skip TLS verification")
     args = ap.parse_args()
+    if not args.issuer:
+        ap.error("--issuer is required outside the directory-sync container")
     verify = not args.insecure
     base = args.issuer.rstrip("/")
 
