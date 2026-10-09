@@ -129,8 +129,8 @@ the DB dump.
 Alerts go to the channels listed in `BACKUP_ALERT_CHANNELS` (comma-separated,
 e.g. `email,teams`; empty = no alerts), filtered by `BACKUP_ALERT_LEVEL`. Fill in
 the matching SMTP / `BACKUP_ALERT_EMAIL` / `BACKUP_TEAMS_WEBHOOK` /
-`BACKUP_WEBHOOK_URL` values. `BACKUP_ALERT_ENABLED` in `.env.example` is not
-read by any compose file — the channel list alone decides.
+`BACKUP_WEBHOOK_URL` values. The channel list alone decides; there is no
+separate on/off switch.
 
 ## Health
 

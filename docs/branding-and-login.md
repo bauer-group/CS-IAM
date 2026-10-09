@@ -44,10 +44,10 @@ by the one-shot **`zitadel-brand`** service:
 
 - Enabled on the instance via `ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED`
   + `ZITADEL_OIDC_DEFAULTLOGINURLV2` (set in the compose files).
-- Served at **`/ui/v2/login`** (same domain via Traefik in prod, host port
-  `IAM_LOGIN_PORT` in dev) by a **two-layer image**: the EP-Zitadel fork base
-  (`LOGIN_BASE_IMAGE`/`LOGIN_BASE_VERSION` — per-IdP brand logos) + the CS-IAM
-  branding overlay (`src/login` → `ghcr.io/bauer-group/cs-iam/login`,
+- Served at **`/ui/v2/login`** (same domain via Traefik in prod, same HTTPS
+  origin via the dev `proxy` in dev) by a **two-layer image**: the EP-Zitadel
+  fork base (`LOGIN_BASE_IMAGE`/`LOGIN_BASE_VERSION` — per-IdP brand logos) +
+  the CS-IAM branding overlay (`src/login` → `ghcr.io/bauer-group/cs-iam/login`,
   `LOGIN_IMAGE`/`LOGIN_VERSION`). See "Custom branding overlay" below.
 - Auth: reads the FirstInstance machine-key **PAT** from the shared volume
   (`ZITADEL_SERVICE_USER_TOKEN_FILE`); the container blocks until that file
