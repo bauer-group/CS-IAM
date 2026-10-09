@@ -16,8 +16,8 @@ license = "MIT"
 [project.optional-dependencies]
 test = ["pytest>=8"]
 
-# Up to 0.17.31 the compose files backed up the Zitadel database with the
-# source type `zitadel-postgres`, a plugin with its own restore for Zitadel's
+# CS-IAM 0.17.29 to 0.17.31 backed up the Zitadel database with the source
+# type `zitadel-postgres`, a plugin with its own restore for Zitadel's
 # partitioned tables. The engine's `postgres` source restores them since
 # BackupHelper 1.9.0, and the compose files use it again. The old name stays
 # registered - as the engine's postgres source - so a compose file that still
