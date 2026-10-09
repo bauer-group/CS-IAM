@@ -17,7 +17,8 @@
 #                    automation containers use.
 # The three automation containers trust the certificate the way the
 # development file's do (SSL_CERT_FILE, CURL_CA_BUNDLE) and start once the
-# stand-in serves. Nothing else of the variant changes. Let's Encrypt (the
+# stand-in serves, and the login starts after the branding job, as in
+# development. Nothing else of the variant changes. Let's Encrypt (the
 # Traefik file's certresolver) is not exercised: the routers fall back to the
 # default certificate.
 # =============================================================================
@@ -104,6 +105,15 @@ services:
     depends_on:
       roundtrip-proxy:
         condition: service_healthy
+
+  # zitadel-brand is a one-shot that nothing depends on in these files, and
+  # 'up --wait' reports a container that exited without a dependant as a
+  # failure. The development file starts the login after the branding; the
+  # round trip does the same here, so the branding has to succeed.
+  login:
+    depends_on:
+      zitadel-brand:
+        condition: service_completed_successfully
 
 volumes:
   roundtrip-certs:
