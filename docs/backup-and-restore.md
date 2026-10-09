@@ -127,9 +127,9 @@ The Zitadel **masterkey must be unchanged** (it decrypts secrets at rest) — ke
 
 ### Snapshots of the `zitadel-postgres` source (0.17.29 to 0.17.31)
 
-Before the engine could restore over partitioned tables, CS-IAM 0.17.29 to
-0.17.31 backed up the database with `zitadel-postgres`, a source plugin of the
-`database-backup` image with the same restore. Their snapshots record the
+CS-IAM 0.17.29 to 0.17.31 backed up the database with `zitadel-postgres`, a
+source plugin of the `database-backup` image that restored over partitioned
+tables before the engine could. Their snapshots record the
 database component's kind as `zitadel-postgres` (`show <id>`), newer ones as
 `postgres`. Both restore with the current compose files: the engine picks the
 source for a component by its name (`zitadel`), not by its kind. Every release
@@ -140,7 +140,7 @@ proves it with a snapshot of 0.17.29 (see
 engine's `postgres` source, so a compose file that still names it keeps backing
 up and restoring. Update the compose file and the image together all the same:
 a compose file with `postgres` and a `database-backup` image older than 0.17.31
-(BackupHelper 1.7) backs up, but its restore rolls back
+(built before BackupHelper 1.9.0) backs up, but its restore rolls back
 (`cannot drop inherited constraint`).
 
 ## Alerts

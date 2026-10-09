@@ -9,9 +9,10 @@
 #
 # The compose files back up the Zitadel database with the engine's `postgres`
 # source, whose restore copes with Zitadel's partitioned cache tables since
-# BackupHelper 1.9.0. Up to 0.17.31 a CS-IAM plugin, `zitadel-postgres`, did
-# that; its name stays registered as an alias of the engine's postgres source
-# (pyproject.toml, no code of its own) for compose files that still use it.
+# BackupHelper 1.9.0. In 0.17.29 to 0.17.31 a CS-IAM plugin,
+# `zitadel-postgres`, did that; its name stays registered as an alias of the
+# engine's postgres source (pyproject.toml, no code of its own) for compose
+# files that still use it.
 #
 # The machinekey and tfstate volumes are backed up with the engine's own
 # `filesystem` source; the compose files configure all three sources.
