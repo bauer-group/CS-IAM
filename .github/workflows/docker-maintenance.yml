@@ -1,8 +1,15 @@
 # =============================================================================
 # Docker Maintenance — Auto-merge Dependabot PRs
 # =============================================================================
-# Auto-merges Dependabot PRs for Dockerfile base-image updates. The merge to
-# main then triggers docker-release.yml (semantic release + image rebuild).
+# Decides every Dependabot PR (docker, pip, terraform, github-actions): no
+# paths filter, so each one gets a merge or a visible "left open" notice.
+#
+# Merged only after docker-release.yml passed on the PR head. Its PR run
+# watches src/** and terraform/**: it builds all images (directory-sync
+# installs requirements*.txt and runs pytest), validates OpenTofu and runs the
+# backup round trip, whose provisioner applies ./terraform against Zitadel.
+# GitHub Actions updates and any .github/ change stay open (module guard).
+# The merge is made with GITHUB_TOKEN and starts no release by itself.
 # =============================================================================
 
 name: 🔧 Docker Maintenance
@@ -10,11 +17,6 @@ name: 🔧 Docker Maintenance
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - 'src/zitadel/Dockerfile'
-      - 'src/provisioner/Dockerfile'
-      - 'src/directory-sync/Dockerfile'
-      - 'src/database-backup/Dockerfile'
 
 permissions:
   contents: write
