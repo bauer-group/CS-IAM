@@ -51,6 +51,10 @@ verification.
 - **Zitadel/Postgres/base images**: Dependabot opens PRs; the daily base-image
   monitor pins upstream digests and triggers a rebuild. Bump `ZITADEL_VERSION`
   in `.env` for a manual upgrade, then `docker compose pull && up -d`.
+- **Roll back** a Zitadel upgrade by restoring a snapshot from before it: take
+  one before upgrading (see [Manage](backup-and-restore.md#manage)) and note the
+  running release - see
+  [Roll back a Zitadel upgrade](backup-and-restore.md#roll-back-a-zitadel-upgrade).
 - **Re-provision** after Terraform changes: restart the stack (the init
   container re-applies, non-destructively) or run `tofu apply` from the CLI.
 

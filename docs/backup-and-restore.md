@@ -104,23 +104,113 @@ The `database-backup` commands start only PostgreSQL and the one-shot
 sidecar's user (uid 1000) - **not Zitadel**. Do not start the stack before the
 restore: on an empty database Zitadel sets up a new instance with new keys. If
 that already happened, restore as on the same host (stop `zitadel` first); the
-restore replaces the new instance's database, keys and state.
+restore replaces the new instance's database, keys and state, also when a newer
+Zitadel than the snapshot's set it up.
 
 After `up -d`, the provisioner log ends with `no changes` or an additive apply
 (`docker compose -f docker-compose.traefik.yml logs provisioner`), and
 `scripts/validate-stack.py` (see [Operations](operations.md#validate-the-deployment))
 checks the restored instance.
 
+## Roll back a Zitadel upgrade
+
+Before an upgrade, take a snapshot (`--now`, see [Manage](#manage)) and note the
+release you run. With `ZITADEL_VERSION=latest` the zitadel container's version
+label names it:
+
+```bash
+docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' \
+  "$(docker compose -f docker-compose.traefik.yml ps -q zitadel)"
+```
+
+That snapshot restores over the database the newer Zitadel has already
+migrated, with a `database-backup` image of 0.17.35 or newer. An image of
+0.17.34 or older (BackupHelper 1.10.1 or older) rolls such a restore back
+(`cannot drop … because other objects depend on it`), and `run --rm` does not
+pull a newer one by itself - pull it first, with `DATABASE_BACKUP_VERSION` at
+`latest` or 0.17.35 or newer.
+
+To go back to the previous release, set its images in `.env` **before**
+Zitadel starts again: stop `zitadel`, restore, edit `.env`, then `up -d`. A
+Zitadel that starts on the new version even once runs its newer setup steps on
+the restored database and migrates it again; the old version then needs another
+restore.
+
+```bash
+docker compose -f docker-compose.traefik.yml --profile backup pull database-backup
+docker compose -f docker-compose.traefik.yml stop zitadel
+docker compose -f docker-compose.traefik.yml --profile backup run --rm database-backup restore <id>
+# .env: ZITADEL_/LOGIN_/PROVISIONER_/DIRECTORY_SYNC_VERSION=<x.y.z>
+docker compose -f docker-compose.traefik.yml up -d
+```
+
+The images of a CS-IAM release share one tag (`x.y.z`). Set `ZITADEL_VERSION`
+and `LOGIN_VERSION` together - the login app tracks the Zitadel core version -
+and `PROVISIONER_VERSION` and `DIRECTORY_SYNC_VERSION` with them, so the
+provisioner applies that release's Terraform configuration to the restored
+state. Leave `DATABASE_BACKUP_VERSION` on the current image. To stay on the new
+version instead, leave `.env` as it is: on `up -d` Zitadel finds the snapshot's
+schema and runs its newer setup steps again.
+
+The restore drops what the newer Zitadel added in the schemas the snapshot
+holds, and logs it (`not in the snapshot, dropped: …`, see
+[below](#how-the-database-is-restored)). A schema the newer Zitadel created as a
+whole is not among them: it stays as it is and is not logged. The log line
+`schema(s) the dump creates, dropped with everything in them: …` names the
+snapshot's schemas, so such a schema is missing there. Drop it by hand if the
+old version must not find it, or the newer setup steps are to create it again
+from scratch.
+
 ## How the database is restored
 
 The archive is `pg_dump --format=custom`, written by the BackupHelper engine's
-`postgres` source. Zitadel keeps its caches in partitioned tables, and a plain
-`pg_restore --clean` cannot restore over them. Since BackupHelper 1.9.0 the
-source therefore restores in **one** transaction: it drops the live partitioned
-tables the dump recreates, then runs the dump's `pg_restore --clean --if-exists`
-script. Any error rolls the whole restore back. On this path the sidecar first
-writes the database as uncompressed SQL to its `/tmp`, which needs room for the
-extracted snapshot plus the uncompressed database - see the engine's
+`postgres` source. Into an empty database - a new host before Zitadel's first
+start - the engine restores with a plain `pg_restore`. Over a database Zitadel
+has set up, a plain `pg_restore --clean` cannot restore: Zitadel keeps its
+caches in partitioned tables, and a newer Zitadel adds tables, types and
+functions the snapshot lacks. There the engine **replaces** Zitadel's schemas
+(`adminapi`, `auth`, `cache`, `eventstore`, `logstore`, `projections`, `queue`,
+`system`) in **one** transaction: it drops their relations and whatever else
+the snapshot lacks, drops each schema whole (`DROP SCHEMA … CASCADE`), then
+runs the dump's `pg_restore --clean --if-exists` script. Any error rolls the
+whole restore back. BackupHelper 1.9.0 to 1.10.1 dropped only the partitioned
+tables, so a restore over a schema a newer Zitadel had migrated rolled back.
+
+The log names the replaced schemas (`restoring zitadel.dump by replacing the …
+relation(s) of schema(s) adminapi, auth, cache, …`) and the partitioned tables
+(`partitioned table(s) the dump recreates: cache.objects, cache.string_keys`).
+psql's `drop cascades to …` notices follow: about 17 lines, two
+`drop cascades to N other objects` notices whose `DETAIL` names some 15 of
+Zitadel's own functions and types (`eventstore.push`, `queue.river_job_state`,
+`projections.count_resource`, …); the number depends on the Zitadel version.
+They are expected: the dump recreates them right after. A notice that names an
+object outside Zitadel's schemas means `CASCADE` dropped something of yours (see
+below); it comes back only if it was in the snapshot.
+
+After the commit, `schema(s) the dump creates, dropped with everything in them:
+adminapi, auth, …` lists Zitadel's schemas - also expected, the dump has
+recreated them - and `not in the snapshot, dropped: …` names what the snapshot
+lacks in those schemas (and foreign keys onto them), which does not come back:
+after a rollback, what the newer Zitadel had added there.
+
+Objects you added to Zitadel's database after the snapshot are dropped as
+well: those in Zitadel's schemas, and, through `CASCADE`, views, foreign keys
+or policies elsewhere that depend on Zitadel's tables. Keep your own objects
+(reporting views, for example) in a database of their own.
+
+The replacing restore first writes the whole database as uncompressed SQL into
+the sidecar's temporary directory, next to the extracted snapshot: plan for
+about two to three times the snapshot. The sidecar has no `tmpfs`, so that is
+`/tmp` in its container, on Docker's disk. If that lacks the room, point
+`TMPDIR` at a volume with room for the restore run, e.g. the backup volume
+`/data`; the engine removes its temporary directories there after the run:
+
+```bash
+docker compose -f docker-compose.traefik.yml --profile backup run --rm -e TMPDIR=/data \
+  database-backup restore <id>
+```
+
+Details are in the engine's
 [sources documentation](https://github.com/bauer-group/CS-BackupHelper/blob/main/docs/sources.md#postgres).
 The Zitadel **masterkey must be unchanged** (it decrypts secrets at rest) — keep
 `ZITADEL_MASTERKEY` backed up separately from the DB dump.
@@ -287,6 +377,10 @@ Not covered by the gate:
   from empty volumes and an empty database, following the procedure above.
 - **Upgrades across several releases** — the upgrade jobs start from the latest
   release only.
+- **Rolling back a Zitadel upgrade** — the upgrade jobs restore over a schema a
+  newer Zitadel migrated only when the commit builds a newer Zitadel than the
+  latest release, as after a new Zitadel image. Going back to the previous
+  release's images after the restore is not tested.
 - **Snapshots of 0.17.30 and 0.17.31** — the legacy job restores one of 0.17.29.
   0.17.30 has the same plugin on the same engine, 0.17.31 the same plugin on
-  BackupHelper 1.10.0, the engine that restores.
+  BackupHelper 1.10.0.

@@ -14,21 +14,26 @@ Zitadel writes only once) and `tfstate` (the provisioner's OpenTofu state). See
 ## The Zitadel database: the engine's `postgres` source
 
 The compose files back up the database with the engine's built-in `postgres`
-source (`pg_dump --format=custom`). Zitadel keeps its caches in partitioned
-tables (schema `cache`), and a plain `pg_restore --clean` cannot restore over
-them: the clean phase drops each partition's primary key on its own, which
-PostgreSQL refuses (`cannot drop inherited constraint`). Since BackupHelper
-1.9.0 the engine restores such a database in **one** `psql --single-transaction`
-run: `DROP TABLE … CASCADE` for the live partitioned tables the dump recreates,
+source (`pg_dump --format=custom`). A plain `pg_restore --clean` cannot restore
+over a database Zitadel has set up. Zitadel keeps its caches in partitioned
+tables (schema `cache`): the clean phase drops each partition's primary key on
+its own, which PostgreSQL refuses (`cannot drop inherited constraint`). And
+after an upgrade, what the newer Zitadel added and the snapshot lacks blocks
+the clean phase or stays behind. The engine therefore restores over such a
+database in **one** transaction: `DROP … CASCADE` for the relations of the
+snapshot's schemas and the functions and types the snapshot lacks,
+`DROP SCHEMA … CASCADE` for the schemas the dump creates - all of Zitadel's -
 then the dump's own clean-and-create script. Any error rolls everything back.
-See the engine's
+BackupHelper 1.9.0 to 1.10.1 dropped only the partitioned tables, so restoring
+a snapshot from before a Zitadel upgrade rolled back. See the engine's
 [sources documentation](https://github.com/bauer-group/CS-BackupHelper/blob/main/docs/sources.md#postgres).
 
-Before BackupHelper 1.9.0 the engine could not do that, and CS-IAM 0.17.29 to
-0.17.31 configured a Source plugin of this image instead, `zitadel-postgres`,
-with that restore. Their snapshots record the database component as kind
-`zitadel-postgres`; they restore with the `postgres` source, because the engine
-picks the source for a component by its name (`zitadel`), not by its kind.
+Before BackupHelper 1.9.0 the engine could not restore over the partitioned
+tables at all, and CS-IAM 0.17.29 to 0.17.31 configured a Source plugin of this
+image instead, `zitadel-postgres`, with such a restore. Their snapshots record
+the database component as kind `zitadel-postgres`; they restore with the
+`postgres` source, because the engine picks the source for a component by its
+name (`zitadel`), not by its kind.
 
 `zitadel-postgres` stays registered (`pyproject.toml`) as an alias of the
 engine's `postgres` source - an entry point, no code of its own - so a compose

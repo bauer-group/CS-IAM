@@ -22,6 +22,33 @@ comes from the snapshot's `machinekey` component. Snapshots taken before that
 component existed do not have it — see
 [Restore onto a new host](backup-and-restore.md#restore-onto-a-new-host-disaster-recovery).
 
+## `restore` fails on the database
+
+The database restore runs in one transaction, so the database is unchanged; the
+snapshot's other components (`machinekey`, `tfstate`) are still written back.
+Fix the cause and restore the whole snapshot again.
+
+- **`cannot drop … because other objects depend on it`** with a snapshot from
+  before a Zitadel upgrade: a `database-backup` image of 0.17.34 or older
+  (BackupHelper 1.10.1 or older) cannot restore over a schema a newer Zitadel
+  migrated, and `run --rm` keeps using the local image. Pull the current one
+  (`docker compose -f <file> --profile backup pull database-backup`) and restore
+  again (see
+  [Roll back a Zitadel upgrade](backup-and-restore.md#roll-back-a-zitadel-upgrade)).
+- **`postgres restore refused: none of the … relation(s) of schema(s) … in the
+  target database is in zitadel.dump`**: the target database holds tables in
+  Zitadel's schemas, but none of the snapshot's - it is not this stack's
+  Zitadel database, and replacing would drop all of it. Restore into an empty
+  database instead (a new, empty `database-data` volume, then
+  [Restore onto a new host](backup-and-restore.md#restore-onto-a-new-host-disaster-recovery)),
+  or drop its objects first.
+
+A restore that logs `no source config for component zitadel — skipped` reports
+success but leaves the database as it is; only the other components are written
+back. The database component is named after the database the snapshot was taken
+of, and `ZITADEL_DB_NAME` in `.env` names another one. Set it back and restore
+again.
+
 ## `provisioner` aborts on a destructive plan
 
 By design — it refuses unattended destroy/replace to protect managed and
