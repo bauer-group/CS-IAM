@@ -9,7 +9,12 @@
 # installs requirements*.txt and runs pytest), validates OpenTofu and runs the
 # backup round trip, whose provisioner applies ./terraform against Zitadel.
 # GitHub Actions updates and any .github/ change stay open (module guard).
-# The merge is made with GITHUB_TOKEN and starts no release by itself.
+#
+# The merge is made with GITHUB_TOKEN and starts no push run, so the module
+# dispatches docker-release.yml on main after a merge and waits for it: the
+# run tests the merged commit again (validation, all backup round trips),
+# releases exactly that commit and only then pushes the images. A release
+# run that does not succeed turns this job red.
 # =============================================================================
 
 name: 🔧 Docker Maintenance
@@ -19,8 +24,11 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: write       # merge
+  pull-requests: write  # approve, read the PR
+  checks: read          # check runs and suites - needed once the repo is private
+  statuses: read        # commit statuses - needed once the repo is private
+  actions: write        # dispatch the release; read workflow runs
 
 jobs:
   maintenance:
@@ -32,4 +40,7 @@ jobs:
       # Merge only after this PR CI has passed on the PR head commit - it
       # builds the images and runs the backup round trip.
       required-workflows: '.github/workflows/docker-release.yml'
+      # Released after the merge: dispatched on main, awaited, a failed
+      # release fails this job.
+      release-workflow: '.github/workflows/docker-release.yml'
     secrets: inherit

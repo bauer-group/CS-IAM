@@ -258,6 +258,13 @@ jobs:
   # ============================================
   # Release (only on main push / dispatch)
   # ============================================
+  # Also dispatched by docker-maintenance.yml after a Dependabot merge and by
+  # the base image monitor. Pinned to the commit this run validated and round
+  # tripped: if main moved on while the gate ran, semantic-release publishes
+  # nothing ("behind the remote one") and the run that tested the newer main
+  # releases both - a version is never tagged on a commit this run did not
+  # test. Only main releases (target-branch), so a dispatch on another
+  # branch runs the gate and publishes nothing.
   release:
     name: 📦 Create Semantic Release
     needs: [validate-compose, validate-scripts, validate-terraform, backup-roundtrip, backup-roundtrip-legacy, backup-roundtrip-upgrade]
@@ -272,6 +279,7 @@ jobs:
     uses: bauer-group/automation-templates/.github/workflows/modules-semantic-release.yml@main
     with:
       target-branch: 'main'
+      ref: ${{ github.sha }}   # release the commit this run tested
       dry-run: false
       force-release: ${{ inputs.force-release || false }}
     secrets: inherit
