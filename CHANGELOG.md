@@ -4,6 +4,16 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.17.42](https://github.com/bauer-group/CS-IAM/compare/v0.17.41...v0.17.42) (2026-11-03)
+
+### 🔧 Maintenance
+
+* **deps:** update base image zitadel [skip ci] ([43af70d](https://github.com/bauer-group/CS-IAM/commit/43af70d9c024ab8fb1614f1fcce64a2a1edc0857))
+* update Dockerfile version to 0.17.41 ([2cdada8](https://github.com/bauer-group/CS-IAM/commit/2cdada8f820acf5209818cb3424518865d3d329a))
+* update Dockerfile version to 0.17.41 ([af5206b](https://github.com/bauer-group/CS-IAM/commit/af5206b50debbeef0140fc7216047e14330c73ab))
+* update Dockerfile version to 0.17.41 ([4e52dc5](https://github.com/bauer-group/CS-IAM/commit/4e52dc586e00e0af2b504977fc15d2164471b343))
+* update Dockerfile version to 0.17.41 ([56889a2](https://github.com/bauer-group/CS-IAM/commit/56889a2b8d4cbf1eeb887772e19f1baf4cae57d5))
+
 ## [0.17.41](https://github.com/bauer-group/CS-IAM/compare/v0.17.40...v0.17.41) (2026-10-28)
 
 ### 🔧 Maintenance
