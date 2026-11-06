@@ -4,6 +4,16 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.17.44](https://github.com/bauer-group/CS-IAM/compare/v0.17.43...v0.17.44) (2026-11-06)
+
+### 🔧 Maintenance
+
+* **deps:** update base image postgres, python-alpine, alpine [skip ci] ([e48aac3](https://github.com/bauer-group/CS-IAM/commit/e48aac3d5c9e2f30d4730857a97fe80ffbe9c5b5))
+* update Dockerfile version to 0.17.43 ([3b90f1d](https://github.com/bauer-group/CS-IAM/commit/3b90f1de7653eec5799d86bfb34bd7ce62970726))
+* update Dockerfile version to 0.17.43 ([8957ced](https://github.com/bauer-group/CS-IAM/commit/8957cedf5f6d33523ed5c22e32cfb8aa89261e94))
+* update Dockerfile version to 0.17.43 ([0634d6a](https://github.com/bauer-group/CS-IAM/commit/0634d6a6c639ef4e02dc9dc43ecf2e9ff60c176d))
+* update Dockerfile version to 0.17.43 ([a086a2e](https://github.com/bauer-group/CS-IAM/commit/a086a2e18535717e91c17f6b7c33bd2a9a7fd15c))
+
 ## [0.17.43](https://github.com/bauer-group/CS-IAM/compare/v0.17.42...v0.17.43) (2026-11-05)
 
 ### 🔧 Maintenance
