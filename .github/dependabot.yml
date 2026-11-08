@@ -4,6 +4,14 @@
 # Monitors GitHub Actions, Docker base images, Python deps and the OpenTofu
 # provider for updates. Combined with docker-maintenance.yml for auto-merge,
 # and with check-base-images.yml for digest-pinned upstream tracking.
+#
+# Commit prefixes decide whether a merged update is released (docker-
+# maintenance.yml dispatches docker-release.yml after each merge):
+#   fix(docker) / fix(deps)  runtime: base images, directory-sync's
+#                            requirements, the provisioner's OpenTofu
+#                            provider - PATCH release, images rebuilt
+#   chore(deps-dev)          development dependencies - no release
+#   chore(ci)                GitHub Actions - no release, merged by hand
 # =============================================================================
 
 version: 2
@@ -37,7 +45,7 @@ updates:
       - "docker"
       - "dependabot"
     commit-message:
-      prefix: "chore(docker)"
+      prefix: "fix(docker)"
 
   # provisioner (OpenTofu IaC runner)
   - package-ecosystem: "docker"
@@ -52,7 +60,7 @@ updates:
       - "docker"
       - "dependabot"
     commit-message:
-      prefix: "chore(docker)"
+      prefix: "fix(docker)"
 
   # directory-sync (Entra -> Zitadel sidecar)
   - package-ecosystem: "docker"
@@ -67,7 +75,7 @@ updates:
       - "docker"
       - "dependabot"
     commit-message:
-      prefix: "chore(docker)"
+      prefix: "fix(docker)"
 
   # database-backup (pg_dump sidecar)
   - package-ecosystem: "docker"
@@ -82,7 +90,7 @@ updates:
       - "docker"
       - "dependabot"
     commit-message:
-      prefix: "chore(docker)"
+      prefix: "fix(docker)"
 
   # ── Python dependencies ───────────────────────────────────────────────────
   - package-ecosystem: "pip"
@@ -99,8 +107,12 @@ updates:
       - "dependencies"
       - "python"
       - "dependabot"
+    # requirements.txt is installed into the directory-sync image: a merged
+    # update has to be released. prefix-development covers what Dependabot
+    # classifies as development dependencies.
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "fix(deps)"
+      prefix-development: "chore(deps-dev)"
 
   # ── Terraform / OpenTofu provider ─────────────────────────────────────────
   - package-ecosystem: "terraform"
@@ -114,5 +126,7 @@ updates:
       - "dependencies"
       - "terraform"
       - "dependabot"
+    # ./terraform is baked into the provisioner image (COPY terraform/), so a
+    # provider update changes a shipped image and has to be released.
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "fix(deps)"
