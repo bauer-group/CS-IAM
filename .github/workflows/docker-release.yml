@@ -256,11 +256,29 @@ jobs:
     secrets: inherit
 
   # ============================================
-  # Release (only on main push / dispatch)
+  # Release (main push / dispatch, after every gate)
   # ============================================
+  # The five docker-build-<svc>-validate jobs below build every image from
+  # this commit on every event (push: false) - the PR CI that
+  # docker-maintenance.yml waits for, and on a push or dispatch (the release
+  # after a Dependabot merge) the image gate of the release: an image that
+  # does not build skips the release and every image push. The five
+  # docker-build-<svc>-release jobs publish only when this job created a
+  # release - never on a PR, a branch dispatch or a run that released nothing.
   release:
     name: 📦 Create Semantic Release
-    needs: [validate-compose, validate-scripts, validate-terraform, backup-roundtrip, backup-roundtrip-legacy, backup-roundtrip-upgrade]
+    needs:
+      - validate-compose
+      - validate-scripts
+      - validate-terraform
+      - backup-roundtrip
+      - backup-roundtrip-legacy
+      - backup-roundtrip-upgrade
+      - docker-build-zitadel-validate
+      - docker-build-login-validate
+      - docker-build-provisioner-validate
+      - docker-build-directory-sync-validate
+      - docker-build-database-backup-validate
     if: |
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       needs.validate-compose.result == 'success' &&
@@ -268,10 +286,21 @@ jobs:
       needs.validate-terraform.result == 'success' &&
       needs.backup-roundtrip.result == 'success' &&
       needs.backup-roundtrip-legacy.result == 'success' &&
-      needs.backup-roundtrip-upgrade.result == 'success'
+      needs.backup-roundtrip-upgrade.result == 'success' &&
+      needs.docker-build-zitadel-validate.result == 'success' &&
+      needs.docker-build-login-validate.result == 'success' &&
+      needs.docker-build-provisioner-validate.result == 'success' &&
+      needs.docker-build-directory-sync-validate.result == 'success' &&
+      needs.docker-build-database-backup-validate.result == 'success'
     uses: bauer-group/automation-templates/.github/workflows/modules-semantic-release.yml@main
     with:
       target-branch: 'main'
+      # Release the commit this run validated and built - the image jobs
+      # below build it too. Unpinned, the release would take the tip of
+      # main: a push that landed meanwhile would be tagged untested and be
+      # missing from the images. Pinned, nothing is released once main has
+      # moved on, and the run for the newer main releases both.
+      ref: ${{ github.sha }}
       dry-run: false
       force-release: ${{ inputs.force-release || false }}
     secrets: inherit
@@ -304,10 +333,14 @@ jobs:
       security-fail-on: 'CRITICAL'
     secrets: inherit
 
-  docker-build-zitadel-pr:
-    name: 🔨 Validate zitadel Build (PR)
+  # Build gate of the release: every event, never pushed.
+  docker-build-zitadel-validate:
+    name: 🔨 Validate zitadel Build
     needs: [validate-compose, validate-scripts, validate-terraform]
-    if: github.event_name == 'pull_request'
+    if: |
+      needs.validate-compose.result == 'success' &&
+      needs.validate-scripts.result == 'success' &&
+      needs.validate-terraform.result == 'success'
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
     with:
       publish-to: 'ghcr'
@@ -346,10 +379,14 @@ jobs:
       security-fail-on: 'CRITICAL'
     secrets: inherit
 
-  docker-build-login-pr:
-    name: 🔨 Validate login Build (PR)
+  # Build gate of the release: every event, never pushed.
+  docker-build-login-validate:
+    name: 🔨 Validate login Build
     needs: [validate-compose, validate-scripts, validate-terraform]
-    if: github.event_name == 'pull_request'
+    if: |
+      needs.validate-compose.result == 'success' &&
+      needs.validate-scripts.result == 'success' &&
+      needs.validate-terraform.result == 'success'
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
     with:
       publish-to: 'ghcr'
@@ -391,10 +428,14 @@ jobs:
       security-fail-on: 'CRITICAL'
     secrets: inherit
 
-  docker-build-provisioner-pr:
-    name: 🔨 Validate provisioner Build (PR)
+  # Build gate of the release: every event, never pushed.
+  docker-build-provisioner-validate:
+    name: 🔨 Validate provisioner Build
     needs: [validate-compose, validate-scripts, validate-terraform]
-    if: github.event_name == 'pull_request'
+    if: |
+      needs.validate-compose.result == 'success' &&
+      needs.validate-scripts.result == 'success' &&
+      needs.validate-terraform.result == 'success'
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
     with:
       publish-to: 'ghcr'
@@ -436,10 +477,14 @@ jobs:
       security-fail-on: 'CRITICAL'
     secrets: inherit
 
-  docker-build-directory-sync-pr:
-    name: 🔨 Validate directory-sync Build (PR)
+  # Build gate of the release: every event, never pushed.
+  docker-build-directory-sync-validate:
+    name: 🔨 Validate directory-sync Build
     needs: [validate-compose, validate-scripts, validate-terraform]
-    if: github.event_name == 'pull_request'
+    if: |
+      needs.validate-compose.result == 'success' &&
+      needs.validate-scripts.result == 'success' &&
+      needs.validate-terraform.result == 'success'
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
     with:
       publish-to: 'ghcr'
@@ -481,10 +526,14 @@ jobs:
       security-fail-on: 'CRITICAL'
     secrets: inherit
 
-  docker-build-database-backup-pr:
-    name: 🔨 Validate database-backup Build (PR)
+  # Build gate of the release: every event, never pushed.
+  docker-build-database-backup-validate:
+    name: 🔨 Validate database-backup Build
     needs: [validate-compose, validate-scripts, validate-terraform]
-    if: github.event_name == 'pull_request'
+    if: |
+      needs.validate-compose.result == 'success' &&
+      needs.validate-scripts.result == 'success' &&
+      needs.validate-terraform.result == 'success'
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
     with:
       publish-to: 'ghcr'

@@ -4,6 +4,17 @@
 # Monitors GitHub Actions, Docker base images, Python deps and the OpenTofu
 # provider for updates. Combined with docker-maintenance.yml for auto-merge,
 # and with check-base-images.yml for digest-pinned upstream tracking.
+#
+# The commit prefix decides whether a merged update is released: fix(...)
+# cuts a PATCH release and rebuilds the images, chore(...) releases nothing.
+# Everything that ends up in a shipped image uses fix(...):
+#   docker          -> fix(docker): the base images of zitadel, provisioner,
+#                      directory-sync and database-backup
+#   pip             -> fix(deps): directory-sync installs requirements.txt
+#                      (prefix-development: chore(deps-dev) for what
+#                      Dependabot counts as dev)
+#   terraform       -> fix(deps): the provisioner image COPYs terraform/
+#   github-actions  -> chore(ci): no release, never auto-merged
 # =============================================================================
 
 version: 2
@@ -37,7 +48,7 @@ updates:
       - "docker"
       - "dependabot"
     commit-message:
-      prefix: "chore(docker)"
+      prefix: "fix(docker)"
 
   # provisioner (OpenTofu IaC runner)
   - package-ecosystem: "docker"
@@ -52,7 +63,7 @@ updates:
       - "docker"
       - "dependabot"
     commit-message:
-      prefix: "chore(docker)"
+      prefix: "fix(docker)"
 
   # directory-sync (Entra -> Zitadel sidecar)
   - package-ecosystem: "docker"
@@ -67,7 +78,7 @@ updates:
       - "docker"
       - "dependabot"
     commit-message:
-      prefix: "chore(docker)"
+      prefix: "fix(docker)"
 
   # database-backup (pg_dump sidecar)
   - package-ecosystem: "docker"
@@ -82,7 +93,7 @@ updates:
       - "docker"
       - "dependabot"
     commit-message:
-      prefix: "chore(docker)"
+      prefix: "fix(docker)"
 
   # ── Python dependencies ───────────────────────────────────────────────────
   - package-ecosystem: "pip"
@@ -100,7 +111,8 @@ updates:
       - "python"
       - "dependabot"
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "fix(deps)"
+      prefix-development: "chore(deps-dev)"
 
   # ── Terraform / OpenTofu provider ─────────────────────────────────────────
   - package-ecosystem: "terraform"
@@ -115,4 +127,4 @@ updates:
       - "terraform"
       - "dependabot"
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "fix(deps)"
