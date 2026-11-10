@@ -4,6 +4,19 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.17.46](https://github.com/bauer-group/CS-IAM/compare/v0.17.45...v0.17.46) (2026-11-10)
+
+### 🐛 Bug Fixes
+
+* **docker:** bump python in /src/directory-sync ([#37](https://github.com/bauer-group/CS-IAM/issues/37)) ([842f179](https://github.com/bauer-group/CS-IAM/commit/842f17951a2f7a1c93a9eefa1caf6da5cf7f8fce))
+
+### 🔧 Maintenance
+
+* update Dockerfile version to 0.17.45 ([157d07d](https://github.com/bauer-group/CS-IAM/commit/157d07d15fcf7d4ff5d4562bd4bfafe3e22c130a))
+* update Dockerfile version to 0.17.45 ([4d17d38](https://github.com/bauer-group/CS-IAM/commit/4d17d383864c7080c2ccc1567593305325d5b3fd))
+* update Dockerfile version to 0.17.45 ([2f8dd69](https://github.com/bauer-group/CS-IAM/commit/2f8dd69a8b53ec0cee29f2f514b1d2cfba4b72e2))
+* update Dockerfile version to 0.17.45 ([6784c6d](https://github.com/bauer-group/CS-IAM/commit/6784c6de64b05eff32243c4b9ef084a7b7338e1f))
+
 ## [0.17.45](https://github.com/bauer-group/CS-IAM/compare/v0.17.44...v0.17.45) (2026-11-10)
 
 ### 🔧 Maintenance
