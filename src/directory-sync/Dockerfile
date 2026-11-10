@@ -17,7 +17,7 @@
 # ---------------------------------------------------------------------------
 # Stage 1: Builder - resolve Python dependencies
 # ---------------------------------------------------------------------------
-FROM python:3.14-alpine AS builder
+FROM python:3.15-alpine AS builder
 RUN apk add --no-cache build-base libffi-dev openssl-dev
 WORKDIR /build
 COPY requirements.txt .
@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 # ---------------------------------------------------------------------------
 # Stage 2: Test - pytest gate (build fails if tests fail)
 # ---------------------------------------------------------------------------
-FROM python:3.14-alpine AS test
+FROM python:3.15-alpine AS test
 RUN apk add --no-cache build-base libffi-dev openssl-dev
 WORKDIR /app
 COPY requirements.txt requirements-test.txt ./
@@ -42,7 +42,7 @@ RUN env -i HOME="$HOME" PATH="$PATH" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=
 # ---------------------------------------------------------------------------
 # Stage 3: Production - minimal runtime
 # ---------------------------------------------------------------------------
-FROM python:3.14-alpine AS prod
+FROM python:3.15-alpine AS prod
 
 # ---------------------------------------------------------------------------
 # Metadata Labels (Legacy)
