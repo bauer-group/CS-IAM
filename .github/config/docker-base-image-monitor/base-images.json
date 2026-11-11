@@ -5,14 +5,14 @@
     {
       "name": "zitadel",
       "image": "ghcr.io/zitadel/zitadel",
-      "tag": "latest",
+      "dockerfile": "src/zitadel/Dockerfile",
       "variable": "ZITADEL_LATEST_DIGEST",
       "description": "Zitadel OIDC/IAM core image — floating latest release (PostgreSQL 18 needs >= v4.11.0); src/zitadel wrapper rebuilds when the digest moves"
     },
     {
       "name": "ep-zitadel-login",
       "image": "ghcr.io/bauer-group/ep-zitadel/zitadel-login",
-      "tag": "latest",
+      "dockerfile": "src/login/Dockerfile",
       "variable": "EP_ZITADEL_LOGIN_LATEST_DIGEST",
       "description": "Base for the src/login branding overlay (EP-Zitadel fork) — floating latest; overlay rebuilds when EP publishes a new login image"
     },
@@ -26,21 +26,21 @@
     {
       "name": "python-alpine",
       "image": "python",
-      "tag": "3.15-alpine",
+      "dockerfile": "src/directory-sync/Dockerfile",
       "variable": "PYTHON_ALPINE_DIGEST",
       "description": "Base image for directory-sync"
     },
     {
       "name": "backuphelper",
       "image": "ghcr.io/bauer-group/cs-backuphelper/backuphelper",
-      "tag": "latest",
+      "dockerfile": "src/database-backup/Dockerfile",
       "variable": "BACKUPHELPER_LATEST_DIGEST",
       "description": "Central BackupHelper engine — base for the src/database-backup meta image; rebuilds when the digest moves"
     },
     {
       "name": "alpine",
       "image": "alpine",
-      "tag": "3.23",
+      "dockerfile": "src/provisioner/Dockerfile",
       "variable": "ALPINE_DIGEST",
       "description": "Base for the provisioner (tofu binary staged in) + machine-key prep step (OpenTofu version pinned via the provisioner Dockerfile ARG)"
     }
